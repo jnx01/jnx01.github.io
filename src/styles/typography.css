@@ -1,0 +1,144 @@
+/* ==========================================================================
+   Typography — webfont loading and long-form ("prose") text styling.
+   Loaded globally by the Base layout, after tokens.css and base.css.
+
+   Fonts are self-hosted variable fonts via Fontsource:
+     - one file per family covers ALL weights (small, fast, no Google servers)
+     - `font-display: swap` (Fontsource default) shows fallback text instantly,
+       then swaps in the real font — no invisible text while loading
+   ========================================================================== */
+
+/* The @font-face rules themselves are imported as packages in Base.astro.
+   This file only needs to map the loaded families onto our tokens. */
+:root {
+  --font-display: 'Newsreader Variable', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* Newsreader has an "optical size" axis: letting it auto-adjust keeps large
+   headlines elegant and small text readable without extra work. */
+h1, h2, h3, h4 {
+  font-optical-sizing: auto;
+}
+
+/* ---- Prose -------------------------------------------------------------------
+   `.prose` styles long-form content (case studies, notes) rendered from
+   Markdown. Instead of styling every element globally, we scope comfortable
+   reading styles to this one class so UI components stay unaffected.
+   -------------------------------------------------------------------------- */
+.prose {
+  max-width: var(--measure); /* comfortable 60–70 character line length */
+  font-size: var(--text-md);
+}
+
+/* Vertical rhythm: consistent space between blocks of text. */
+.prose > * + * {
+  margin-top: var(--space-4);
+}
+
+.prose h2 {
+  font-size: var(--text-xl);
+  margin-top: var(--space-12); /* extra air above a new section */
+}
+
+.prose h3 {
+  font-size: var(--text-lg);
+  margin-top: var(--space-8);
+}
+
+.prose p {
+  line-height: 1.7;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: var(--space-6);
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Links inside prose are underlined by default: in running text, color alone
+   is not an accessible cue (WCAG), so the underline is always on. */
+.prose a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+.prose a:hover {
+  text-decoration-color: var(--color-accent-hover);
+}
+
+.prose strong {
+  font-weight: 600;
+}
+
+.prose blockquote {
+  border-left: 2px solid var(--color-accent);
+  padding-left: var(--space-4);
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin-block: var(--space-8);
+}
+
+/* ---- Code --------------------------------------------------------------------
+   Mono font for anything technical: inline code, endpoints, data values.
+   -------------------------------------------------------------------------- */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em; /* mono reads larger than sans at the same size */
+  font-optical-sizing: none;
+}
+
+/* Inline code: subtle tinted chip so it stands out from prose. */
+.prose :not(pre) > code {
+  background: var(--color-bg-tint);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.35em;
+}
+
+/* Code blocks: dark-on-light "paper" style, not a dark theme — keeps the
+   light-first identity while still feeling technical. */
+.prose pre {
+  background: var(--color-bg-tint);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-6);
+  overflow-x: auto; /* long lines scroll instead of breaking the layout */
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+/* ---- Figures -------------------------------------------------------------------
+   A horizontal strip of images (e.g. app screenshots) that scrolls on small
+   screens and wraps on large ones, plus a quiet caption style.
+   -------------------------------------------------------------------------- */
+.prose .figure-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-block: var(--space-6) var(--space-2);
+}
+
+.prose .figure-strip img {
+  /* Phone screenshots: cap the height so a row of them reads as a strip,
+     not a wall. Width follows the aspect ratio. */
+  height: 320px;
+  width: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tint);
+}
+
+.prose .figure-caption {
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  font-style: italic;
+}

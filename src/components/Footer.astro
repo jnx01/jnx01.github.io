@@ -1,0 +1,62 @@
+---
+/**
+ * Footer — global contact access (strategy §R: "email/LinkedIn/GitHub always
+ * visible in footer"). Present on every page, quiet in style.
+ */
+
+import { EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.config';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <p class="footer-note">© {year} Jahanzeb Naeem · Islamabad, Pakistan</p>
+
+    <ul class="footer-links">
+      <!-- Email is plain text (obfuscated), not a mailto: link — the user
+           prefers not to expose a clickable address to scrapers. -->
+      <li><span class="footer-email">{EMAIL_DISPLAY}</span></li>
+      <li><a href={LINKEDIN_URL} rel="me">LinkedIn</a></li>
+      <li><a href={GITHUB_URL} rel="me">GitHub</a></li>
+    </ul>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-24);
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-block: var(--space-8);
+  }
+
+  .footer-note {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  .footer-links {
+    display: flex;
+    flex-wrap: wrap; /* wrap to a second line on small screens */
+    gap: var(--space-2) var(--space-6);
+    list-style: none;
+    padding: 0;
+    font-size: var(--text-sm);
+  }
+
+  /* The plain-text email: same size/color as the footer links, but not a
+     link (no hover, no accent). Allow it to wrap/shrink so the long
+     obfuscated address never overflows a narrow screen. */
+  .footer-email {
+    color: var(--color-ink-muted);
+    word-break: break-word;
+  }
+</style>

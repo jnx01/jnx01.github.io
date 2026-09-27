@@ -1,0 +1,93 @@
+/* ==========================================================================
+   Layout primitives — reusable building blocks for page structure.
+   These are plain CSS classes (not components) so any page or component can
+   compose them without imports.
+   ========================================================================== */
+
+/* ---- Section -------------------------------------------------------------------
+   `.section` is the standard vertical band of a page. Sections stack with
+   generous whitespace; the `--tint` and `--accent` variants add the
+   "occasional soft tinted sections for rhythm" from the strategy (§L).
+   -------------------------------------------------------------------------- */
+.section {
+  padding-block: var(--space-16);
+}
+
+@media (min-width: 768px) {
+  .section {
+    padding-block: var(--space-24);
+  }
+}
+
+.section--tint {
+  background: var(--color-bg-tint);
+}
+
+.section--accent {
+  background: var(--color-bg-accent);
+}
+
+/* Section header pattern: small mono kicker + display heading.
+   Used at the top of most sections ("Selected work", "Research", …). */
+.section-kicker {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-accent);
+  margin-bottom: var(--space-3);
+}
+
+.section-title {
+  font-size: var(--text-xl);
+  max-width: 24ch;
+}
+
+@media (min-width: 768px) {
+  .section-title {
+    font-size: var(--text-2xl);
+  }
+}
+
+/* ---- Grid ----------------------------------------------------------------------
+   A simple 12-column grid for desktop that collapses to a single column on
+   mobile. Children span columns with the `.col-N` classes.
+   Deliberate asymmetry (strategy §L) is done by choosing uneven spans.
+   -------------------------------------------------------------------------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-6);
+}
+
+/* On mobile everything stacks full-width… */
+.grid > * {
+  grid-column: 1 / -1;
+}
+
+/* …and from tablets up, explicit spans take over. */
+@media (min-width: 768px) {
+  .col-4 { grid-column: span 4; }
+  .col-5 { grid-column: span 5; }
+  .col-6 { grid-column: span 6; }
+  .col-7 { grid-column: span 7; }
+  .col-8 { grid-column: span 8; }
+}
+
+/* ---- Cluster -------------------------------------------------------------------
+   `.cluster` lays out small items in a row with wrapping (tags, link lists).
+   -------------------------------------------------------------------------- */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: baseline;
+}
+
+/* ---- Stack ---------------------------------------------------------------------
+   `.stack` adds consistent vertical spacing between direct children.
+   Use `--stack-space` to override the default gap.
+   -------------------------------------------------------------------------- */
+.stack > * + * {
+  margin-top: var(--stack-space, var(--space-4));
+}

@@ -1,0 +1,122 @@
+---
+/**
+ * Top navigation — minimal by design (strategy §C).
+ *
+ * Five short text links plus the name as a wordmark that links home.
+ * No hamburger menu on desktop; the items are short enough to fit even on
+ * small phones (≥360px). The current page's link is marked with
+ * aria-current="page" so screen readers announce it, and styled subtly.
+ */
+
+// The list of nav items. Adding a page to the nav means adding one line here.
+const items = [
+  { label: 'Work', href: '/work/' },
+  { label: 'Research', href: '/research/' },
+  { label: 'About', href: '/about/' },
+  { label: 'Notes', href: '/notes/' },
+  { label: 'Contact', href: '/contact/' },
+];
+
+// Figure out which nav item (if any) matches the page being viewed,
+// so we can highlight it and mark it for screen readers.
+const currentPath = Astro.url.pathname;
+const isCurrent = (href: string) => currentPath.startsWith(href);
+---
+
+<header class="site-header">
+  <nav class="container nav" aria-label="Main navigation">
+    <!-- Wordmark: the name doubles as the "home" link -->
+    <a href="/" class="wordmark">Jahanzeb Naeem</a>
+
+    <ul class="nav-list">
+      {items.map((item) => (
+        <li>
+          <a
+            href={item.href}
+            class:list={['nav-link', { current: isCurrent(item.href) }]}
+            aria-current={isCurrent(item.href) ? 'page' : undefined}
+          >
+            {item.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    /* The nav stays visible while scrolling, on a slightly translucent
+       background so content passing underneath stays readable. */
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap; /* let the list drop below the wordmark if space runs out */
+    gap: var(--space-2) var(--space-4);
+    padding-block: var(--space-4);
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: -0.01em;
+  }
+
+  .wordmark:hover {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .nav-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-6);
+    list-style: none;
+    padding: 0;
+  }
+
+  .nav-link {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    /* Generous tap target on mobile (≥44px tall) without looking padded. */
+    padding-block: var(--space-2);
+  }
+
+  .nav-link:hover {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  /* The current page's link: ink color + a small accent underline. */
+  .nav-link.current {
+    color: var(--color-ink);
+    box-shadow: inset 0 -2px 0 var(--color-accent);
+  }
+
+  /* On narrow phones, tighten gaps and shrink the wordmark so all five
+     items fit without horizontal scrolling. */
+  @media (max-width: 480px) {
+    .wordmark {
+      font-size: var(--text-base);
+    }
+
+    .nav-list {
+      gap: var(--space-2) var(--space-4);
+    }
+
+    .nav-link {
+      font-size: var(--text-xs);
+    }
+  }
+</style>

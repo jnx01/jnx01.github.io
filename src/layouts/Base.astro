@@ -1,0 +1,240 @@
+---
+/**
+ * Base layout — the HTML shell every page is built inside.
+ *
+ * It provides:
+ *   - the <head> with SEO metadata (title, description, canonical, Open Graph)
+ *   - the global stylesheets (tokens + base)
+ *   - the skip link, top navigation, and footer
+ *   - a <main> landmark that page content is slotted into
+ *
+ * Every page passes at least a `title` and `description` so each page has
+ * unique, meaningful metadata (strategy §T — SEO).
+ */
+// Self-hosted variable fonts (Fontsource). Importing the package registers
+// the @font-face rules; tokens in typography.css map them to our variables.
+import '@fontsource-variable/newsreader';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/jetbrains-mono';
+
+import '../styles/tokens.css';
+import '../styles/base.css';
+import '../styles/typography.css';
+import '../styles/layout.css';
+import '../styles/motion.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+// ClientRouter enables Astro view transitions: internal navigations swap the
+// page content with a fast cross-fade + slight rise (motion moment #5,
+// strategy §G) instead of a full browser reload. Browsers without support
+// fall back to normal navigation automatically.
+import { ClientRouter } from 'astro:transitions';
+import { ANALYTICS } from '../site.config';
+
+interface Props {
+  title: string;        // becomes "<title> — Jahanzeb Naeem" in the browser tab
+  description: string;  // used for the meta description and social previews
+}
+
+const { title, description } = Astro.props;
+
+// The canonical URL of the current page, e.g. https://jnx01.github.io/research/
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
+// Absolute URL of the social preview image.
+const ogImage = new URL('/images/og.jpg', Astro.site);
+
+// JSON-LD Person schema (strategy §T) — helps search engines understand who
+// this site is about. Only real, verifiable facts.
+const personSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Jahanzeb Naeem',
+  url: Astro.site,
+  image: ogImage.toString(),
+  jobTitle: 'AI Engineer',
+  worksFor: { '@type': 'Organization', name: 'Teradata' },
+  address: { '@type': 'PostalAddress', addressLocality: 'Islamabad', addressCountry: 'PK' },
+  sameAs: [
+    'https://www.linkedin.com/in/jna1',
+    'https://github.com/jnx01',
+  ],
+};
+
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Mark that JS is available BEFORE first paint. Motion.css only hides
+         reveal elements when this class exists, so no-JS users always see
+         the full page. Placed first in <head> to avoid a flash. -->
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+
+    <!-- Primary SEO metadata -->
+    <title>{title} — Jahanzeb Naeem</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Open Graph: controls how links to this site look when shared -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Jahanzeb Naeem" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- Structured data: Person schema for search engines -->
+    <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <!-- Astro injects the sitemap link here automatically via the integration -->
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <ClientRouter />
+  </head>
+  <body>
+    <!-- Keyboard users can jump straight past the nav to the content -->
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <Nav />
+
+    <main id="main">
+      <!-- The current page's content is inserted here -->
+      <slot />
+    </main>
+
+    <Footer />
+
+    <!-- Reveal-on-scroll: one IntersectionObserver watches every element
+         marked [data-reveal] and adds .is-revealed the first time it enters
+         the viewport. ~20 lines, no library, unobserve after reveal so
+         nothing loops or re-triggers.
+
+         It runs on first load AND after every view-transition page swap
+         (astro:page-load), because client-side navigation replaces the DOM
+         and the new page's [data-reveal] elements need fresh observers. -->
+    <script is:inline>
+      function setupReveals() {
+        const els = document.querySelectorAll('[data-reveal]:not(.is-revealed)');
+        // No IntersectionObserver (very old browser) -> show everything.
+        if (!('IntersectionObserver' in window)) {
+          els.forEach((el) => el.classList.add('is-revealed'));
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-revealed');
+                io.unobserve(entry.target); // reveal once, then stop watching
+              }
+            }
+          },
+          { rootMargin: '0px 0px -10% 0px' } // trigger slightly before fully in view
+        );
+        els.forEach((el) => io.observe(el));
+      }
+      // astro:page-load fires on initial load and after each client-side
+      // navigation, so it covers both cases with one listener.
+      document.addEventListener('astro:page-load', setupReveals);
+    </script>
+
+    <!-- Hero portrait parallax (motion moment #1, strategy §E/§F): the
+         portrait drifts a few percent slower than the text as you scroll,
+         adding subtle depth. Transform-only (GPU-friendly), driven by
+         requestAnimationFrame so it stays smooth.
+
+         Disabled when the user prefers reduced motion, and on touch devices
+         (coarse pointers) where scroll-linked movement tends to jank —
+         strategy §S. The element is looked up fresh on each frame so the
+         script keeps working after view-transition page swaps. -->
+    <script is:inline>
+      (() => {
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+        if (reduceMotion || coarsePointer) return;
+
+        // How much slower the portrait moves vs. the page (0.06 = 6%).
+        const STRENGTH = 0.06;
+        let ticking = false;
+
+        function update() {
+          // Look up the portrait fresh each frame — it only exists on the
+          // home page, and view transitions replace the DOM on navigation.
+          const el = document.querySelector('[data-parallax]');
+          if (el) {
+            // Shift the portrait down slightly as the page scrolls up, so it
+            // appears to lag behind the text.
+            el.style.transform = `translateY(${window.scrollY * STRENGTH}px)`;
+          }
+          ticking = false;
+        }
+
+        window.addEventListener('scroll', () => {
+          if (!ticking) {
+            window.requestAnimationFrame(update);
+            ticking = true;
+          }
+        }, { passive: true });
+      })();
+    </script>
+
+    <!-- GoatCounter analytics: privacy-friendly, cookie-free visitor stats.
+         Only loads when ANALYTICS.ENABLED is true in site.config.ts. The
+         script is async so it never blocks the page. No personal data, no
+         cookies, no consent banner needed. -->
+    {ANALYTICS.ENABLED && (
+      <script
+        is:inline
+        async
+        data-goatcounter={`https://${ANALYTICS.GOATCOUNTER_CODE}.goatcounter.com/count`}
+        src="https://gc.zgo.at/count.js"
+      ></script>
+    )}
+  </body>
+</html>
+
+<style>
+  /* Page transition: fast cross-fade + slight rise (strategy §G, moment #5).
+     Astro's default fade is close; we add the small upward settle on the
+     incoming page. Kept quick (200ms) so navigation feels instant. */
+  @media (prefers-reduced-motion: no-preference) {
+    @keyframes page-rise {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    ::view-transition-old(root) {
+      animation: 180ms var(--ease-out) both fade-out;
+    }
+
+    ::view-transition-new(root) {
+      animation: 220ms var(--ease-out) both page-rise;
+    }
+  }
+
+  /* Reduced motion: no view-transition animation at all — instant swap. */
+  @media (prefers-reduced-motion: reduce) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+    }
+  }
+</style>

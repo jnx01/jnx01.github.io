@@ -1,0 +1,136 @@
+/* ==========================================================================
+   Base styles — a small reset plus sensible defaults for the whole site.
+   Loaded once, globally, by the Base layout. Component styles live with
+   their components; only truly global rules belong here.
+   ========================================================================== */
+
+/* ---- Reset -----------------------------------------------------------------
+   Start from a clean, predictable slate in every browser.
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* padding and borders count toward an element's size */
+  margin: 0;              /* remove browser default margins; we set our own */
+}
+
+/* ---- Document -------------------------------------------------------------- */
+html {
+  /* Smooth scrolling for anchor jumps, unless the user asked for less motion
+     (the reduced-motion block at the bottom of this file overrides it). */
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  /* Crisper text rendering on macOS/iOS. */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Prevent mobile browsers from inflating text on rotation. */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---- Headings -------------------------------------------------------------- */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  /* Slightly tighter letter spacing makes large display type feel refined. */
+  letter-spacing: -0.01em;
+  text-wrap: balance; /* avoid lonely words on the last line of a heading */
+}
+
+/* ---- Links -------------------------------------------------------------------
+   The accent color's main job. Underlines appear on hover/focus so body text
+   stays calm, but links are still identifiable by color alone (and color is
+   never the ONLY cue in body copy — see .prose rules in later modules).
+   -------------------------------------------------------------------------- */
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+a:hover {
+  color: var(--color-accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---- Keyboard focus ----------------------------------------------------------
+   A clearly visible focus ring is an accessibility requirement (WCAG 2.2 AA).
+   :focus-visible shows it for keyboard users without flashing it on clicks.
+   -------------------------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---- Media ------------------------------------------------------------------- */
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto; /* keep aspect ratio when width scales */
+}
+
+/* ---- Selection ---------------------------------------------------------------- */
+::selection {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* ---- Skip link -----------------------------------------------------------------
+   Lets keyboard users jump straight to the main content, past the nav.
+   Visually hidden until focused — then it appears in the top-left corner.
+   -------------------------------------------------------------------------- */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-4);
+  z-index: 100;
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-ink);
+  color: var(--color-bg);
+  border-radius: var(--radius-sm);
+}
+
+.skip-link:focus {
+  top: var(--space-4); /* slide into view when focused */
+}
+
+/* ---- Shared layout helper ------------------------------------------------------
+   .container centers content and caps its width. Used by nav, footer, and
+   page sections so everything lines up on the same invisible grid.
+   -------------------------------------------------------------------------- */
+.container {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--space-6);
+}
+
+/* ---- Reduced motion --------------------------------------------------------------
+   Users who set "reduce motion" in their OS get a calm, static experience.
+   This is a hard requirement of the strategy (§G) — motion must never be the
+   only way information is communicated.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

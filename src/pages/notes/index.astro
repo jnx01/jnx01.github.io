@@ -1,0 +1,131 @@
+---
+/**
+ * Notes index — occasional technical writing (strategy §D).
+ *
+ * Sparse by design: no tags, no date-pressure UI, no RSS promise. When there
+ * are no published notes yet, the page shows a quiet intentional empty state
+ * rather than a blank or a "coming soon" that apologizes for itself.
+ *
+ * Adding a note = one Markdown file in src/content/notes/ with
+ * draft: false. Drafts are hidden from this index.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+// Published notes only, newest first.
+const notes = (await getCollection('notes'))
+  .filter((n) => !n.data.draft)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+// Format a date as "Month YYYY" — enough precision for occasional notes,
+// without the pressure of an exact day.
+const formatDate = (d: Date) =>
+  d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+---
+
+<Base
+  title="Notes"
+  description="Occasional technical notes and experiment writeups by Jahanzeb Naeem."
+>
+  <section class="section page-head">
+    <div class="container stack" style="--stack-space: var(--space-4);">
+      <h1 class="page-title" data-reveal>Notes</h1>
+      <p class="page-lede" data-reveal data-reveal-delay="1">
+        Occasional technical notes and experiment writeups. Infrequent by
+        intention — only when there's something worth writing down.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top: 0;">
+    <div class="container">
+      {notes.length === 0 ? (
+        // Intentional empty state: quiet, confident, not apologetic.
+        <p class="notes-empty" data-reveal>
+          Nothing published yet. The first note will appear here when there's
+          something worth saying.
+        </p>
+      ) : (
+        <ul class="notes-list">
+          {notes.map((note, i) => (
+            <li class="notes-item" data-reveal data-reveal-delay={String(Math.min(i, 4))}>
+              <a href={`/notes/${note.id}/`} class="notes-link">
+                <span class="notes-title">{note.data.title}</span>
+                <span class="notes-summary">{note.data.summary}</span>
+                <span class="notes-date">{formatDate(note.data.date)}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-head {
+    padding-bottom: var(--space-8);
+  }
+
+  .page-title {
+    font-size: var(--text-3xl);
+  }
+
+  .page-lede {
+    font-size: var(--text-md);
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+    line-height: 1.7;
+  }
+
+  .notes-empty {
+    color: var(--color-ink-muted);
+    font-style: italic;
+    max-width: var(--measure);
+  }
+
+  /* The notes list: full-width rows separated by hairlines, like the contact
+     page — confident and scannable. */
+  .notes-list {
+    list-style: none;
+    padding: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .notes-link {
+    display: grid;
+    gap: var(--space-1);
+    padding-block: var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .notes-link:hover {
+    text-decoration: none;
+  }
+
+  .notes-title {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .notes-link:hover .notes-title {
+    color: var(--color-accent);
+  }
+
+  .notes-summary {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+  }
+
+  .notes-date {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-top: var(--space-1);
+  }
+</style>

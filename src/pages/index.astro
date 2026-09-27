@@ -1,0 +1,683 @@
+---
+/**
+ * Home — the scroll narrative (strategy §D). Six movements:
+ *   1. Hero            — editorial statement + headshot + scroll cue
+ *   2. Proof strip     — quantified facts, no adjectives
+ *   3. Selected work   — three flagship case studies, weighted
+ *   4. Research teaser — theme + two pillars, link to /research
+ *   5. Experience      — one-line-per-role compressed timeline
+ *   6. Person + contact — 2–3 sentences of humanity + the three links
+ *
+ * Every claim below is backed by the audit (planning/01-audit.md) or the
+ * resumes. Nothing here is invented.
+ */
+import Base from '../layouts/Base.astro';
+import Headshot from '../components/Headshot.astro';
+import Card from '../components/Card.astro';
+import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.config';
+---
+
+<Base
+  title="AI Engineer"
+  description="Jahanzeb Naeem builds and evaluates AI systems that have to work outside the notebook — production GenAI at Teradata, and honest experiments on efficiency and reliability."
+>
+  <!-- 1. HERO -------------------------------------------------------------
+      Asymmetric editorial composition: statement left, portrait right
+      (roughly a third of the width on desktop). No CTA buttons — the
+      scroll cue is the CTA (strategy §E). -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-text">
+        <h1 class="hero-statement" data-reveal>
+          I build and evaluate AI systems that have to work outside the notebook.
+        </h1>
+        <p class="hero-byline" data-reveal data-reveal-delay="1">
+          Jahanzeb Naeem · AI Engineer · Teradata · Islamabad
+        </p>
+        <p class="hero-scroll">
+          <span class="scroll-cue" data-reveal="fade" data-reveal-delay="3">Scroll</span>
+        </p>
+      </div>
+      <div class="hero-portrait" data-reveal="fade" data-reveal-delay="2" data-parallax>
+        <Headshot size="hero" />
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. PROOF STRIP -------------------------------------------------------
+      Four quantified facts. Numbers, not adjectives. Each is verifiable
+      against the resumes/audit. -->
+  <section class="section section--tint" aria-label="Key facts">
+    <div class="container">
+      <dl class="proof-strip">
+        <div class="proof-item" data-reveal>
+          <dt class="proof-label">Enterprise AI systems shipped</dt>
+          <dd class="proof-value">3+</dd>
+        </div>
+        <div class="proof-item" data-reveal data-reveal-delay="1">
+          <dt class="proof-label">AI agent APIs architected</dt>
+          <dd class="proof-value">2</dd>
+        </div>
+        <div class="proof-item" data-reveal data-reveal-delay="2">
+          <dt class="proof-label">Performance awards, 2 promotions</dt>
+          <dd class="proof-value">4×</dd>
+        </div>
+        <div class="proof-item" data-reveal data-reveal-delay="3">
+          <dt class="proof-label">Peer-reviewed AI paper</dt>
+          <dd class="proof-value">1</dd>
+        </div>
+      </dl>
+
+      <!-- Wordmark row: the organizations behind the work, as quiet text
+           (not logos — strategy §L avoids logo walls). The framing line keeps
+           the relationships honest: employer, university, fellowship,
+           publisher, and the Google Developers community program. -->
+      <div class="wordmark-row" data-reveal>
+        <span class="wordmark-lede">Orgs I've worked, collaborated &amp; published with</span>
+        <ul class="wordmark-list">
+          <li>Teradata</li>
+          <li>Bahria University</li>
+          <li>Arbisoft</li>
+          <li>Springer</li>
+          <li>Google Developers</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. SELECTED WORK -------------------------------------------------------
+      Three flagships, weighted: Teradata largest, then SignChatter, then
+      Experiments. Each links to its case study (built in the Work module). -->
+  <section class="section">
+    <div class="container stack" style="--stack-space: var(--space-8);">
+      <div data-reveal>
+        <p class="section-kicker">Selected work</p>
+        <h2 class="section-title">Three things I've built, in depth.</h2>
+      </div>
+
+      <div class="grid">
+        <div class="col-7" data-reveal>
+          <Card
+            href="/work/teradata/"
+            title="Production AI at Teradata"
+            meta="Industry · 2023–present"
+          >
+            <p>
+              Production AI across several enterprise systems — the API layer
+              of a Text-to-SQL agent, agentic skills, and evaluation &
+              retrieval work — from before launch through customer onboarding.
+            </p>
+          </Card>
+        </div>
+        <div class="col-5" data-reveal data-reveal-delay="1">
+          <Card
+            href="/work/signchatter/"
+            title="SignChatter"
+            meta="Research · Peer-reviewed"
+          >
+            <p>
+              Sign-language recognition end to end: a dataset built from
+              scratch, a model comparison, a deployed app, and a Springer
+              publication.
+            </p>
+          </Card>
+        </div>
+        <div class="col-12 experiments-card" data-reveal>
+          <Card
+            href="/work/experiments/"
+            title="Experiments in efficiency & reliability"
+            meta="Self-directed research · 3 studies"
+          >
+            <p>
+              Three reproducible studies on making LLM systems and AI agents cheaper and more
+              robust — including one nuanced, fragile finding reported honestly.
+            </p>
+          </Card>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. RESEARCH TEASER ------------------------------------------------------
+      The theme sentence plus the two pillars, minimally. The full diagram
+      and question list live on /research. -->
+  <section class="section section--accent">
+    <div class="container stack" style="--stack-space: var(--space-6);">
+      <div data-reveal>
+        <p class="section-kicker">Research</p>
+        <h2 class="section-title research-theme">
+          Making AI systems efficient and reliable enough to deploy in the real
+          world.
+        </h2>
+      </div>
+
+      <div class="grid pillars">
+        <div class="col-6 pillar" data-reveal>
+          <h3>Efficiency</h3>
+          <p>
+            How can we get useful AI behavior while spending less compute,
+            latency, and cost?
+          </p>
+        </div>
+        <div class="col-6 pillar" data-reveal data-reveal-delay="1">
+          <h3>Reliability</h3>
+          <p>
+            How do AI systems behave when evidence, models, or tasks degrade —
+            and how would we know?
+          </p>
+        </div>
+      </div>
+
+      <p data-reveal>
+        <a class="link-draw research-link" href="/research/">
+          Questions, experiments, and findings →
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 5. EXPERIENCE, COMPRESSED -------------------------------------------------
+      One line per role. The full timeline lives on /about. -->
+  <section class="section">
+    <div class="container stack" style="--stack-space: var(--space-8);">
+      <div data-reveal>
+        <p class="section-kicker">Experience</p>
+        <h2 class="section-title">Where I've worked.</h2>
+      </div>
+
+      <ol class="timeline" data-reveal>
+        <li class="timeline-item">
+          <span class="timeline-when">2023 —</span>
+          <span class="timeline-what">
+            <strong>Teradata</strong> — Data Science Engineer II, GenAI &amp;
+            Agentic AI <span class="timeline-note">(promoted twice)</span>
+          </span>
+        </li>
+        <li class="timeline-item">
+          <span class="timeline-when">2022–23</span>
+          <span class="timeline-what">
+            <strong>Bahria University, Center of Excellence for AI</strong> —
+            Research Assistant
+          </span>
+        </li>
+        <li class="timeline-item">
+          <span class="timeline-when">2022–24</span>
+          <span class="timeline-what">
+            <strong>SignChatter</strong> — research that shipped
+            <span class="timeline-note">&nbsp;(FYP → publication)</span>
+          </span>
+        </li>
+        <li class="timeline-item">
+          <span class="timeline-when">2022</span>
+          <span class="timeline-what">
+            <strong>Arbisoft</strong> — Fellow
+          </span>
+        </li>
+      </ol>
+
+      <p data-reveal>
+        <a class="link-draw" href="/about/">Full timeline and background →</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 6. THE PERSON + CONTACT ----------------------------------------------------
+      Two or three sentences of humanity, then the three contact links.
+      Personality as seasoning, not the main course (strategy §D). -->
+  <section class="section section--tint">
+    <div class="container stack" style="--stack-space: var(--space-6);">
+      <div data-reveal>
+        <p class="section-kicker">The person</p>
+        <h2 class="section-title">Outside of work.</h2>
+      </div>
+
+      <div class="person-grid">
+        <div class="person-text" data-reveal>
+          <p class="person-note">
+            I've written professionally for international clients for over six
+            years — which is why this site reads the way it does. I love engaging
+            with the student community whenever I can through mentoring and 
+            training sessions. And when I'm not working, I'm usually reading a
+            book, watching a movie, or hiking Islamabad's Margalla Hills.&#32;
+            <a class="link-draw" href="/about/">More about me →</a>
+          </p>
+        </div>
+
+        <!-- The talk photo: real evidence of the leadership/mentoring line
+             above. Cropped and brightened from the original. -->
+        <figure class="person-photo" data-reveal="fade" data-reveal-delay="1">
+          <picture>
+            <source
+              type="image/avif"
+              srcset="/images/talk-1000.avif 1000w, /images/talk-2000.avif 2000w"
+              sizes="(min-width: 768px) 40vw, 90vw"
+            />
+            <source
+              type="image/webp"
+              srcset="/images/talk-1000.webp 1000w, /images/talk-2000.webp 2000w"
+              sizes="(min-width: 768px) 40vw, 90vw"
+            />
+            <img
+              src="/images/talk-1000.jpg"
+              srcset="/images/talk-1000.jpg 1000w, /images/talk-2000.jpg 2000w"
+              sizes="(min-width: 768px) 40vw, 90vw"
+              width="1000"
+              height="820"
+              alt="Jahanzeb Naeem giving a talk on stage, with a Google Developer Groups on Campus presentation projected behind him"
+              loading="lazy"
+              decoding="async"
+            />
+          </picture>
+          <figcaption class="person-photo-caption">
+            Giving a talk on founding and leading Bahria's Google Developer
+            Group on Campus chapter.
+          </figcaption>
+        </figure>
+      </div>
+
+      <ul class="contact-row" data-reveal>
+        <!-- "Email" matches the LinkedIn/GitHub links visually, but instead of
+             navigating it reveals the obfuscated address in a small popup.
+             Works on hover (desktop), focus (keyboard), and click/tap
+             (mobile). The address stays out of any href, so scrapers get
+             nothing actionable. -->
+        <li class="email-reveal">
+          <button
+            type="button"
+            class="link-draw email-reveal-btn"
+            aria-describedby="email-tooltip"
+          >
+            Email
+          </button>
+          <span class="email-tooltip" id="email-tooltip" role="tooltip">
+            {EMAIL_DISPLAY}
+          </span>
+        </li>
+        <li><a class="link-draw" href={LINKEDIN_URL} rel="me">LinkedIn</a></li>
+        <li><a class="link-draw" href={GITHUB_URL} rel="me">GitHub</a></li>
+        <!-- Quiet resume link (Google Drive, read-only) for recruiters who
+             need a PDF. No fanfare — just one accessible link. -->
+        <li><a class="link-draw" href={RESUME_URL}>Resume</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Email-reveal toggle: on touch devices there's no hover, so tapping the
+       "Email" button toggles the popup open/closed. Tapping anywhere else
+       closes it. Hover (desktop) and focus (keyboard) are handled in CSS. -->
+  <script is:inline>
+    (() => {
+      const wrap = document.querySelector('.email-reveal');
+      const btn = document.querySelector('.email-reveal-btn');
+      if (!wrap || !btn) return;
+
+      // Toggle the popup when the button is clicked/tapped.
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        wrap.classList.toggle('open');
+      });
+
+      // Tapping anywhere outside closes it.
+      document.addEventListener('click', () => wrap.classList.remove('open'));
+
+      // Escape key closes it too (keyboard accessibility).
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') wrap.classList.remove('open');
+      });
+    })();
+  </script>
+</Base>
+
+<style>
+  /* ---- Hero --------------------------------------------------------------
+     Asymmetric grid: text takes ~2/3, portrait ~1/3. On mobile the portrait
+     drops below the statement at a smaller size.
+
+     The hero field gets a subtle texture (strategy §L/§M): a faint warm
+     gradient plus a whisper of grain, generated in pure CSS — no image file.
+     The grain is an SVG feTurbulence noise pattern inlined as a background,
+     at very low opacity so it reads as texture, not noise. */
+  .hero {
+    position: relative;
+    padding-block: var(--space-16) var(--space-12);
+    background:
+      /* faint warm gradient, top-left to bottom-right */
+      linear-gradient(160deg, var(--color-bg) 0%, var(--color-bg-tint) 100%);
+  }
+
+  /* The grain layer: a tiny tiled noise pattern, absolutely positioned behind
+     the hero content. pointer-events:none so it never intercepts clicks. */
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Keep hero content above the grain layer. */
+  .hero > .container {
+    position: relative;
+  }
+
+  @media (min-width: 768px) {
+    .hero {
+      padding-block: var(--space-24) var(--space-16);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 7fr 5fr;
+      gap: var(--space-12);
+      align-items: center;
+    }
+  }
+
+  .hero-statement {
+    font-size: clamp(var(--text-2xl), 5.5vw, var(--text-hero));
+    max-width: 18ch;
+  }
+
+  .hero-byline {
+    margin-top: var(--space-6);
+    font-size: var(--text-md);
+    color: var(--color-ink-muted);
+  }
+
+  .hero-scroll {
+    margin-top: var(--space-16);
+  }
+
+  .hero-portrait {
+    margin-top: var(--space-8);
+    max-width: 340px;
+  }
+
+  @media (min-width: 768px) {
+    .hero-portrait {
+      margin-top: 0;
+      max-width: none;
+      justify-self: end;
+      width: 100%;
+    }
+  }
+
+  /* ---- Proof strip ---------------------------------------------------------
+     Four facts in a row on desktop, two-by-two on small screens. The number
+     is the display-serif hero of each cell; the label is quiet mono. */
+  .proof-strip {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8) var(--space-6);
+  }
+
+  @media (min-width: 768px) {
+    .proof-strip {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  /* dl/dt/dd are used semantically (term = label, description = value);
+     visually we flip the order so the number reads first. */
+  .proof-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .proof-value {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-weight: 600;
+    line-height: 1;
+    order: -1; /* number above label */
+  }
+
+  .proof-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-ink-muted);
+  }
+
+  /* ---- Selected work -------------------------------------------------------- */
+  .experiments-card {
+    grid-column: 1 / -1; /* full-width third card: weighted below the big two */
+  }
+
+  /* ---- Research teaser -------------------------------------------------------- */
+  .research-theme {
+    max-width: 26ch;
+  }
+
+  .pillars {
+    margin-top: var(--space-4);
+  }
+
+  .pillar h3 {
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-2);
+  }
+
+  .pillar p {
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+  }
+
+  .research-link {
+    font-size: var(--text-md);
+  }
+
+  /* ---- Timeline --------------------------------------------------------------- */
+  .timeline {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .timeline-item {
+    display: grid;
+    grid-template-columns: 7ch 1fr;
+    gap: var(--space-4);
+    align-items: baseline;
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .timeline-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .timeline-when {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    white-space: nowrap;
+  }
+
+  .timeline-note {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+    margin-left: var(--space-2);
+  }
+
+  /* ---- Person + contact --------------------------------------------------------- */
+  .person-note {
+    max-width: var(--measure);
+    font-size: var(--text-md);
+    line-height: 1.7;
+  }
+
+  .contact-row {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap; /* wrap to a second line on small screens */
+    gap: var(--space-3) var(--space-8);
+    font-size: var(--text-md);
+    font-weight: 500;
+  }
+
+  /* The plain-text email: same size/weight as the contact links, but not a
+     link (no accent, no hover). */
+  .contact-email {
+    color: var(--color-ink);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 400;
+  }
+
+  /* ---- Email reveal -------------------------------------------------------
+     The "Email" button looks like the LinkedIn/GitHub links. The tooltip is
+     hidden by default and appears on hover (desktop), focus (keyboard), or
+     when toggled on by click/tap (mobile). */
+  .email-reveal {
+    position: relative; /* the tooltip positions itself against this */
+  }
+
+  /* Make the button look exactly like the text links beside it. */
+  .email-reveal-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: var(--text-md);
+    font-weight: 500;
+    color: var(--color-accent);
+    cursor: pointer;
+  }
+
+  .email-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px); /* sit just above the button */
+    left: 0;
+    white-space: nowrap;
+    background: var(--color-ink);
+    color: var(--color-bg);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    /* Hidden by default */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition:
+      opacity var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out),
+      visibility var(--duration-fast);
+    pointer-events: none; /* the tooltip itself never intercepts clicks */
+    z-index: 10;
+  }
+
+  /* A small caret pointing down from the tooltip toward the button. */
+  .email-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: var(--space-6);
+    border: 5px solid transparent;
+    border-top-color: var(--color-ink);
+  }
+
+  /* Show on hover (desktop), on keyboard focus, and when toggled by tap. */
+  .email-reveal:hover .email-tooltip,
+  .email-reveal-btn:focus-visible + .email-tooltip,
+  .email-reveal.open .email-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  /* Reduced motion: the tooltip simply appears, no slide. */
+  @media (prefers-reduced-motion: reduce) {
+    .email-tooltip {
+      transition: none;
+      transform: none;
+    }
+  }
+
+  /* ---- Person + contact --------------------------------------------------------- */
+  /* Two-column on desktop: text left, photo right. Stacks on mobile. */
+  .person-grid {
+    display: grid;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  @media (min-width: 768px) {
+    .person-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-12);
+    }
+  }
+
+  .person-note {
+    max-width: var(--measure);
+    font-size: var(--text-md);
+    line-height: 1.7;
+  }
+
+  .person-photo {
+    margin: 0;
+  }
+
+  .person-photo img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .person-photo-caption {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  /* ---- Wordmark row ---------------------------------------------------------
+     The orgs behind the work, as quiet text — not logos. Sits below the
+     proof strip, separated by a hairline. Muted color so it reads as a
+     supporting detail, not a banner. */
+  .wordmark-row {
+    margin-top: var(--space-12);
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-3) var(--space-8);
+  }
+
+  .wordmark-lede {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-ink-muted);
+  }
+
+  .wordmark-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-6);
+  }
+
+  /* Each org name in the display serif, muted — recognizable but restrained. */
+  .wordmark-list li {
+    font-family: var(--font-display);
+    font-size: var(--text-md);
+    font-weight: 600;
+    color: var(--color-ink-muted);
+    letter-spacing: -0.01em;
+  }
+</style>

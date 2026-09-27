@@ -1,0 +1,116 @@
+---
+/**
+ * PillarDiagram — the research theme branching into its two pillars.
+ *
+ * Motion moment #3 (strategy §G): the connecting strokes draw themselves on
+ * scroll via stroke-dashoffset. The whole thing is one inline SVG so it
+ * scales crisply at any size and needs no image file.
+ *
+ * Accessibility: the SVG is decorative — the same information is conveyed in
+ * the adjacent text (the two pillar questions), so the diagram has
+ * role="img" with a <title> and the strokes are pure decoration. Under
+ * reduced motion the strokes render fully drawn (no animation).
+ */
+---
+
+<figure class="pillar-diagram" data-reveal="fade">
+  <svg
+    viewBox="0 0 600 260"
+    role="img"
+    aria-labelledby="pillar-diagram-title"
+    class="pillar-svg"
+  >
+    <title id="pillar-diagram-title">
+      Diagram: the research theme branches into two pillars, Efficiency and
+      Reliability.
+    </title>
+
+    <!-- Theme node (top center) -->
+    <g class="node node-theme">
+      <rect x="180" y="20" width="240" height="56" rx="8" />
+      <text x="300" y="54" text-anchor="middle" class="node-label">
+        Efficient &amp; reliable AI
+      </text>
+    </g>
+
+    <!-- Connecting strokes: theme -> each pillar. These are the parts that
+         draw themselves on scroll. -->
+    <path class="connector" d="M 260 76 C 260 130, 160 130, 160 168" />
+    <path class="connector" d="M 340 76 C 340 130, 440 130, 440 168" />
+
+    <!-- Pillar nodes (bottom left + right) -->
+    <g class="node node-pillar">
+      <rect x="60" y="168" width="200" height="56" rx="8" />
+      <text x="160" y="202" text-anchor="middle" class="node-label">Efficiency</text>
+    </g>
+    <g class="node node-pillar">
+      <rect x="340" y="168" width="200" height="56" rx="8" />
+      <text x="440" y="202" text-anchor="middle" class="node-label">Reliability</text>
+    </g>
+  </svg>
+</figure>
+
+<style>
+  .pillar-diagram {
+    margin: 0;
+  }
+
+  .pillar-svg {
+    width: 100%;
+    height: auto;
+    max-width: 560px;
+  }
+
+  /* Node boxes: warm field with a hairline border, matching the site's
+     card/matte treatment. */
+  .node rect {
+    fill: var(--color-bg);
+    stroke: var(--color-border);
+    stroke-width: 1;
+  }
+
+  /* The theme node gets a subtle accent tint to read as the root. */
+  .node-theme rect {
+    fill: var(--color-bg-accent);
+    stroke: var(--color-accent);
+  }
+
+  .node-label {
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 600;
+    fill: var(--color-ink);
+  }
+
+  .node-theme .node-label {
+    fill: var(--color-accent);
+  }
+
+  /* Connectors: accent strokes that draw themselves on scroll. */
+  .connector {
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+  }
+
+  /* The draw-on animation. Each path's length is ~120 units; we set the
+     dash equal to the length and animate the offset to zero when the parent
+     figure is revealed. Gated behind reduced-motion like everything else. */
+  @media (prefers-reduced-motion: no-preference) {
+    .js .connector {
+      stroke-dasharray: 200;
+      stroke-dashoffset: 200;
+      transition: stroke-dashoffset 900ms var(--ease-out) 300ms;
+    }
+
+    /* Second connector starts slightly after the first for a staged draw. */
+    .js .connector:last-of-type {
+      transition-delay: 500ms;
+    }
+
+    .js .pillar-diagram.is-revealed .connector {
+      stroke-dashoffset: 0;
+    }
+  }
+</style>

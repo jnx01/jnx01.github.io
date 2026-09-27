@@ -1,0 +1,80 @@
+---
+/**
+ * Work index — the three flagship case studies, weighted.
+ *
+ * Reads from the 'work' content collection and sorts by the `weight` field
+ * (Teradata=1 largest, SignChatter=2, Experiments=3). Adding a new case
+ * study Markdown file automatically adds it here (strategy §19).
+ */
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Card from '../../components/Card.astro';
+
+const entries = (await getCollection('work')).sort((a, b) => a.data.weight - b.data.weight);
+
+// Human-readable kind labels for the card meta line.
+const kindLabel = {
+  industry: 'Industry',
+  research: 'Research',
+  experiment: 'Self-directed research',
+};
+---
+
+<Base
+  title="Work"
+  description="Case studies of production AI systems and shipped research by Jahanzeb Naeem."
+>
+  <section class="section page-head">
+    <div class="container stack" style="--stack-space: var(--space-4);">
+      <h1 class="page-title" data-reveal>Work</h1>
+      <p class="page-lede" data-reveal data-reveal-delay="1">
+        Three case studies, in depth — production AI systems at Teradata, a
+        shipped research project, and a research program.
+      </p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top: 0;">
+    <div class="container">
+      <div class="grid">
+        {entries.map((entry, i) => (
+          // First card (Teradata) spans 7 cols, second 5, third full width —
+          // the same weighting as the homepage.
+          <div
+            class={i === 0 ? 'col-7' : i === 1 ? 'col-5' : 'col-12'}
+            data-reveal
+            data-reveal-delay={String(Math.min(i, 4))}
+          >
+            <Card
+              href={`/work/${entry.id}/`}
+              title={entry.data.title}
+              meta={kindLabel[entry.data.kind]}
+            >
+              <p>{entry.data.summary}</p>
+            </Card>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-head {
+    padding-bottom: var(--space-8);
+  }
+
+  .page-title {
+    font-size: var(--text-3xl);
+  }
+
+  .page-lede {
+    font-size: var(--text-md);
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+  }
+
+  .col-12 {
+    grid-column: 1 / -1;
+  }
+</style>

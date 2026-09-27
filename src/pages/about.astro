@@ -1,0 +1,505 @@
+---
+/**
+ * About — experience timeline, education, awards, and the person.
+ *
+ * Strategy reference: §J (Experience Architecture) and §D (About blueprint).
+ *
+ * The experience section is a timeline, most recent first, with one entry
+ * per ROLE LEVEL at Teradata so the two promotions are visible. Each entry
+ * is a short narrative of ownership and scope — not resume bullets pasted
+ * into cards. Every fact is verifiable against the resumes/audit; Teradata
+ * content stays at safe abstraction (no client names, no internal detail).
+ *
+ * Also here: education, a compressed awards block (signal-bearing only),
+ * the leadership one-liner (GDSC/BCS — approved), and a short "Outside of
+ * work" block. No autobiography.
+ */
+import Base from '../layouts/Base.astro';
+import { RESUME_URL } from '../site.config';
+---
+<Base
+  title="About"
+  description="Experience, education, and the person behind the work — Jahanzeb Naeem, AI engineer in Islamabad."
+>
+  <!-- Page header -------------------------------------------------------- -->
+  <section class="section page-head">
+    <div class="container stack" style="--stack-space: var(--space-4);">
+      <h1 class="page-title" data-reveal>About</h1>
+      <p class="page-lede" data-reveal data-reveal-delay="1">
+        The work, the progression, and a little of the person.
+      </p>
+      <!-- Quiet resume link (Google Drive, read-only) for recruiters who
+           need a PDF. -->
+      <p data-reveal data-reveal-delay="2">
+        <a class="link-draw" href={RESUME_URL}>
+          Resume (PDF) ↗
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <!-- Experience timeline ---------------------------------------------------
+      Most recent first. Teradata gets three entries (one per level) so the
+      two promotions read as progression, not a flat job. -->
+  <section class="section section--tint" aria-labelledby="experience-heading">
+    <div class="container">
+      <p class="section-kicker" data-reveal>Experience</p>
+      <h2 id="experience-heading" class="section-title" data-reveal>
+        Where I've worked, and how the scope grew.
+      </h2>
+
+      <ol class="xp-timeline">
+        <!-- Teradata — current level -->
+        <li class="xp-item" data-reveal>
+          <div class="xp-when">
+            <span class="xp-dates">2023 — present</span>
+            <span class="xp-place">Teradata · Islamabad</span>
+          </div>
+          <div class="xp-body">
+            <h3 class="xp-role">Data Science Engineer II — GenAI &amp; Agentic AI</h3>
+            <p class="xp-progression">
+              Progression: Data Science Trainee Consultant → Data Science &amp;
+              ETL Consultant I → Data Science Engineer II
+            </p>
+            <p>
+              I've worked across several production AI systems rather than a
+              single product. The deepest of these: I own the API layer of
+              Teradata's enterprise Text-to-SQL agent — about forty REST
+              endpoints across two FastAPI services covering prompt handling,
+              metadata ingestion, script execution, job orchestration, and
+              initialization. I took it from before launch through customer
+              onboarding.
+            </p>
+            <p>
+              On a separate track, I author agentic skills for the AI platform
+              (train-eval for in-database ML via MCP tool calls), validated in
+              CI with LLM-graded correctness and tool-use metrics. Evaluation
+              runs through everything: I improved the schema-mapping engine by
+              comparing LLM councils, retrieval strategies, embedding models,
+              and prompt designs, and worked with the VectorStore team on the
+              RAG pipeline — in-database embeddings, HNSW vector search, custom
+              tokenizers, and SLMs.
+            </p>
+            <p>
+              I built the CI pipeline (60 automated tests, 75% coverage),
+              resolved 35+ critical integration issues, led deployments across
+              AWS and on-premises, and mentored three junior engineers.
+            </p>
+            <p class="xp-links">
+              <a class="link-draw" href="/work/teradata/">Read the full case study →</a>
+            </p>
+          </div>
+        </li>
+
+        <!-- Bahria RA -->
+        <li class="xp-item" data-reveal>
+          <div class="xp-when">
+            <span class="xp-dates">2022 — 2023</span>
+            <span class="xp-place">Center of Excellence for AI, Bahria University</span>
+          </div>
+          <div class="xp-body">
+            <h3 class="xp-role">Research Assistant</h3>
+            <p>
+              Managed a team of four on a crowd-threat detection system
+              (DenseNet3D, 97% test accuracy), scaling the dataset to more
+              threat categories and training ConvLSTM and ResNet3D variants
+              (89–97%). Separately, built a popularity-prediction system for
+              short-form video from a 15,000-video dataset I scraped and
+              labeled, with ResNet/EfficientNet/MobileNet models reaching
+              73–86% accuracy.
+            </p>
+          </div>
+        </li>
+
+        <!-- SignChatter -->
+        <li class="xp-item" data-reveal>
+          <div class="xp-when">
+            <span class="xp-dates">2022 — 2024</span>
+            <span class="xp-place">SignChatter · Final Year Project</span>
+          </div>
+          <div class="xp-body">
+            <h3 class="xp-role">Research that shipped</h3>
+            <p>
+              Built a word-level sign-language dataset from scratch, extracted
+              body-movement keypoints with MediaPipe, and compared RNN, BRNN,
+              LSTM, and GRU models for translation. Deployed the result as a
+              mobile app and website that speak the recognized word aloud, and
+              published the work as a peer-reviewed Springer chapter (ICCIS,
+              Dec 2024).
+            </p>
+            <p class="xp-links">
+              <a class="link-draw" href="/work/signchatter/">Read the full case study →</a>
+            </p>
+          </div>
+        </li>
+
+        <!-- Arbisoft -->
+        <li class="xp-item" data-reveal>
+          <div class="xp-when">
+            <span class="xp-dates">2022</span>
+            <span class="xp-place">Arbisoft · Lahore</span>
+          </div>
+          <div class="xp-body">
+            <h3 class="xp-role">Fellow</h3>
+            <p>
+              One of three students selected for the fellowship. Built a
+              weather application in Python/NumPy that processed hundreds of
+              CSVs into statistics and visualizations, and shipped small
+              full-stack apps with React and Django.
+            </p>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Education + awards ------------------------------------------------------ -->
+  <section class="section" aria-labelledby="education-heading">
+    <div class="container">
+      <div class="grid">
+        <div class="col-6" data-reveal>
+          <p class="section-kicker">Education</p>
+          <h2 id="education-heading" class="section-title">Education.</h2>
+          <div class="stack" style="--stack-space: var(--space-6); margin-top: var(--space-6);">
+            <div>
+              <h3 class="sub-head">Bahria University, Islamabad</h3>
+              <p class="sub-body">
+                BS Computer Science, 2019–2023 · CGPA 3.83/4 · Valedictorian
+                (batch topper)
+              </p>
+            </div>
+            <div>
+              <h3 class="sub-head">Cambridge Assessment International Education</h3>
+              <p class="sub-body">O &amp; A Levels — Biology &amp; Computer Science, 2019</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-6" data-reveal data-reveal-delay="1">
+          <p class="section-kicker">Recognition</p>
+          <h2 class="section-title">Awards, kept to the ones that signal.</h2>
+          <ul class="award-list" style="margin-top: var(--space-6);">
+            <li>Four-time Teradata Performance Award winner</li>
+            <li>Selected for Teradata's GenAI Research Group</li>
+            <li>Program-best Final Year Project; one of three FYPs shortlisted for incubation; full thesis in the Bahria repository</li>
+            <li>Rector's Honor List 3x (CGPA &gt; 3.90), Merit Scholarship 5x</li>
+            <li>One of three students selected for the Arbisoft Fellowship</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Toolbox ------------------------------------------------------------------
+      Capabilities, grouped, one line each, plain text (strategy §K). No skill
+      bars, no logo wall. The evidence for each lives in the case studies;
+      this is just the map. Groupings drawn from the resume's skills line. -->
+  <section class="section section--tint" aria-labelledby="toolbox-heading">
+    <div class="container">
+      <p class="section-kicker" data-reveal>Toolbox</p>
+      <h2 id="toolbox-heading" class="section-title" data-reveal>
+        What I work with.
+      </h2>
+      <p class="toolbox-note" data-reveal>
+        The evidence for each of these is in the <a href="/work/">case studies</a>
+        — this is the map, not the proof.
+      </p>
+
+      <div class="toolbox-grid">
+        <div class="toolbox-group" data-reveal>
+          <h3 class="toolbox-label">AI engineering</h3>
+          <p class="toolbox-line">
+            LLM agents, agentic skills, RAG pipelines, prompt engineering, MCP,
+            LangChain, LangGraph, model evaluation
+          </p>
+        </div>
+
+        <div class="toolbox-group" data-reveal data-reveal-delay="1">
+          <h3 class="toolbox-label">Machine learning</h3>
+          <p class="toolbox-line">
+            PyTorch, TensorFlow, OpenCV, MediaPipe, feature engineering,
+            applied research
+          </p>
+        </div>
+
+        <div class="toolbox-group" data-reveal data-reveal-delay="2">
+          <h3 class="toolbox-label">Retrieval &amp; data</h3>
+          <p class="toolbox-line">
+            Vector search (HNSW), embeddings, SQL, data warehousing, data
+            cleaning &amp; preprocessing
+          </p>
+        </div>
+
+        <div class="toolbox-group" data-reveal data-reveal-delay="3">
+          <h3 class="toolbox-label">Development</h3>
+          <p class="toolbox-line">
+            FastAPI, REST API design, Docker, Kubernetes, AWS, CI/CD,
+            Git/GitHub/GitLab, technical writing
+          </p>
+        </div>
+      </div>
+
+      <!-- The few certifications that signal (strategy §K) — one quiet line,
+           not a wall. -->
+      <p class="certs-line" data-reveal>
+        <span class="certs-label">Certifications</span>
+        Teradata PE AgenticAI · Enterprise Vector Store · HuggingFace AI
+        Agents · Google–Kaggle GenAI Intensive
+      </p>
+    </div>
+  </section>
+
+  <!-- Leadership + the person --------------------------------------------------- -->
+  <section class="section section--tint" aria-labelledby="person-heading">
+    <div class="container">
+      <div class="grid">
+        <div class="col-7" data-reveal>
+          <p class="section-kicker">The person</p>
+          <h2 id="person-heading" class="section-title">Outside of work.</h2>
+          <div class="prose" style="margin-top: var(--space-6);">
+            <p>
+              I've written professionally for international clients for over six
+              years — technical content, documentation, and long-form pieces.
+              It's why I care how this site reads, not just how it runs.
+            </p>
+            <p>
+              At university I founded and led the Google DSC chapter at Bahria
+              and the Bahria Computing Society. I buy more books than I
+              can possibly read, and I live in Islamabad, where the Margalla
+              Hills are the best reason to close a laptop.
+            </p>
+          </div>
+        </div>
+        <div class="col-5" data-reveal="fade" data-reveal-delay="1">
+          <!-- The talk photo: real evidence of the leadership/mentoring line
+               in the text beside it. -->
+          <figure class="about-photo">
+            <picture>
+              <source
+                type="image/avif"
+                srcset="/images/talk-1000.avif 1000w, /images/talk-2000.avif 2000w"
+                sizes="(min-width: 768px) 40vw, 90vw"
+              />
+              <source
+                type="image/webp"
+                srcset="/images/talk-1000.webp 1000w, /images/talk-2000.webp 2000w"
+                sizes="(min-width: 768px) 40vw, 90vw"
+              />
+              <img
+                src="/images/talk-1000.jpg"
+                srcset="/images/talk-1000.jpg 1000w, /images/talk-2000.jpg 2000w"
+                sizes="(min-width: 768px) 40vw, 90vw"
+                width="1000"
+                height="820"
+                alt="Jahanzeb Naeem giving a talk on stage, with a Google Developer Groups on Campus presentation projected behind him"
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
+            <figcaption class="about-photo-caption">
+              Giving a talk on founding and leading Bahria's Google Developer
+              Group on Campus chapter.
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ---- Page header --------------------------------------------------------- */
+  .page-head {
+    padding-bottom: var(--space-8);
+  }
+
+  .page-title {
+    font-size: var(--text-3xl);
+  }
+
+  .page-lede {
+    font-size: var(--text-md);
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+  }
+
+  /* ---- Experience timeline ----------------------------------------------------
+     A vertical timeline: date/place in a quiet left column, the narrative in
+     the right. On mobile the two stack. A hairline rail on the left edge of
+     each item gives the "timeline" read without a literal line-and-dots. */
+  .xp-timeline {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-12);
+    display: grid;
+    gap: var(--space-12);
+  }
+
+  .xp-item {
+    display: grid;
+    gap: var(--space-4);
+    padding-left: var(--space-6);
+    border-left: 1px solid var(--color-border);
+  }
+
+  @media (min-width: 768px) {
+    .xp-item {
+      grid-template-columns: 220px 1fr;
+      gap: var(--space-8);
+    }
+  }
+
+  .xp-when {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .xp-dates {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+  }
+
+  .xp-place {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  .xp-role {
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-2);
+  }
+
+  .xp-progression {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+    margin-bottom: var(--space-4);
+  }
+
+  .xp-body p {
+    max-width: var(--measure);
+    line-height: 1.7;
+    color: var(--color-ink);
+  }
+
+  .xp-body p + p {
+    margin-top: var(--space-3);
+  }
+
+  .xp-links {
+    margin-top: var(--space-4);
+  }
+
+  /* ---- Education + awards ------------------------------------------------------- */
+  .sub-head {
+    font-size: var(--text-base);
+    font-family: var(--font-body);
+    font-weight: 600;
+  }
+
+  .sub-body {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+    margin-top: var(--space-1);
+  }
+
+  .award-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: var(--space-3);
+    max-width: var(--measure);
+  }
+
+  .award-list li {
+    padding-left: var(--space-4);
+    position: relative;
+    color: var(--color-ink);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+  }
+
+  /* A small accent tick instead of a default bullet. */
+  .award-list li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+  }
+
+  /* ---- Toolbox ------------------------------------------------------------------ */
+  .toolbox-note {
+    margin-top: var(--space-4);
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+  }
+
+  .toolbox-grid {
+    margin-top: var(--space-8);
+    display: grid;
+    gap: var(--space-8) var(--space-6);
+  }
+
+  @media (min-width: 768px) {
+    .toolbox-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .toolbox-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-accent);
+    margin-bottom: var(--space-2);
+  }
+
+  .toolbox-line {
+    color: var(--color-ink);
+    line-height: 1.6;
+    max-width: 44ch;
+  }
+
+  /* Certifications: a single quiet full-width line below the toolbox grid. */
+  .certs-line {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    line-height: 1.6;
+  }
+
+  .certs-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-accent);
+    margin-bottom: var(--space-2);
+  }
+
+  /* The talk photo in the person section. */
+  .about-photo {
+    margin: 0;
+  }
+
+  .about-photo img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .about-photo-caption {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-style: italic;
+    line-height: 1.5;
+  }
+</style>

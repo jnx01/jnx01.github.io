@@ -1,0 +1,7 @@
+{
+  // Astro's strict TypeScript preset. Strictness catches bugs early
+  // and makes content-collection schemas (added in a later module) reliable.
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist"]
+}

@@ -1,0 +1,73 @@
+---
+/**
+ * Headshot — the single professional portrait used site-wide (strategy §F).
+ *
+ * Implementation notes:
+ *   - <picture> serves AVIF → WebP → JPEG so every browser gets the best
+ *     format it supports.
+ *   - Explicit width/height prevent layout shift (CLS) while the image loads.
+ *   - `fetchpriority="high"` + `loading="eager"` because this is the hero's
+ *     largest element (LCP); below-the-fold images would use lazy instead.
+ *   - The soft-matted treatment (warm field, hairline border, small radius)
+ *     is done in CSS so the image file itself stays reusable.
+ */
+
+interface Props {
+  // 'hero' is the large hero treatment; 'small' is the About-page size.
+  size?: 'hero' | 'small';
+}
+
+const { size = 'hero' } = Astro.props;
+const width = size === 'hero' ? 600 : 400;
+const height = size === 'hero' ? 750 : 500;
+---
+
+<picture class:list={['headshot', `headshot--${size}`]}>
+  <!-- Responsive images: the browser picks the best format it supports
+       (AVIF, then WebP, then JPEG) and the best size for the screen
+       (600w for normal displays, 1200w for retina). `sizes` tells the
+       browser how wide the image will render so it downloads the right file. -->
+  <source
+    type="image/avif"
+    srcset="/images/headshot-600.avif 600w, /images/headshot-1200.avif 1200w"
+    sizes="(min-width: 768px) 32vw, 70vw"
+  />
+  <source
+    type="image/webp"
+    srcset="/images/headshot-600.webp 600w, /images/headshot-1200.webp 1200w"
+    sizes="(min-width: 768px) 32vw, 70vw"
+  />
+  <img
+    src="/images/headshot-600.jpg"
+    srcset="/images/headshot-600.jpg 600w, /images/headshot-1200.jpg 1200w"
+    sizes="(min-width: 768px) 32vw, 70vw"
+    width={width}
+    height={height}
+    alt="Portrait of Jahanzeb Naeem"
+    loading="eager"
+    fetchpriority="high"
+    decoding="async"
+  />
+</picture>
+
+<style>
+  .headshot {
+    display: block;
+    /* Soft matte: a warm tinted field behind the photo, a hairline border,
+       and a small radius. Designed into the composition, not a card. */
+    background: var(--color-bg-tint);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+  }
+
+  .headshot img {
+    border-radius: var(--radius-sm);
+    width: 100%;
+    height: auto;
+  }
+
+  .headshot--small {
+    max-width: 280px;
+  }
+</style>

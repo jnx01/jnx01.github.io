@@ -1,0 +1,32 @@
+---
+/**
+ * Dynamic route for case studies — renders any Markdown file in
+ * src/content/work/ at /work/<slug>/. Adding a new case study means adding
+ * one Markdown file; this route handles the rest (strategy §19).
+ */
+import { getCollection, render } from 'astro:content';
+import CaseStudy from '../../layouts/CaseStudy.astro';
+
+// Tell Astro which slugs to build — one per Markdown file in the collection.
+export async function getStaticPaths() {
+  const entries = await getCollection('work');
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<CaseStudy
+  title={entry.data.title}
+  kind={entry.data.kind}
+  summary={entry.data.summary}
+  stack={entry.data.stack}
+  links={entry.data.links}
+  confidential={entry.data.confidential}
+>
+  <Content />
+</CaseStudy>

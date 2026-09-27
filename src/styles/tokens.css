@@ -1,0 +1,81 @@
+/* ==========================================================================
+   Design tokens — the single source of truth for the visual language.
+   Everything (colors, type sizes, spacing) is defined here ONCE as a CSS
+   custom property, and the rest of the site references these variables.
+   To restyle the site, edit this file — not individual components.
+   Strategy reference: planning/02-strategy.md §L (Visual Design System).
+   ========================================================================== */
+
+:root {
+  /* ---- Colors ------------------------------------------------------------
+     Light-first, warm off-white base with near-black ink.
+     One accent (electric indigo) used SPARINGLY: links, focus rings,
+     diagram strokes, and a single hero detail. Nothing else.
+     ----------------------------------------------------------------------- */
+  --color-bg: #fafaf8;          /* warm off-white page background */
+  --color-bg-tint: #f3f3ef;     /* pale warm gray, for occasional tinted sections */
+  --color-bg-accent: #eef0fb;   /* pale indigo, used very rarely for rhythm */
+  --color-ink: #1a1a18;         /* near-black body text */
+  --color-ink-muted: #5c5c57;   /* secondary text (dates, captions, metadata) */
+  --color-border: #e3e3dd;      /* hairline borders */
+  --color-accent: #4f46e5;      /* electric indigo — links, focus, diagrams */
+  --color-accent-hover: #3d37c9;/* darker indigo for link hover (keeps AA contrast) */
+
+  /* ---- Typography ----------------------------------------------------------
+     Editorial pairing (strategy §L):
+       display  -> serif, for headlines and the hero statement
+       body     -> neutral grotesque, for reading text and UI
+       mono     -> for data, endpoints, code-ish details
+     Real webfonts are wired up in Module 1 (design system). Until then these
+     fall back to high-quality system fonts so the site still looks clean.
+     ----------------------------------------------------------------------- */
+  --font-display: 'Newsreader', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type scale: 1.333 modular ("perfect fourth").
+     Each step is ~1.333x the previous one, so sizes feel harmonious. */
+  --text-xs: 0.75rem;     /* 12px — captions, metadata */
+  --text-sm: 0.875rem;    /* 14px — secondary text */
+  --text-base: 1rem;      /* 16px — body */
+  --text-md: 1.125rem;    /* 18px — large body / lede */
+  --text-lg: 1.333rem;    /* ~21px — small headings */
+  --text-xl: 1.777rem;    /* ~28px — section headings */
+  --text-2xl: 2.369rem;   /* ~38px — page titles */
+  --text-3xl: 3.157rem;   /* ~50px — large display */
+  --text-hero: 4.5rem;    /* 72px — hero statement (desktop; clamped in CSS) */
+
+  /* ---- Spacing -------------------------------------------------------------
+     4px-based scale. Components pick from these steps instead of inventing
+     arbitrary pixel values, which keeps the whole site's rhythm consistent.
+     ----------------------------------------------------------------------- */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-24: 6rem;     /* 96px — section breaks on desktop */
+
+  /* ---- Layout -------------------------------------------------------------- */
+  --content-max: 1200px;  /* widest any page content may get (strategy §L) */
+  --measure: 68ch;        /* ideal line length for reading (60–70 characters) */
+
+  /* ---- Shape & depth ---------------------------------------------------------
+     Restraint: small corner radii, rare soft shadows (strategy §L).
+     ----------------------------------------------------------------------- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --shadow-soft: 0 1px 2px rgb(26 26 24 / 0.04), 0 4px 16px rgb(26 26 24 / 0.06);
+
+  /* ---- Motion ----------------------------------------------------------------
+     Shared durations and easings so every animation feels related.
+     The full motion system arrives in Module 2; these are the primitives.
+     ----------------------------------------------------------------------- */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 600ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* gentle, settles softly */
+}

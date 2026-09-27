@@ -1,0 +1,134 @@
+---
+/**
+ * CorruptionBars — answer quality (F1) by evidence condition for the
+ * rag_corruption_test experiment.
+ *
+ * Data is REAL, from the rag_corruption_test repo (README/REPORT):
+ *   Clean:         F1 0.649
+ *   Remove 1:      F1 0.440
+ *   Remove All:    F1 0.337
+ *   Contaminated:  F1 0.314
+ *
+ * Horizontal bars that grow on scroll (scaleX), matching the site's motion
+ * language. The same numbers are in the caption and the surrounding prose.
+ */
+
+const conditions = [
+  { label: 'Clean', f1: 0.649 },
+  { label: 'Remove 1 support', f1: 0.440 },
+  { label: 'Remove all supports', f1: 0.337 },
+  { label: 'Contaminated', f1: 0.314 },
+];
+
+const max = 0.7; // chart ceiling, slightly above the highest value
+---
+
+<figure class="chart" data-reveal="fade">
+  <div class="bars" role="img" aria-label="Bar chart of answer F1 by evidence condition. Clean 0.649, remove one support 0.440, remove all supports 0.337, contaminated 0.314.">
+    {conditions.map((c) => (
+      <div class="bar-row">
+        <span class="bar-label">{c.label}</span>
+        <span class="bar-track">
+          <!-- The bar's width is passed to CSS as a custom property
+               (--bar-w), computed from the F1 value as a percentage of the
+               chart ceiling. CSS then animates it growing from the left. -->
+          <span
+            class="bar-fill"
+            style={`--bar-w: ${(c.f1 / max) * 100}%;`}
+          ></span>
+        </span>
+        <span class="bar-value">{c.f1.toFixed(3)}</span>
+      </div>
+    ))}
+  </div>
+
+  <figcaption class="chart-caption">
+    Answer quality degrades steadily as evidence is removed — and contaminated
+    evidence is slightly worse than missing evidence. Data: rag_corruption_test.
+  </figcaption>
+</figure>
+
+<style>
+  .chart {
+    margin-block: var(--space-6) var(--space-2);
+  }
+
+  .bars {
+    display: grid;
+    gap: var(--space-4);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 150px 1fr 48px;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .bar-label {
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+  }
+
+  .bar-track {
+    display: block;
+    height: 22px;
+    background: var(--color-bg-tint);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    display: block;
+    height: 100%;
+    width: var(--bar-w);
+    background: var(--color-accent);
+    border-radius: var(--radius-sm);
+    transform-origin: left;
+  }
+
+  .bar-value {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+    text-align: right;
+  }
+
+  /* Bars grow from the left on scroll (motion moment #4). */
+  @media (prefers-reduced-motion: no-preference) {
+    .js .bar-fill {
+      transform: scaleX(0);
+      transition: transform 800ms var(--ease-out);
+    }
+
+    .js .chart.is-revealed .bar-fill {
+      transform: scaleX(1);
+    }
+
+    /* Stagger each bar slightly. */
+    .js .chart.is-revealed .bar-row:nth-child(2) .bar-fill { transition-delay: 100ms; }
+    .js .chart.is-revealed .bar-row:nth-child(3) .bar-fill { transition-delay: 200ms; }
+    .js .chart.is-revealed .bar-row:nth-child(4) .bar-fill { transition-delay: 300ms; }
+  }
+
+  /* On narrow screens, stack the label above the bar. */
+  @media (max-width: 560px) {
+    .bar-row {
+      grid-template-columns: 1fr 48px;
+    }
+    .bar-label {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .chart-caption {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-style: italic;
+    max-width: var(--measure);
+  }
+</style>

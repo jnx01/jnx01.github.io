@@ -1,0 +1,151 @@
+---
+/**
+ * Contact — three large, confident links and one sentence (strategy §D).
+ *
+ * No contact form: GitHub Pages is static hosting, and a form would need a
+ * backend for no real benefit. Email is the primary action; LinkedIn and
+ * GitHub are the other two. Each link is large and confident — this page
+ * should feel like an invitation, not a form to fill.
+ */
+import Base from '../layouts/Base.astro';
+import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.config';
+---
+
+<Base
+  title="Contact"
+  description="Reach Jahanzeb Naeem by email, LinkedIn, or GitHub."
+>
+  <section class="section contact-section">
+    <div class="container">
+      <p class="section-kicker" data-reveal>Contact</p>
+      <h1 class="contact-title" data-reveal data-reveal-delay="1">
+        The fastest way to reach me is email.
+      </h1>
+      <p class="contact-lede" data-reveal data-reveal-delay="2">
+        Whether it's a role, a collaboration, or a question about something
+        I've built — I'd genuinely like to hear it.
+      </p>
+
+      <ul class="contact-list">
+        <li data-reveal data-reveal-delay="2">
+          <!-- Email is plain text (obfuscated), not a mailto: link — the user
+               prefers not to expose a clickable address to scrapers. -->
+          <div class="contact-link contact-link--static">
+            <span class="contact-method">Email</span>
+            <span class="contact-value">{EMAIL_DISPLAY}</span>
+          </div>
+        </li>
+        <li data-reveal data-reveal-delay="3">
+          <a class="contact-link" href={LINKEDIN_URL} rel="me">
+            <span class="contact-method">LinkedIn</span>
+            <span class="contact-value">linkedin.com/in/jna1</span>
+          </a>
+        </li>
+        <li data-reveal data-reveal-delay="4">
+          <a class="contact-link" href={GITHUB_URL} rel="me">
+            <span class="contact-method">GitHub</span>
+            <span class="contact-value">github.com/jnx01</span>
+          </a>
+        </li>
+        <!-- Quiet resume link (Google Drive, read-only) for recruiters who
+             need a PDF. -->
+        <li data-reveal data-reveal-delay="5">
+          <a class="contact-link" href={RESUME_URL}>
+            <span class="contact-method">Resume</span>
+            <span class="contact-value">PDF · Google Drive</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .contact-section {
+    padding-block: var(--space-24);
+  }
+
+  .contact-title {
+    font-size: var(--text-3xl);
+    max-width: 20ch;
+    margin-top: var(--space-3);
+  }
+
+  .contact-lede {
+    margin-top: var(--space-4);
+    font-size: var(--text-md);
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+    line-height: 1.7;
+  }
+
+  /* The three links: large, full-width rows separated by hairlines. Each row
+     is one big tap target (well over 44px) — good on mobile and confident on
+     desktop. */
+  .contact-list {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-16);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .contact-link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-6);
+    padding-block: var(--space-8);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-ink);
+    text-decoration: none;
+    transition: padding-left var(--duration-base) var(--ease-out);
+  }
+
+  /* On hover the whole row shifts slightly right — a quiet, confident nudge. */
+  .contact-link:hover {
+    text-decoration: none;
+    padding-left: var(--space-4);
+  }
+
+  /* Static variant (the email row): not a link, so no hover nudge and no
+     pointer cursor — but visually identical to the link rows. */
+  .contact-link--static {
+    cursor: default;
+  }
+
+  .contact-link--static:hover {
+    padding-left: 0;
+  }
+
+  .contact-link--static:hover .contact-method {
+    color: var(--color-ink);
+  }
+
+  .contact-method {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .contact-link:hover .contact-method {
+    color: var(--color-accent);
+  }
+
+  .contact-value {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  /* Reduced motion: no sliding nudge, just the color change. */
+  @media (prefers-reduced-motion: reduce) {
+    .contact-link {
+      transition: none;
+    }
+    .contact-link:hover {
+      padding-left: 0;
+    }
+  }
+</style>

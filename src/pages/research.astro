@@ -1,0 +1,349 @@
+---
+/**
+ * Research — theme, pillars, done vs. interested, publication.
+ *
+ * Strategy reference: §I (Research Architecture).
+ *
+ * The page is built around one theme and two pillars, each framed as a
+ * concrete question. "Research I've done" (artifacts) is visually distinct
+ * from "Questions I'm sitting with" (no claims). Healthcare appears at most
+ * once, as a motivating high-stakes domain, only if it earns its place.
+ * Nothing here exaggerates the academic record: independent experiments are
+ * NOT presented as peer-reviewed; the one peer-reviewed publication is
+ * SignChatter.
+ */
+import Base from '../layouts/Base.astro';
+import PillarDiagram from '../components/PillarDiagram.astro';
+---
+
+<Base
+  title="Research"
+  description="Making AI systems efficient and reliable enough to deploy in the real world — questions, experiments, and findings by Jahanzeb Naeem."
+>
+  <!-- Header + theme ------------------------------------------------------ -->
+  <section class="section page-head">
+    <div class="container stack" style="--stack-space: var(--space-6);">
+      <div>
+        <p class="section-kicker" data-reveal>Research</p>
+        <h1 class="page-title" data-reveal data-reveal-delay="1">
+          Making AI systems efficient and reliable enough to deploy in the real
+          world.
+        </h1>
+      </div>
+      <p class="page-lede" data-reveal data-reveal-delay="2">
+        That's the theme everything below hangs on — systems that could
+        eventually be trusted in high-stakes domains like healthcare, where a
+        model that is merely impressive in a notebook isn't good enough. I
+        approach it through two questions.
+      </p>
+    </div>
+  </section>
+
+  <!-- Two pillars ------------------------------------------------------------
+      The diagram draws itself on scroll (motion moment #3); the same two
+      questions are stated in text beside it so nothing is conveyed by the
+      animation alone. -->
+  <section class="section section--tint" aria-labelledby="pillars-heading">
+    <div class="container">
+      <h2 id="pillars-heading" class="section-title" data-reveal>
+        Two pillars, two questions.
+      </h2>
+
+      <div class="pillars-layout">
+        <div class="pillars-diagram" data-reveal="fade">
+          <PillarDiagram />
+        </div>
+
+        <div class="pillars-text stack" style="--stack-space: var(--space-8);">
+          <div class="pillar-block" data-reveal>
+            <h3 class="pillar-name">Efficiency</h3>
+            <p class="pillar-question">
+              How can we get useful AI behavior while spending less compute,
+              latency, and cost?
+            </p>
+            <p class="pillar-note">
+              Doing more with less: SLM capability and efficiency work, and
+              LLM routing — pursued through the budgeted model-routing
+              experiment and the SLM/RAG work at Teradata.
+            </p>
+          </div>
+
+          <div class="pillar-block" data-reveal data-reveal-delay="1">
+            <h3 class="pillar-name">Reliability</h3>
+            <p class="pillar-question">
+              How do AI systems behave when evidence, models, or tasks degrade
+              — and how would we know?
+            </p>
+            <p class="pillar-note">
+              Agent evaluation and robustness — retrieval, LLM-as-judge,
+              trustworthy AI — pursued through the RAG-corruption and
+              budgeted-evaluation experiments, and the LLM-graded CI
+              evaluation at work.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Research I've done --------------------------------------------------------
+      Artifacts, each with question → method → finding → link. -->
+  <section class="section" aria-labelledby="done-heading">
+    <div class="container">
+      <p class="section-kicker" data-reveal>Done</p>
+      <h2 id="done-heading" class="section-title" data-reveal>
+        Research I've done.
+      </h2>
+
+      <div class="stack" style="--stack-space: var(--space-12); margin-top: var(--space-8);">
+        <!-- SignChatter -->
+        <article class="done-item" data-reveal>
+          <h3 class="done-title">Word-level sign-language recognition</h3>
+          <p class="done-meta">Peer-reviewed · ICCIS 2024 · Springer</p>
+          <p>
+            Built a word-level Pakistani Sign Language dataset from scratch and
+            compared recurrent models for translation, then deployed the result
+            as an app that speaks the recognized word aloud.
+          </p>
+          <p class="done-links">
+            <a class="link-draw" href="/work/signchatter/">Case study →</a>
+            <a class="link-draw" href="https://link.springer.com/chapter/10.1007/978-981-95-2212-5_13">Springer ↗</a>
+            <a class="link-draw" href="https://www.kaggle.com/datasets/jahanzebnaeem/wlpsl">Dataset ↗</a>
+          </p>
+        </article>
+
+        <!-- Experiments -->
+        <article class="done-item" data-reveal>
+          <h3 class="done-title">Three experiments in efficiency &amp; reliability</h3>
+          <p class="done-meta">Self-directed · Reproducible · One nuanced finding, reported honestly</p>
+          <p>
+            Budgeted model routing (efficiency), RAG corruption (reliability),
+            and budgeted evaluation (measurement) — three open, reproducible
+            studies with stated limitations.
+          </p>
+          <p class="done-links">
+            <a class="link-draw" href="/work/experiments/">Case study →</a>
+          </p>
+        </article>
+
+        <!-- RA work -->
+        <article class="done-item" data-reveal>
+          <h3 class="done-title">Applied research at the Center of Excellence for AI</h3>
+          <p class="done-meta">Research Assistant · Bahria University · 2022–2023</p>
+          <p>
+            Crowd-threat detection with DenseNet3D (97% test accuracy) and a
+            popularity-prediction system for short-form video built on a
+            15,000-video dataset (73–86% accuracy).
+          </p>
+          <p class="manuscripts-note">
+            Both projects were written up as manuscripts and submitted to
+            conferences; they weren't accepted, and we later set them aside.
+            The work was real even if the publications didn't happen.
+          </p>
+          <p class="done-links">
+            <a class="link-draw" href="/about/">Background →</a>
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Questions I'm sitting with -------------------------------------------------
+      The interested-in list, as questions, clearly separated. No claims. -->
+  <section class="section section--accent" aria-labelledby="exploring-heading">
+    <div class="container">
+      <p class="section-kicker" data-reveal>Exploring</p>
+      <h2 id="exploring-heading" class="section-title" data-reveal>
+        Questions I'm sitting with.
+      </h2>
+      <p class="exploring-note" data-reveal>
+        These are open questions, not claims. I haven't answered them — they're
+        what I want to investigate next.
+      </p>
+
+      <ul class="question-list">
+        <li data-reveal>When does routing to a smaller model actually save money end-to-end, once you count the cost of being wrong?</li>
+        <li data-reveal data-reveal-delay="1">Can we detect RAG evidence degradation at inference time, before the answer is generated?</li>
+        <li data-reveal data-reveal-delay="2">What makes an LLM-graded evaluation metric trustworthy enough to gate a deployment?</li>
+        <li data-reveal data-reveal-delay="3">How small can a model get before reliability — not just accuracy — collapses?</li>
+        <li data-reveal data-reveal-delay="4">Do disagreement signals between cheap evaluators generalize across model families, or are they always pair-specific?</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Publication ---------------------------------------------------------------- -->
+  <section class="section" aria-labelledby="publication-heading">
+    <div class="container">
+      <p class="section-kicker" data-reveal>Publication</p>
+      <h2 id="publication-heading" class="section-title" data-reveal>
+        Peer-reviewed work.
+      </h2>
+
+      <blockquote class="citation" data-reveal>
+        <p>
+          Naeem, J., Asif, Z., Rahman, A. "Word-Level Pakistani Sign Language
+          Recognition." <em>International Conference on Computational
+          Intelligent Systems (ICCIS)</em>, Islamabad, Pakistan, December 2024.
+          Published on Springer.
+        </p>
+        <p class="citation-links">
+          <a class="link-draw" href="https://link.springer.com/chapter/10.1007/978-981-95-2212-5_13">
+            Read the chapter ↗
+          </a>
+          <a class="link-draw" href="http://dspace.bahria.edu.pk:8080/xmlui/handle/123456789/15662">
+            Read the full thesis ↗
+          </a>
+        </p>
+      </blockquote>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page-head {
+    padding-bottom: var(--space-8);
+  }
+
+  .page-title {
+    font-size: var(--text-2xl);
+    max-width: 24ch;
+  }
+
+  @media (min-width: 768px) {
+    .page-title {
+      font-size: var(--text-3xl);
+    }
+  }
+
+  .page-lede {
+    font-size: var(--text-md);
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+    line-height: 1.7;
+  }
+
+  /* ---- Pillars: diagram + text side by side on desktop, stacked on mobile ---- */
+  .pillars-layout {
+    display: grid;
+    gap: var(--space-8);
+    margin-top: var(--space-8);
+    align-items: center;
+  }
+
+  @media (min-width: 900px) {
+    .pillars-layout {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-12);
+    }
+  }
+
+  .pillar-name {
+    font-size: var(--text-lg);
+    margin-bottom: var(--space-2);
+  }
+
+  .pillar-question {
+    font-size: var(--text-md);
+    line-height: 1.6;
+    max-width: var(--measure);
+  }
+
+  .pillar-note {
+    margin-top: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  /* ---- Done items -------------------------------------------------------------- */
+  .done-item {
+    padding-left: var(--space-6);
+    border-left: 1px solid var(--color-border);
+    max-width: var(--measure);
+  }
+
+  .done-title {
+    font-size: var(--text-lg);
+  }
+
+  .done-meta {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-accent);
+    margin-block: var(--space-2) var(--space-3);
+  }
+
+  .done-item p {
+    line-height: 1.7;
+  }
+
+  .done-links {
+    margin-top: var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-6);
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  /* The manuscripts note: an honest aside about work that didn't reach
+     publication. Smaller, muted, italic — clearly not a publication claim. */
+  .manuscripts-note {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-style: italic;
+  }
+
+  /* ---- Exploring questions ------------------------------------------------------- */
+  .exploring-note {
+    margin-top: var(--space-4);
+    color: var(--color-ink-muted);
+    max-width: var(--measure);
+    font-style: italic;
+  }
+
+  .question-list {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-8);
+    display: grid;
+    gap: var(--space-4);
+    max-width: var(--measure);
+  }
+
+  .question-list li {
+    padding-left: var(--space-6);
+    position: relative;
+    line-height: 1.6;
+  }
+
+  /* A question mark as the marker, in accent. */
+  .question-list li::before {
+    content: '?';
+    position: absolute;
+    left: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  /* ---- Citation --------------------------------------------------------------------- */
+  .citation {
+    margin-top: var(--space-6);
+    border-left: 2px solid var(--color-accent);
+    padding-left: var(--space-6);
+    max-width: var(--measure);
+  }
+
+  .citation p {
+    line-height: 1.7;
+  }
+
+  .citation-links {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+</style>

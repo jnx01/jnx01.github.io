@@ -1,0 +1,85 @@
+---
+/**
+ * Card — the reusable container for case-study teasers and similar items.
+ *
+ * Design intent (strategy §L): restrained. A hairline border, no heavy
+ * shadow, small radius. On hover the border darkens and the title gains the
+ * accent color — a quiet cue, not a lifting/floating animation.
+ *
+ * Usage:
+ *   <Card href="/work/teradata/" title="…" meta="…">
+ *     <p>One-sentence summary.</p>
+ *   </Card>
+ */
+
+interface Props {
+  href: string;    // the whole card links here
+  title: string;
+  meta?: string;   // small line above the title, e.g. "Production AI · Teradata"
+}
+
+const { href, title, meta } = Astro.props;
+---
+
+<a href={href} class="card">
+  {meta && <p class="card-meta">{meta}</p>}
+  <h3 class="card-title">{title}</h3>
+  <div class="card-body">
+    <slot />
+  </div>
+  <span class="card-cta" aria-hidden="true">Read the case study →</span>
+</a>
+
+<style>
+  .card {
+    display: block;
+    height: 100%;
+    padding: var(--space-6);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-ink);
+    transition:
+      border-color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out);
+  }
+
+  .card:hover {
+    border-color: var(--color-ink-muted);
+    box-shadow: var(--shadow-soft);
+    text-decoration: none;
+  }
+
+  .card-meta {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-2);
+  }
+
+  .card-title {
+    font-size: var(--text-lg);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .card:hover .card-title {
+    color: var(--color-accent);
+  }
+
+  .card-body {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    line-height: 1.6;
+  }
+
+  .card-cta {
+    display: inline-block;
+    margin-top: var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+</style>

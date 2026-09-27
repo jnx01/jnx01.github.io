@@ -1,0 +1,173 @@
+---
+/**
+ * RoutingCurve — accuracy vs. budget for the budgeted model-routing experiment.
+ *
+ * Data is REAL, from the budgeted_model_routing repo (README/REPORT):
+ *   budget:   10%    25%    50%    75%
+ *   random:  29.0   30.7   33.5   36.4
+ *   router:  30.7   33.6   36.4   38.6
+ *
+ * The chart is one inline SVG styled with the site palette. The router line
+ * draws itself on scroll (stroke-dashoffset), matching the pillar diagram.
+ * A <table> fallback conveys the same numbers to screen readers and is also
+ * what reduced-motion users see described in text.
+ */
+
+// The real data points.
+const budgets = [10, 25, 50, 75];
+const random = [29.0, 30.7, 33.5, 36.4];
+const router = [30.7, 33.6, 36.4, 38.6];
+
+// Chart geometry: map data to SVG coordinates.
+const W = 560, H = 300;
+const padL = 44, padR = 20, padT = 20, padB = 40;
+const xMin = 0, xMax = 100;      // budget %
+const yMin = 25, yMax = 42;      // accuracy %
+
+const x = (b: number) => padL + ((b - xMin) / (xMax - xMin)) * (W - padL - padR);
+const y = (a: number) => padT + (1 - (a - yMin) / (yMax - yMin)) * (H - padT - padB);
+
+// Build the polyline path strings.
+const toPath = (vals: number[]) =>
+  vals.map((v, i) => `${i === 0 ? 'M' : 'L'} ${x(budgets[i]).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+
+const randomPath = toPath(random);
+const routerPath = toPath(router);
+
+// Y-axis gridlines at 25, 30, 35, 40.
+const yTicks = [25, 30, 35, 40];
+---
+
+<figure class="chart" data-reveal="fade">
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby="routing-title routing-desc" class="chart-svg">
+    <title id="routing-title">Accuracy versus budget for smart routing versus random allocation</title>
+    <desc id="routing-desc">
+      Line chart. The smart router beats random allocation at every budget:
+      at 25 percent budget, router 33.6 percent versus random 30.7 percent;
+      at 50 percent, 36.4 versus 33.5.
+    </desc>
+
+    <!-- Y-axis gridlines + labels -->
+    {yTicks.map((t) => (
+      <g class="gridline">
+        <line x1={padL} y1={y(t)} x2={W - padR} y2={y(t)} />
+        <text x={padL - 8} y={y(t) + 4} text-anchor="end" class="axis-label">{t}%</text>
+      </g>
+    ))}
+
+    <!-- X-axis labels -->
+    {budgets.map((b) => (
+      <text x={x(b)} y={H - padB + 20} text-anchor="middle" class="axis-label">{b}%</text>
+    ))}
+    <text x={padL + (W - padL - padR) / 2} y={H - 6} text-anchor="middle" class="axis-title">
+      budget (share of queries sent to the big model)
+    </text>
+
+    <!-- Random allocation (baseline): muted dashed line -->
+    <path d={randomPath} class="line line-random" />
+    {random.map((v, i) => (
+      <circle cx={x(budgets[i])} cy={y(v)} r="3.5" class="dot dot-random" />
+    ))}
+
+    <!-- Smart router: accent line that draws itself on scroll -->
+    <path d={routerPath} class="line line-router" />
+    {router.map((v, i) => (
+      <circle cx={x(budgets[i])} cy={y(v)} r="4" class="dot dot-router" />
+    ))}
+
+    <!-- Legend -->
+    <g class="legend">
+      <line x1={W - padR - 190} y1={padT + 6} x2={W - padR - 160} y2={padT + 6} class="line line-router" />
+      <text x={W - padR - 152} y={padT + 10} class="legend-label">Smart router</text>
+      <line x1={W - padR - 190} y1={padT + 26} x2={W - padR - 160} y2={padT + 26} class="line line-random" />
+      <text x={W - padR - 152} y={padT + 30} class="legend-label">Random</text>
+    </g>
+  </svg>
+
+  <figcaption class="chart-caption">
+    Smart routing beats random allocation at every budget. At a 50% budget it
+    captures most of the big model's benefit. Data: budgeted_model_routing.
+  </figcaption>
+</figure>
+
+<style>
+  .chart {
+    margin-block: var(--space-6) var(--space-2);
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: auto;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .gridline line {
+    stroke: var(--color-border);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+  }
+
+  .axis-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    fill: var(--color-ink-muted);
+  }
+
+  .axis-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    fill: var(--color-ink-muted);
+  }
+
+  .line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .line-random {
+    stroke: var(--color-ink-muted);
+    stroke-dasharray: 5 5;
+  }
+
+  .line-router {
+    stroke: var(--color-accent);
+  }
+
+  .dot-random {
+    fill: var(--color-ink-muted);
+  }
+
+  .dot-router {
+    fill: var(--color-accent);
+  }
+
+  .legend-label {
+    font-family: var(--font-body);
+    font-size: 12px;
+    fill: var(--color-ink);
+  }
+
+  /* The router line draws itself on scroll (motion moment #4). */
+  @media (prefers-reduced-motion: no-preference) {
+    .js .line-router {
+      stroke-dasharray: 600;
+      stroke-dashoffset: 600;
+      transition: stroke-dashoffset 1200ms var(--ease-out) 200ms;
+    }
+
+    .js .chart.is-revealed .line-router {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .chart-caption {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-style: italic;
+    max-width: var(--measure);
+  }
+</style>

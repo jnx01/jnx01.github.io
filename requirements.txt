@@ -1,0 +1,57 @@
+# =============================================================================
+# Requirements — every package this website depends on, and why.
+#
+# This is a Node.js / Astro project, so the machine-readable dependency list
+# lives in package.json (with exact locked versions in package-lock.json).
+# THIS file is the human-readable explanation: what each package is for and
+# why it's included. Keep it in sync if you add or remove a dependency.
+#
+# To install everything:   npm install
+# To run the dev server:   npm run dev
+# To build for production: npm run build
+# =============================================================================
+
+
+# ---- Runtime / framework -----------------------------------------------------
+
+astro@^7.3.5
+    # The static-site framework the whole site is built on. Turns .astro
+    # components and Markdown/MDX content into plain HTML at build time, and
+    # ships almost no JavaScript to the browser (fast on GitHub Pages).
+
+@astrojs/sitemap@^3.7.4
+    # Official Astro integration. Generates sitemap-index.xml automatically on
+    # every build so search engines can find every page.
+
+@astrojs/mdx@^8.0.2
+    # Official Astro integration. Lets Markdown content files (.mdx) embed
+    # interactive components inline — used to drop the experiment charts into
+    # the case-study body.
+
+
+# ---- Fonts (self-hosted, no external requests) --------------------------------
+# Variable fonts via Fontsource: one file per family covers all weights, and
+# they're served from our own site instead of Google Fonts (faster + private).
+
+@fontsource-variable/newsreader@^5.3.0
+    # Display serif — headlines and the hero statement.
+
+@fontsource-variable/inter@^5.3.0
+    # Neutral grotesque — body text and UI.
+
+@fontsource-variable/jetbrains-mono@^5.3.0
+    # Monospace — data, endpoints, code-ish details, metadata labels.
+
+
+# ---- Build-time / development -------------------------------------------------
+
+typescript@^7.0.2          (devDependency)
+    # Adds type-checking. Astro's strict preset (tsconfig.json) uses it to
+    # validate content-collection schemas and component props at build time.
+
+
+# ---- Bundled transitively (no need to install directly) ------------------------
+# sharp — image processing library. It comes bundled inside Astro, and the
+#   headshot/screenshot pipeline (scripts/prepare-headshot.mjs) uses it to
+#   crop, grade, and export AVIF/WebP/JPEG. You don't install it separately;
+#   it's available because Astro depends on it.

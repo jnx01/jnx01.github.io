@@ -1,0 +1,6 @@
+<!-- Favicon: simple "JN" wordmark in the accent indigo on the warm off-white.
+     SVG keeps it sharp at every size with a tiny file. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="8" fill="#fafaf8"/>
+  <text x="32" y="42" text-anchor="middle" font-family="Georgia, serif" font-weight="600" font-size="30" fill="#4f46e5">JN</text>
+</svg>
