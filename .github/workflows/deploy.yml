@@ -35,6 +35,8 @@ jobs:
       # dist/ folder as a Pages artifact.
       - name: Build with Astro
         uses: withastro/action@v3
+        with:
+          node-version: 22
 
   deploy:
     needs: build
