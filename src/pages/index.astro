@@ -221,10 +221,34 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     </div>
   </section>
 
+  <!-- 5b. RECOGNITION ---------------------------------------------------------
+      A compact grid of the signal-bearing awards — distinct from the
+      text-heavy sections around it so it stops the scanner without reading
+      as another prose line. The full list lives on /about. -->
+  <section class="section section--tint" aria-labelledby="recognition-heading">
+    <div class="container">
+      <p class="section-kicker" data-reveal>Recognition</p>
+      <h2 id="recognition-heading" class="section-title" data-reveal>
+        A few things I'm proud of.
+      </h2>
+
+      <ul class="recognition-grid">
+        <li data-reveal>Four-time Teradata Performance Award winner</li>
+        <li data-reveal data-reveal-delay="1">Valedictorian, Bahria University (3.83/4)</li>
+        <li data-reveal data-reveal-delay="2">Selected for Teradata's GenAI Research Group</li>
+        <li data-reveal data-reveal-delay="3">Program-best Final Year Project, shortlisted for incubation</li>
+        <li data-reveal data-reveal-delay="3">Rector's Honor List 3× · Merit Scholarship 5×</li>
+        <li data-reveal data-reveal-delay="4">One of three students selected for the Arbisoft Fellowship</li>
+      </ul>
+    </div>
+  </section>
+
   <!-- 6. THE PERSON + CONTACT ----------------------------------------------------
       Two or three sentences of humanity, then the three contact links.
-      Personality as seasoning, not the main course (strategy §D). -->
-  <section class="section section--tint">
+      Personality as seasoning, not the main course (strategy §D).
+      No tint here — the Recognition section above is tinted, so this one
+      stays plain to keep the backgrounds alternating. -->
+  <section class="section">
     <div class="container stack" style="--stack-space: var(--space-6);">
       <div data-reveal>
         <p class="section-kicker">The person</p>
@@ -679,5 +703,41 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     font-weight: 600;
     color: var(--color-ink-muted);
     letter-spacing: -0.01em;
+  }
+
+  /* ---- Recognition ---------------------------------------------------------
+     A two-column grid of awards, each with a small accent tick. Distinct
+     from the prose sections around it. */
+  .recognition-grid {
+    list-style: none;
+    padding: 0;
+    margin-top: var(--space-8);
+    display: grid;
+    gap: var(--space-4) var(--space-8);
+  }
+
+  @media (min-width: 768px) {
+    .recognition-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .recognition-grid li {
+    position: relative;
+    padding-left: var(--space-6);
+    line-height: 1.5;
+    font-size: var(--text-base);
+  }
+
+  /* A small accent tick instead of a default bullet. Drawn as a CSS rectangle
+     (not a text character) so there's no character-encoding risk. */
+  .recognition-grid li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.65em; /* vertically centered on the first line of text */
+    width: 12px;
+    height: 2px;
+    background: var(--color-accent);
   }
 </style>
