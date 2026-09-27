@@ -1,0 +1,48 @@
+# Deploy the site to GitHub Pages on every push to main.
+#
+# This is the official Astro workflow (docs.astro.build/en/guides/deploy/github/):
+#   1. "build" job installs dependencies and builds the static site into dist/
+#   2. "deploy" job publishes dist/ to GitHub Pages
+#
+# One-time setup in the GitHub repo (done at launch, not in code):
+#   Settings → Pages → Source: "GitHub Actions".
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Allow triggering a deploy by hand from the Actions tab.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deploy at a time; a newer push cancels an in-progress one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # withastro/action handles: npm ci, astro build, and uploading the
+      # dist/ folder as a Pages artifact.
+      - name: Build with Astro
+        uses: withastro/action@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

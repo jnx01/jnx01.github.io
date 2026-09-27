@@ -1,0 +1,19 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Node / Astro
+node_modules/
+dist/
+.astro/
+
+# Local environment files (never commit secrets)
+.env
+.env.*
+
+# Local-only source materials and planning docs — kept out of the public repo.
+# (The site only needs the processed assets in public/, not the originals.)
+assets-source/
+planning/
+
