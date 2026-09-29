@@ -1,0 +1,173 @@
+---
+/**
+ * ThinkingCost — the price of the thinking switch, for the hold-the-line
+ * experiment.
+ *
+ * Data is REAL, from the hold-the-line repo (REPORT.md §5):
+ *   Tokens per response:   OFF 258    ON 784   (~3×)
+ *   Seconds per response:  OFF 1.1    ON 3.1   (~3×, on one Apple Silicon Mac)
+ *
+ * The two rows have different units, so each row is normalized to its own
+ * maximum (the thinking-ON bar is always full width). Bars grow from the
+ * left on scroll, matching the site's motion language. The same numbers are
+ * in the caption, the surrounding prose, and the aria-label.
+ */
+
+const costs = [
+  { label: 'Tokens per response', off: '258', on: '784', offW: (258 / 784) * 100 },
+  { label: 'Seconds per response', off: '1.1', on: '3.1', offW: (1.1 / 3.1) * 100 },
+];
+
+let rowIndex = 0;
+---
+
+<figure class="chart" data-reveal="fade">
+  <!-- Legend: which bar color is which condition. -->
+  <div class="legend">
+    <span class="legend-item"><span class="swatch swatch--off"></span>Thinking off</span>
+    <span class="legend-item"><span class="swatch swatch--on"></span>Thinking on</span>
+  </div>
+
+  <div
+    class="bars"
+    role="img"
+    aria-label="Paired bar chart of inference cost. Tokens per response: 258 with thinking off, 784 with thinking on. Seconds per response: 1.1 off, 3.1 on. About three times the cost in both."
+  >
+    {costs.map((c) => (
+      <div class="bar-group">
+        <span class="group-label">{c.label}</span>
+        {([['off', c.off, c.offW], ['on', c.on, 100]] as const).map(([mode, value, width]) => (
+          <div class="bar-row">
+            <!-- Bar width is passed to CSS as --bar-w; --d staggers the
+                 grow-on-scroll animation row by row. -->
+            <span class="bar-track">
+              <span
+                class={`bar-fill bar-fill--${mode}`}
+                style={`--bar-w: ${width}%; --d: ${rowIndex++ * 80}ms;`}
+              ></span>
+            </span>
+            <span class="bar-value">{value}</span>
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+
+  <figcaption class="chart-caption">
+    The reliability gain costs about 3× the tokens and 3× the latency —
+    roughly 76 extra tokens per percentage-point reduction in caving.
+    Data: hold-the-line.
+  </figcaption>
+</figure>
+
+<style>
+  .chart {
+    margin-block: var(--space-6) var(--space-2);
+  }
+
+  .legend {
+    display: flex;
+    gap: var(--space-6);
+    margin-bottom: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-sm);
+  }
+
+  .swatch--off {
+    background: var(--color-ink-muted);
+  }
+
+  .swatch--on {
+    background: var(--color-accent);
+  }
+
+  .bars {
+    display: grid;
+    gap: var(--space-6);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+  }
+
+  .bar-group {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .group-label {
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+    margin-bottom: var(--space-1);
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 1fr 56px;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .bar-track {
+    display: block;
+    height: 18px;
+    background: var(--color-bg-tint);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    display: block;
+    height: 100%;
+    width: var(--bar-w);
+    border-radius: var(--radius-sm);
+    transform-origin: left;
+  }
+
+  .bar-fill--off {
+    background: var(--color-ink-muted);
+  }
+
+  .bar-fill--on {
+    background: var(--color-accent);
+  }
+
+  .bar-value {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+    text-align: right;
+  }
+
+  /* Bars grow from the left on scroll (motion moment #4). */
+  @media (prefers-reduced-motion: no-preference) {
+    .js .bar-fill {
+      transform: scaleX(0);
+      transition: transform 800ms var(--ease-out);
+      transition-delay: var(--d, 0ms);
+    }
+
+    .js .chart.is-revealed .bar-fill {
+      transform: scaleX(1);
+    }
+  }
+
+  .chart-caption {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-style: italic;
+    max-width: var(--measure);
+  }
+</style>
