@@ -76,9 +76,9 @@ import PillarDiagram from '../components/PillarDiagram.astro';
             </p>
             <p class="pillar-note">
               Agent evaluation and robustness — retrieval, LLM-as-judge,
-              trustworthy AI — pursued through the RAG-corruption and
-              budgeted-evaluation experiments, and the LLM-graded CI
-              evaluation at work.
+              trustworthy AI — pursued through the RAG-corruption,
+              budgeted-evaluation, and pushback-resistance experiments, and
+              the LLM-graded CI evaluation at work.
             </p>
           </div>
         </div>
@@ -114,12 +114,13 @@ import PillarDiagram from '../components/PillarDiagram.astro';
 
         <!-- Experiments -->
         <article class="done-item" data-reveal>
-          <h3 class="done-title">Three experiments in efficiency &amp; reliability</h3>
-          <p class="done-meta">Self-directed · Reproducible · One nuanced finding, reported honestly</p>
+          <h3 class="done-title">Four experiments in efficiency &amp; reliability</h3>
+          <p class="done-meta">Self-directed · Reproducible · Nuanced findings, reported honestly</p>
           <p>
             Budgeted model routing (efficiency), RAG corruption (reliability),
-            and budgeted evaluation (measurement) — three open, reproducible
-            studies with stated limitations.
+            budgeted evaluation (measurement), and pushback resistance under
+            test-time reasoning (reliability, priced in tokens) — four open,
+            reproducible studies with stated limitations.
           </p>
           <p class="done-links">
             <a class="link-draw" href="/work/experiments/">Case study →</a>
@@ -167,6 +168,7 @@ import PillarDiagram from '../components/PillarDiagram.astro';
         <li data-reveal data-reveal-delay="2">What makes an LLM-graded evaluation metric trustworthy enough to gate a deployment?</li>
         <li data-reveal data-reveal-delay="3">How small can a model get before reliability — not just accuracy — collapses?</li>
         <li data-reveal data-reveal-delay="4">Do disagreement signals between cheap evaluators generalize across model families, or are they always pair-specific?</li>
+        <li data-reveal data-reveal-delay="5">Does the reliability gain from test-time reasoning hold at larger scale — and when is it worth 3× the tokens?</li>
       </ul>
     </div>
   </section>
