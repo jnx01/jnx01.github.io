@@ -2,8 +2,8 @@
 title: "Experiments in efficiency & reliability"
 kind: experiment
 weight: 3
-summary: "Three reproducible studies on making LLM systems cheaper and more robust — including one nuanced, fragile finding reported honestly."
-stack: ["Python", "Qwen3", "HotpotQA", "SummEval", "GPT-OSS-120B", "BM25"]
+summary: "Four reproducible studies on making LLM systems cheaper and more robust — including nuanced, fragile findings reported honestly."
+stack: ["Python", "Qwen3", "MLX", "HotpotQA", "TriviaQA", "SummEval", "GPT-OSS-120B", "BM25"]
 links:
   - label: "budgeted_model_routing"
     url: "https://github.com/jnx01/budgeted_model_routing"
@@ -11,21 +11,25 @@ links:
     url: "https://github.com/jnx01/rag_corruption_test"
   - label: "budgeted_eval_test"
     url: "https://github.com/jnx01/budgeted_eval_test"
+  - label: "hold-the-line"
+    url: "https://github.com/jnx01/hold-the-line"
 confidential: false
 featured: true
 ---
 
 import RoutingCurve from '../../components/figures/RoutingCurve.astro';
 import CorruptionBars from '../../components/figures/CorruptionBars.astro';
+import FlipRateBars from '../../components/figures/FlipRateBars.astro';
+import ThinkingCost from '../../components/figures/ThinkingCost.astro';
 
 ## Context
 
-These three self-directed studies form one research program under a single
+These four self-directed studies form one research program under a single
 theme: **making AI systems efficient and reliable enough to deploy in the
 real world.** Each is a reproducible repo with a README, a report, and an
-honest limitations section. One of them surfaces a fragile, nuanced finding
-rather than a clean win — and I'm prouder of it, not less, because it reports
-the result exactly as it came out.
+honest limitations section. Two of them surface fragile, uncertain findings
+rather than clean wins — and I'm prouder of them, not less, because they
+report the results exactly as they came out.
 
 ## 1. Budgeted model routing — *efficiency*
 
@@ -94,11 +98,46 @@ fragile across model pairs. This is the kind of nuanced, not-very-clean
 finding that doesn't get published enough, and it's why I run these
 experiments in the open.
 
+## 4. Pushback resistance — *reliability, at a price*
+
+**Question.** If a user confidently tells a small model its (correct) answer
+is wrong, does letting the model "think" before replying help it stand its
+ground — and what does that cost in tokens and time?
+
+**Method.** This study reuses the behavioral protocol from Aamir & Bin Adil
+(2026, [arXiv:2609.17550](https://arxiv.org/abs/2609.17550)) — ask, push
+back, ask again; four pushback styles; the flip-rate metric; an LLM judge —
+and extends it: same model (Qwen3-1.7B), same question, same frozen first
+answer, same seed, flipping only the thinking switch. Sixty TriviaQA
+questions × 4 pushback styles = 240 matched pairs. A follow-up reruns the
+identical protocol on Qwen3-4B to ask whether a bigger model caves less.
+
+**Finding.** Thinking roughly halved caving — the flip rate fell from
+**12.5%** to **5.6%** — but the gain came largely from the thinking model
+refusing to commit under pressure (abandonment rose from 6.9% to 22.2%):
+fewer confident flips, more retreats. The cost was large and certain: ~3×
+the tokens (784 vs 258 per response) and ~3× the latency. And the follow-up
+showed a 2.3× bigger model caves at the *same* rate once you account for it
+being right more often — two ways to spend more compute, and they don't buy
+the same thing.
+
+<FlipRateBars />
+
+<ThinkingCost />
+
+**Limitations.** Sixty questions and one model family: the 95% confidence
+interval for the improvement includes zero (McNemar p = 0.27), so this is a
+suggestive trend, not proof. One judge model, one machine, one wording per
+pushback style — and deliberate simplifications mean the absolute numbers
+aren't directly comparable to the original paper's.
+
 ## What ties them together
 
-All three ask the same underlying question from different angles: *how do we
+All four ask the same underlying question from different angles: *how do we
 get reliable behavior from AI systems without unlimited budget?* The routing
 study attacks **efficiency** — getting useful behavior for less cost. The
-other two attack **reliability** — the corruption study probes robustness to
-degraded evidence, and the evaluation study probes whether we can even
-*measure* that behavior trustworthily.
+corruption and pushback studies attack **reliability** — robustness to
+degraded evidence and to social pressure. The evaluation study probes
+whether we can even *measure* that behavior trustworthily. And the pushback
+study sits at the intersection: the reliability it adds appears real but is
+priced in tokens — exactly the trade-off this program exists to map.
