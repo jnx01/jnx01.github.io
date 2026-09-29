@@ -1,0 +1,177 @@
+---
+/**
+ * FlipRateBars — what happens after pushback, thinking OFF vs ON, for the
+ * hold-the-line experiment.
+ *
+ * Data is REAL, from the hold-the-line repo (REPORT.md §5), over the 72
+ * initially-correct episodes per mode:
+ *   Flip (correct → wrong):     OFF 12.5%   ON 5.6%
+ *   Hold (stayed correct):      OFF 80.6%   ON 72.2%
+ *   Abandon (gave up/unclear):  OFF 6.9%    ON 22.2%
+ *
+ * Three outcome groups, each with two bars (thinking off = muted ink,
+ * thinking on = accent). Bars grow from the left on scroll, matching the
+ * site's motion language. The same numbers are in the caption and the
+ * surrounding prose, and in the aria-label for screen readers.
+ */
+
+const outcomes = [
+  { label: 'Flip — correct → wrong', off: 12.5, on: 5.6 },
+  { label: 'Hold — stayed correct', off: 80.6, on: 72.2 },
+  { label: 'Abandon — gave up / unclear', off: 6.9, on: 22.2 },
+];
+
+// Values are already percentages, so the bar width is the value itself.
+let rowIndex = 0;
+---
+
+<figure class="chart" data-reveal="fade">
+  <!-- Legend: which bar color is which condition. -->
+  <div class="legend">
+    <span class="legend-item"><span class="swatch swatch--off"></span>Thinking off</span>
+    <span class="legend-item"><span class="swatch swatch--on"></span>Thinking on</span>
+  </div>
+
+  <div
+    class="bars"
+    role="img"
+    aria-label="Paired bar chart of outcomes under pushback. Flip rate: 12.5 percent with thinking off, 5.6 percent with thinking on. Hold rate: 80.6 percent off, 72.2 percent on. Abandon rate: 6.9 percent off, 22.2 percent on."
+  >
+    {outcomes.map((o) => (
+      <div class="bar-group">
+        <span class="group-label">{o.label}</span>
+        {([['off', o.off], ['on', o.on]] as const).map(([mode, value]) => (
+          <div class="bar-row">
+            <!-- Bar width is passed to CSS as --bar-w; --d staggers the
+                 grow-on-scroll animation row by row. -->
+            <span class="bar-track">
+              <span
+                class={`bar-fill bar-fill--${mode}`}
+                style={`--bar-w: ${value}%; --d: ${rowIndex++ * 80}ms;`}
+              ></span>
+            </span>
+            <span class="bar-value">{value.toFixed(1)}%</span>
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+
+  <figcaption class="chart-caption">
+    Thinking roughly halved caving (12.5% → 5.6% flips) but more than tripled
+    abandonment (6.9% → 22.2%) — fewer confident flips, more retreats.
+    Data: hold-the-line.
+  </figcaption>
+</figure>
+
+<style>
+  .chart {
+    margin-block: var(--space-6) var(--space-2);
+  }
+
+  .legend {
+    display: flex;
+    gap: var(--space-6);
+    margin-bottom: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-sm);
+  }
+
+  .swatch--off {
+    background: var(--color-ink-muted);
+  }
+
+  .swatch--on {
+    background: var(--color-accent);
+  }
+
+  .bars {
+    display: grid;
+    gap: var(--space-6);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+  }
+
+  .bar-group {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .group-label {
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+    margin-bottom: var(--space-1);
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 1fr 56px;
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .bar-track {
+    display: block;
+    height: 18px;
+    background: var(--color-bg-tint);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    display: block;
+    height: 100%;
+    width: var(--bar-w);
+    border-radius: var(--radius-sm);
+    transform-origin: left;
+  }
+
+  .bar-fill--off {
+    background: var(--color-ink-muted);
+  }
+
+  .bar-fill--on {
+    background: var(--color-accent);
+  }
+
+  .bar-value {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+    text-align: right;
+  }
+
+  /* Bars grow from the left on scroll (motion moment #4). */
+  @media (prefers-reduced-motion: no-preference) {
+    .js .bar-fill {
+      transform: scaleX(0);
+      transition: transform 800ms var(--ease-out);
+      transition-delay: var(--d, 0ms);
+    }
+
+    .js .chart.is-revealed .bar-fill {
+      transform: scaleX(1);
+    }
+  }
+
+  .chart-caption {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    font-style: italic;
+    max-width: var(--measure);
+  }
+</style>
