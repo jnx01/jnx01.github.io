@@ -1056,19 +1056,27 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
   @media (prefers-reduced-motion: no-preference) {
     .hero::after {
       opacity: 1;
-      /* Hold the pale indigo while the frame drops and the avatar greets,
-         then fade out over 1.4s as the headshot pops up (4.05s). `forwards`
-         keeps it at 0.
-         The animation starts PAUSED and only plays once the tab is visible
-         (the .is-visible class on <html>), so opening the page in a
-         background tab doesn't spend the welcome wash unseen. */
-      animation: hero-wash-out 1.4s var(--ease-out) 4.05s forwards;
+      /* Hold the pale indigo, then fade out over 1.4s. `forwards` keeps it
+         at 0. The animation starts PAUSED and only plays once the tab is
+         visible (the .is-visible class on <html>), so opening the page in a
+         background tab doesn't spend the welcome wash unseen.
+
+         Two timings:
+         - First visit (.first-visit): the frame drops (~1.55s) with the
+           avatar already in it, the avatar greets for 2s, so the wash holds
+           until 3.55s and fades as the headshot pops up.
+         - Revisit: no frame drop, no avatar — fade at 2.5s. */
+      animation: hero-wash-out 1.4s var(--ease-out) 2.5s forwards;
       animation-play-state: paused;
+    }
+
+    :global(html.first-visit) .hero::after {
+      animation-delay: 3.55s;
     }
 
     /* Play only when the tab is visible. */
     :global(html.is-visible) .hero::after {
-      animation-play-state: running;
+      animation-play-state: running, running;
     }
   }
 
@@ -1164,17 +1172,23 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     .hero-underline-stroke path {
       stroke-dasharray: 300; /* slightly more than the path length */
       stroke-dashoffset: 300;
-      /* First draw: starts at 5.05s (one second after the headshot pops at
-         4.05s), draws over 700ms, stays drawn. Then the loop below takes
-         over: every 12s the stroke wipes and redraws — a periodic reminder
-         of the thesis (moment B).
-         Both start PAUSED (animation-play-state below) and only play once the
-         tab is visible (the .is-visible class on <html>), so a background tab
-         doesn't spend the first draw unseen. */
+      /* First draw: one second after the hero wash fades, then a slow
+         wipe-and-redraw loop every 12s — a periodic reminder of the thesis.
+         Two timings, matching the wash:
+         - Revisit: wash fades at 2.5s, so the underline draws at 3.5s.
+         - First visit (.first-visit): headshot pops at 3.55s, so the
+           underline draws at 4.55s.
+         Both start PAUSED and only play once the tab is visible
+         (.is-visible on <html>), so a background tab doesn't spend the
+         first draw unseen. */
       animation:
-        hero-underline-draw 700ms var(--ease-out) 5.05s both,
-        hero-underline-redraw 12s var(--ease-out) 5.75s infinite;
+        hero-underline-draw 700ms var(--ease-out) 3.5s both,
+        hero-underline-redraw 12s var(--ease-out) 4.2s infinite;
       animation-play-state: paused, paused;
+    }
+
+    :global(html.first-visit) .hero-underline-stroke path {
+      animation-delay: 4.55s, 5.25s;
     }
 
     /* Play only when the tab is visible. */
