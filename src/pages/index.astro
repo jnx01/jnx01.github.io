@@ -1071,7 +1071,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     }
 
     :global(html.first-visit) .hero::after {
-      animation-delay: 3.55s;
+      animation-delay: 3.25s;
     }
 
     /* Play only when the tab is visible. */
@@ -1188,7 +1188,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     }
 
     :global(html.first-visit) .hero-underline-stroke path {
-      animation-delay: 4.55s, 5.25s;
+      animation-delay: 4.25s, 4.95s;
     }
 
     /* Play only when the tab is visible. */
@@ -1325,10 +1325,10 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
 
     :global(html.first-visit) .hero-portrait {
       /* First visit: frame drop (1.4s @ 150ms) AND breathing (underline draws
-         at 4.55s + 0.7s = done at 5.25s). */
+         at 4.25s + 0.7s = done at 4.95s). */
       animation:
         hero-frame-drop 1.4s cubic-bezier(0.22, 1, 0.36, 1) 150ms both,
-        hero-breathe 9s ease-in-out 5.3s infinite;
+        hero-breathe 9s ease-in-out 5.0s infinite;
       animation-play-state: paused, paused;
     }
 
@@ -1340,9 +1340,9 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
        perceptible speed change at the turning points. */
     @keyframes hero-breathe {
       0%, 100% { transform: scale(1); }
-      25%      { transform: scale(1.014); }
-      50%      { transform: scale(1.02); }
-      75%      { transform: scale(1.014); }
+      25%      { transform: scale(1.012); }
+      50%      { transform: scale(1.018); }
+      75%      { transform: scale(1.012); }
     }
   }
 
