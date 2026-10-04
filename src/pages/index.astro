@@ -1191,9 +1191,10 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
   }
 
   /* ---- Hero action row ---------------------------------------------------
-     One primary button (the work index) plus the Email / LinkedIn / GitHub text
-     links. The button is solid accent with a high-contrast label; on
-     :active it dips 1px for a tactile push. */
+     One primary action (the work index) plus the Email / LinkedIn / GitHub
+     text links. The primary is a hairline outline button: a thin ink border,
+     no fill, so it reads as the main action without the "app UI" weight of a
+     solid rectangle. On hover the border and label turn accent. */
   .hero-cta {
     margin-top: var(--space-8);
     display: flex;
@@ -1203,29 +1204,63 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
   }
 
   .btn-primary {
+    position: relative; /* anchor for the fill overlay */
     display: inline-block;
     padding: var(--space-3) var(--space-6);
-    background: var(--color-accent);
-    color: var(--color-on-accent);
+    background: transparent;
+    color: var(--color-ink);
     font-weight: 500;
     font-size: var(--text-base);
     line-height: 1.2;
-    border-radius: var(--radius-md);
+    border: 1px solid var(--color-ink);
+    border-radius: 999px; /* pill / capsule */
     text-decoration: none;
     white-space: nowrap; /* the label never wraps to a second line */
+    overflow: hidden; /* clip the fill sweep to the pill shape */
+    /* Slow color + border change so the label flips only once the fill
+       has mostly arrived (the "powering up" read). */
     transition:
-      background-color var(--duration-fast) var(--ease-out),
+      color 450ms var(--ease-out) 120ms,
+      border-color 450ms var(--ease-out),
       transform var(--duration-fast) var(--ease-out);
   }
 
+  /* The fill: an accent layer that starts as a thin sliver off the left edge
+     and sweeps across on hover. transform-only, so it stays smooth. */
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1; /* behind the label */
+    background: var(--color-accent);
+    border-radius: inherit;
+    transform: scaleX(0);
+    transform-origin: left; /* sweep left to right */
+    transition: transform 550ms var(--ease-out);
+  }
+
+  /* On hover the fill sweeps across (powering up) and the label flips to the
+     on-accent color (white on light, dark on the lighter dark-mode indigo). */
   .btn-primary:hover {
-    background: var(--color-accent-hover);
+    border-color: var(--color-accent);
     color: var(--color-on-accent);
     text-decoration: none;
+  }
+
+  .btn-primary:hover::before {
+    transform: scaleX(1);
   }
 
   .btn-primary:active {
     transform: translateY(1px); /* a small physical "push" on click */
+  }
+
+  /* Reduced motion: no sweep, the fill and label change instantly. */
+  @media (prefers-reduced-motion: reduce) {
+    .btn-primary,
+    .btn-primary::before {
+      transition: none;
+    }
   }
 
   .hero-links {
