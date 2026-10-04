@@ -3,28 +3,25 @@
  * AvatarIntro — a one-time cartoon-avatar greeting on the homepage hero.
  *
  * What the visitor sees (first visit per browser session only):
- *   1. A cartoon avatar (neutral pose) rises into the portrait frame.
- *   2. It crossfades to the waving pose, with a little wiggle on the arm.
- *   3. It slides back down out of the frame.
- *   4. The real headshot photo pops up from the bottom edge and stays.
+ *   1. A cartoon avatar (waving pose) rises into the portrait frame and waves.
+ *   2. At 2.5s it slides back down out of the frame.
+ *   3. The real headshot photo pops up from the bottom edge and stays.
  *
- * The avatar is two PNG cutouts with transparent backgrounds:
- *   /images/avatar/avatar-1.png  — neutral standing pose
- *   /images/avatar/avatar-2.png  — waving pose (same canvas, aligned)
+ * The avatar is a single PNG cutout with a transparent background:
+ *   /images/avatar/avatar-2.png  — waving pose
  *
  * Safety rules (each one skips the animation and shows the photo directly):
  *   - The visitor asked for reduced motion (prefers-reduced-motion).
  *   - The animation already played this session (sessionStorage flag).
  *   - JavaScript is off or an image fails to load.
  *
- * Performance: the two PNGs are only fetched when the intro will play.
+ * Performance: the PNG is only fetched when the intro will play.
  */
 ---
 
 <div class="avatar-intro" data-avatar-intro>
-  <!-- The two avatar poses, stacked. Hidden until the script plays. -->
+  <!-- The waving avatar. Hidden until the script plays. -->
   <div class="avatar-intro-stage" data-avatar-stage aria-hidden="true">
-    <img class="avatar-pose avatar-pose--neutral" src="/images/avatar/avatar-1.png" alt="" />
     <img class="avatar-pose avatar-pose--waving" src="/images/avatar/avatar-2.png" alt="" />
     <span class="avatar-greeting" data-avatar-greeting>Hi There!</span>
   </div>
@@ -82,11 +79,6 @@
     filter: grayscale(1);
   }
 
-  /* The waving pose starts invisible; the script crossfades to it. */
-  .avatar-pose--waving {
-    opacity: 0;
-  }
-
   /* "Hi There!" — handwriting greeting above the avatar's head.
      Appears (script-driven) when the waving pose shows. */
   .avatar-greeting {
@@ -123,14 +115,11 @@
 </style>
 
 <script>
-  // One timeline, in seconds. Matches the hero's pale-indigo phase (2.5s):
-  // avatar-1 (neutral) shows until 1.1s, avatar-2 (waving) is fully in by
-  // 1.4s, then the real headshot pops up as the hero background turns warm
-  // off-white.
+  // One timeline, in seconds. The waving avatar rises at 0s and waves until
+  // 2.5s, then sinks as the real headshot pops up and the hero's pale-indigo
+  // wash fades to off-white (both at 2.5s).
   const RISE_END = 0.35;   // avatar finishes rising into frame
-  const CROSSFADE = 1.1;   // neutral -> waving pose swap midpoint (avatar-1 holds until here)
-  const WAVE_IN = 1.4;     // avatar-2 (waving) fully visible
-  const WIGGLE_END = 2.0;  // the wave wiggle stops
+  const WIGGLE_END = 2.2;  // the wave wiggle stops (just before the sink)
   const PHOTO_POP = 2.5;   // headshot starts popping up (matches hero wash)
   const GONE = 2.9;        // avatar fully below the frame edge
   const CLEANUP = 3.4;     // remove the avatar stage from the page
@@ -151,10 +140,9 @@
 
   function runIntro(root: HTMLElement) {
     const stage = root.querySelector<HTMLElement>('[data-avatar-stage]');
-    const neutral = root.querySelector<HTMLElement>('.avatar-pose--neutral');
     const waving = root.querySelector<HTMLElement>('.avatar-pose--waving');
     const greeting = root.querySelector<HTMLElement>('[data-avatar-greeting]');
-    if (!stage || !neutral || !waving) return;
+    if (!stage || !waving) return;
 
     const start = performance.now();
     let popped = false;
@@ -167,24 +155,17 @@
       const down = easeIn(between(t, PHOTO_POP, GONE));
       stage.style.transform = `translateY(${(1 - up) * 104 + down * 104}%)`;
 
-      // 2. Swap poses: the neutral pose fades OUT while the waving pose
-      //    fades IN, so the two never ghost through each other. The swap
-      //    starts just before CROSSFADE and completes at WAVE_IN (1.4s).
-      const swap = between(t, CROSSFADE - 0.15, WAVE_IN);
-      waving.style.opacity = String(swap);
-      neutral.style.opacity = String(1 - swap);
-
-      // 2b. The "Hi There!" greeting fades in just after the wave pose
-      //     lands, and fades out as the avatar starts sinking.
+      // 2. The "Hi There!" greeting fades in once the avatar has risen, and
+      //    fades out as the avatar starts sinking.
       if (greeting) {
         greeting.style.opacity = String(
-          between(t, CROSSFADE + 0.15, CROSSFADE + 0.4) * (1 - between(t, PHOTO_POP, GONE))
+          between(t, RISE_END, RISE_END + 0.3) * (1 - between(t, PHOTO_POP, GONE))
         );
       }
 
       // 3. The wave: a small rotation wiggle on the whole figure sells the
       //    gesture (the raised arm is baked into the waving pose).
-      const wiggling = between(t, CROSSFADE, WIGGLE_END) * (1 - between(t, WIGGLE_END, WIGGLE_END + 0.2));
+      const wiggling = between(t, RISE_END, WIGGLE_END) * (1 - between(t, WIGGLE_END, WIGGLE_END + 0.2));
       const wiggle = Math.sin(t * Math.PI * 5) * 2.2 * wiggling; // degrees
       stage.style.rotate = `${wiggle}deg`;
 
