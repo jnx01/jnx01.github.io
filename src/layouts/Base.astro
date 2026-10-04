@@ -72,6 +72,18 @@ const personSchema = {
     <script is:inline>
       document.documentElement.classList.add('js');
 
+      // Tab visibility: mark <html> with .is-visible once the tab is actually
+      // being viewed. Time-based CSS animations (the hero wash, the underline
+      // draw) start paused and only play when this class is present, so
+      // opening the page in a background tab doesn't spend them unseen.
+      function markVisible() {
+        if (document.visibilityState === 'visible') {
+          document.documentElement.classList.add('is-visible');
+        }
+      }
+      markVisible(); // in case the tab is already visible at load
+      document.addEventListener('visibilitychange', markVisible);
+
       // Theme (light/dark): apply the saved choice, or the OS preference,
       // BEFORE first paint so there is no flash of the wrong theme.
       // The toggle button lives in Nav.astro; it writes localStorage.theme.
@@ -96,6 +108,7 @@ const personSchema = {
       document.addEventListener('astro:after-swap', () => {
         document.documentElement.classList.add('js');
         applyTheme(getTheme());
+        markVisible(); // the new <html> also needs the visibility mark
       });
     </script>
 
