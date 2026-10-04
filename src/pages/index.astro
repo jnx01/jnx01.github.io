@@ -1143,8 +1143,8 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
 
   @media (prefers-reduced-motion: no-preference) {
     /* The stroke starts hidden (dashoffset = full length) and draws in after
-       a 3.3s delay — after the hero's indigo wash (2.5s) and the headshot
-       pop. `backwards` fill means the hidden state applies DURING
+       a 3.5s delay — after the hero's indigo wash and the headshot pop
+       (2.5s). `backwards` fill means the hidden state applies DURING
        the delay, so the stroke never flashes visible first.
        No `.js` gate here on purpose: Astro scopes styles with attribute
        selectors, and `.js` lives on <html> which has no scope attribute, so
@@ -1154,13 +1154,13 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     .hero-underline-stroke path {
       stroke-dasharray: 300; /* slightly more than the path length */
       stroke-dashoffset: 300;
-      /* First draw: starts at 3.3s (after the hero's indigo wash finishes
-         and the headshot has popped in), draws over 700ms, stays drawn.
+      /* First draw: starts at 3.5s (after the hero's indigo wash and the
+         headshot pop at 2.5s), draws over 700ms, stays drawn.
          Then the loop below takes over: every 12s the stroke wipes and
          redraws — a periodic reminder of the thesis (moment B). */
       animation:
-        hero-underline-draw 700ms var(--ease-out) 3.3s both,
-        hero-underline-redraw 12s var(--ease-out) 5s infinite;
+        hero-underline-draw 700ms var(--ease-out) 3.5s both,
+        hero-underline-redraw 12s var(--ease-out) 5.2s infinite;
     }
 
     @keyframes hero-underline-draw {
