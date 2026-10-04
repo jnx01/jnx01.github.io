@@ -1057,12 +1057,12 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     .hero::after {
       opacity: 1;
       /* Hold the pale indigo while the frame drops and the avatar greets,
-         then fade out over 1.4s as the headshot pops up (2.9s). `forwards`
+         then fade out over 1.4s as the headshot pops up (4.05s). `forwards`
          keeps it at 0.
          The animation starts PAUSED and only plays once the tab is visible
          (the .is-visible class on <html>), so opening the page in a
          background tab doesn't spend the welcome wash unseen. */
-      animation: hero-wash-out 1.4s var(--ease-out) 2.9s forwards;
+      animation: hero-wash-out 1.4s var(--ease-out) 4.05s forwards;
       animation-play-state: paused;
     }
 
@@ -1164,16 +1164,16 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     .hero-underline-stroke path {
       stroke-dasharray: 300; /* slightly more than the path length */
       stroke-dashoffset: 300;
-      /* First draw: starts at 3.9s (after the frame drop, the avatar greeting,
-         and the headshot pop at 2.9s), draws over 700ms, stays drawn.
-         Then the loop below takes over: every 12s the stroke wipes and
-         redraws — a periodic reminder of the thesis (moment B).
+      /* First draw: starts at 5.05s (one second after the headshot pops at
+         4.05s), draws over 700ms, stays drawn. Then the loop below takes
+         over: every 12s the stroke wipes and redraws — a periodic reminder
+         of the thesis (moment B).
          Both start PAUSED (animation-play-state below) and only play once the
          tab is visible (the .is-visible class on <html>), so a background tab
          doesn't spend the first draw unseen. */
       animation:
-        hero-underline-draw 700ms var(--ease-out) 3.9s both,
-        hero-underline-redraw 12s var(--ease-out) 5.6s infinite;
+        hero-underline-draw 700ms var(--ease-out) 5.05s both,
+        hero-underline-redraw 12s var(--ease-out) 5.75s infinite;
       animation-play-state: paused, paused;
     }
 
@@ -1314,13 +1314,14 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     }
 
     /* Fall from well above, overshoot clearly below home, rebound up, settle.
-       The bigger overshoot + double settle is the "bounce". transform +
-       opacity only. */
+       The bounce is doubled: a big overshoot, a big rebound, then a second
+       smaller overshoot + settle. transform + opacity only. */
     @keyframes hero-frame-drop {
       0%   { transform: translateY(-130%); opacity: 0; }
-      50%  { transform: translateY(6%);    opacity: 1; } /* big overshoot (well past home) */
-      68%  { transform: translateY(-3%);   }             /* rebound up */
-      82%  { transform: translateY(1.5%);  }             /* second, smaller settle */
+      48%  { transform: translateY(12%);   opacity: 1; } /* big overshoot (doubled) */
+      64%  { transform: translateY(-6%);   }             /* big rebound up (doubled) */
+      78%  { transform: translateY(3%);    }             /* second, smaller overshoot */
+      90%  { transform: translateY(-1%);   }             /* second, smaller rebound */
       100% { transform: translateY(0);     opacity: 1; } /* rest */
     }
   }
