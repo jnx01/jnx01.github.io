@@ -1057,8 +1057,16 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     .hero::after {
       opacity: 1;
       /* Hold the pale indigo for 2.5s (while the avatar greets), then fade
-         out over 1.4s. `forwards` keeps it at 0. */
-      animation: hero-wash-out 1.4s var(--ease-out) 2.5s forwards;
+         out over 1.4s. `forwards` keeps it at 0.
+         The animation starts PAUSED and only plays once the tab is visible
+         (the .is-visible class on <html>), so opening the page in a
+         background tab doesn't spend the welcome wash unseen. */
+      animation: hero-wash-out 1.4s var(--ease-out) 2.5s forwards paused;
+    }
+
+    /* Play only when the tab is visible. */
+    :global(html.is-visible) .hero::after {
+      animation-play-state: running;
     }
   }
 
@@ -1157,22 +1165,18 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
       /* First draw: starts at 3.5s (after the hero's indigo wash and the
          headshot pop at 2.5s), draws over 700ms, stays drawn.
          Then the loop below takes over: every 12s the stroke wipes and
-         redraws — a periodic reminder of the thesis (moment B). */
+         redraws — a periodic reminder of the thesis (moment B).
+         Both start PAUSED and only play once the tab is visible (the
+         .is-visible class on <html>), so a background tab doesn't spend
+         the first draw unseen. */
       animation:
-        hero-underline-draw 700ms var(--ease-out) 3.5s both,
-        hero-underline-redraw 12s var(--ease-out) 5.2s infinite;
+        hero-underline-draw 700ms var(--ease-out) 3.5s both paused,
+        hero-underline-redraw 12s var(--ease-out) 5.2s infinite paused;
     }
 
-    @keyframes hero-underline-draw {
-      to { stroke-dashoffset: 0; }
-    }
-
-    /* The re-draw loop: hold drawn for most of the cycle, wipe, redraw. */
-    @keyframes hero-underline-redraw {
-      0%    { stroke-dashoffset: 0; }   /* drawn */
-      88%   { stroke-dashoffset: 0; }   /* still drawn (most of the 12s) */
-      92%   { stroke-dashoffset: 300; } /* wiped */
-      100%  { stroke-dashoffset: 0; }   /* redrawn */
+    /* Play only when the tab is visible. */
+    :global(html.is-visible) .hero-underline-stroke path {
+      animation-play-state: running, running;
     }
   }
   .hero-byline {
