@@ -208,15 +208,12 @@
     // session this class is never set, so the frame is simply there.
     document.documentElement.classList.add('first-visit');
 
-    // Watchdog: if the images have not loaded within 6 seconds (slow
-    // network, missing file), give up gracefully and show the photo.
-    const watchdog = window.setTimeout(() => {
-      if (!root.classList.contains('is-done')) bailOut(root);
-    }, 6000);
-
-    // Start only once both pose images are ready (or give up on error).
+    // Start only once both pose images are ready (or give up on error), AND
+    // only once the tab is actually visible. If the page was opened in a
+    // background tab, wait for the visitor to switch to it first, so the
+    // greeting isn't spent unseen.
     const imgs = Array.from(root.querySelectorAll('img.avatar-pose'));
-    Promise.all(
+    const imagesReady = Promise.all(
       imgs.map((img) =>
         img.complete
           ? Promise.resolve()
@@ -225,14 +222,24 @@
               img.addEventListener('error', rej, { once: true });
             })
       )
-    )
-      // Don't start the clock until the tab is actually visible. If the page
-      // was opened in a background tab, wait for the visitor to switch to it
-      // first, so the greeting isn't spent unseen.
-      .then(() => whenVisible(() => runIntro(root)))
-      .catch(() => bailOut(root));
+    );
 
-    document.addEventListener('astro:before-swap', () => window.clearTimeout(watchdog), { once: true });
+    imagesReady
+      .then(() =>
+        whenVisible(() => {
+          // Watchdog: if the intro hasn't finished within 6 seconds of the tab
+          // becoming visible (slow network, missing file), give up gracefully
+          // and show the photo. Started here, not at page load, so a hidden
+          // tab doesn't trigger it.
+          const watchdog = window.setTimeout(() => {
+            if (!root.classList.contains('is-done')) bailOut(root);
+          }, 6000);
+          document.addEventListener('astro:before-swap', () => window.clearTimeout(watchdog), { once: true });
+
+          runIntro(root);
+        })
+      )
+      .catch(() => bailOut(root));
   }
 
   // Run `fn` now if the tab is visible, otherwise the moment it becomes
