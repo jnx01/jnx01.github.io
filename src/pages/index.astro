@@ -1056,12 +1056,14 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
   @media (prefers-reduced-motion: no-preference) {
     .hero::after {
       opacity: 1;
-      /* Hold the pale indigo for 2.5s (while the avatar greets), then fade
-         out over 1.4s. `forwards` keeps it at 0.
+      /* Hold the pale indigo while the frame drops and the avatar greets,
+         then fade out over 1.4s as the headshot pops up (2.9s). `forwards`
+         keeps it at 0.
          The animation starts PAUSED and only plays once the tab is visible
          (the .is-visible class on <html>), so opening the page in a
          background tab doesn't spend the welcome wash unseen. */
-      animation: hero-wash-out 1.4s var(--ease-out) 2.5s forwards paused;
+      animation: hero-wash-out 1.4s var(--ease-out) 2.9s forwards;
+      animation-play-state: paused;
     }
 
     /* Play only when the tab is visible. */
@@ -1162,21 +1164,34 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     .hero-underline-stroke path {
       stroke-dasharray: 300; /* slightly more than the path length */
       stroke-dashoffset: 300;
-      /* First draw: starts at 3.5s (after the hero's indigo wash and the
-         headshot pop at 2.5s), draws over 700ms, stays drawn.
+      /* First draw: starts at 3.9s (after the frame drop, the avatar greeting,
+         and the headshot pop at 2.9s), draws over 700ms, stays drawn.
          Then the loop below takes over: every 12s the stroke wipes and
          redraws — a periodic reminder of the thesis (moment B).
-         Both start PAUSED and only play once the tab is visible (the
-         .is-visible class on <html>), so a background tab doesn't spend
-         the first draw unseen. */
+         Both start PAUSED (animation-play-state below) and only play once the
+         tab is visible (the .is-visible class on <html>), so a background tab
+         doesn't spend the first draw unseen. */
       animation:
-        hero-underline-draw 700ms var(--ease-out) 3.5s both paused,
-        hero-underline-redraw 12s var(--ease-out) 5.2s infinite paused;
+        hero-underline-draw 700ms var(--ease-out) 3.9s both,
+        hero-underline-redraw 12s var(--ease-out) 5.6s infinite;
+      animation-play-state: paused, paused;
     }
 
     /* Play only when the tab is visible. */
     :global(html.is-visible) .hero-underline-stroke path {
       animation-play-state: running, running;
+    }
+
+    @keyframes hero-underline-draw {
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* The re-draw loop: hold drawn for most of the cycle, wipe, redraw. */
+    @keyframes hero-underline-redraw {
+      0%    { stroke-dashoffset: 0; }   /* drawn */
+      88%   { stroke-dashoffset: 0; }   /* still drawn (most of the 12s) */
+      92%   { stroke-dashoffset: 300; } /* wiped */
+      100%  { stroke-dashoffset: 0; }   /* redrawn */
     }
   }
   .hero-byline {
@@ -1283,12 +1298,30 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     max-width: 340px;
   }
 
-  @media (min-width: 768px) {
-    .hero-portrait {
-      margin-top: 0;
-      max-width: none;
-      justify-self: end;
-      width: 100%;
+  /* The frame drops in from above the viewport and lands with a pronounced
+     bounce. FIRST VISIT ONLY (the .first-visit class on <html> is set by the
+     AvatarIntro script while the greeting plays), and paused until the tab is
+     visible (.is-visible). Because it only ever plays once per session, it
+     can afford to be big and slow. Reduced-motion users skip it entirely. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(html.first-visit) .hero-portrait {
+      animation: hero-frame-drop 1.4s cubic-bezier(0.22, 1, 0.36, 1) 150ms both;
+      animation-play-state: paused;
+    }
+
+    :global(html.first-visit.is-visible) .hero-portrait {
+      animation-play-state: running;
+    }
+
+    /* Fall from well above, overshoot clearly below home, rebound up, settle.
+       The bigger overshoot + double settle is the "bounce". transform +
+       opacity only. */
+    @keyframes hero-frame-drop {
+      0%   { transform: translateY(-130%); opacity: 0; }
+      50%  { transform: translateY(6%);    opacity: 1; } /* big overshoot (well past home) */
+      68%  { transform: translateY(-3%);   }             /* rebound up */
+      82%  { transform: translateY(1.5%);  }             /* second, smaller settle */
+      100% { transform: translateY(0);     opacity: 1; } /* rest */
     }
   }
 
