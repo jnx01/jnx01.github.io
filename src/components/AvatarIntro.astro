@@ -115,14 +115,17 @@
 </style>
 
 <script>
-  // One timeline, in seconds. The waving avatar rises at 0s and waves until
-  // 2.5s, then sinks as the real headshot pops up and the hero's pale-indigo
-  // wash fades to off-white (both at 2.5s).
-  const RISE_END = 0.35;   // avatar finishes rising into frame
-  const WIGGLE_END = 2.2;  // the wave wiggle stops (just before the sink)
-  const PHOTO_POP = 2.5;   // headshot starts popping up (matches hero wash)
-  const GONE = 2.9;        // avatar fully below the frame edge
-  const CLEANUP = 3.4;     // remove the avatar stage from the page
+  // One timeline, in seconds. The frame drops in from above first (about
+  // 1.55s, see hero-frame-drop in index.astro); the avatar waits for the
+  // landing, then rises and waves until 2.5s, when it sinks as the real
+  // headshot pops up and the hero's pale-indigo wash fades to off-white
+  // (both at 2.5s).
+  const FRAME_LANDS = 1.55; // the frame's drop finishes; the avatar rises after
+  const RISE_END = 1.9;    // avatar finishes rising into frame
+  const WIGGLE_END = 2.6;  // the wave wiggle stops (just before the sink)
+  const PHOTO_POP = 2.9;   // headshot starts popping up
+  const GONE = 3.3;        // avatar fully below the frame edge
+  const CLEANUP = 3.8;     // remove the avatar stage from the page
 
   /** Ease helpers: turn a 0..1 progress value into a nicer 0..1 curve. */
   const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -150,8 +153,9 @@
     const tick = () => {
       const t = (performance.now() - start) / 1000;
 
-      // 1. Rise into the frame, then sink back down at the end.
-      const up = easeOut(between(t, 0, RISE_END));
+      // 1. Rise into the frame (once the frame has landed), then sink back
+      //    down at the end.
+      const up = easeOut(between(t, FRAME_LANDS, RISE_END));
       const down = easeIn(between(t, PHOTO_POP, GONE));
       stage.style.transform = `translateY(${(1 - up) * 104 + down * 104}%)`;
 
@@ -200,6 +204,10 @@
     }
 
     root.classList.add('is-playing');
+    // Tell the page this is the one-time greeting, so the portrait frame's
+    // drop-from-above (in index.astro) plays too. On later loads within the
+    // session this class is never set, so the frame is simply there.
+    document.documentElement.classList.add('first-visit');
 
     // Watchdog: if the images have not loaded within 6 seconds (slow
     // network, missing file), give up gracefully and show the photo.
