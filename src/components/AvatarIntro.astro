@@ -115,17 +115,16 @@
 </style>
 
 <script>
-  // One timeline, in seconds. The frame drops in from above first (about
-  // 1.55s, see hero-frame-drop in index.astro); the avatar waits for the
-  // landing, then rises and waves until 2.5s, when it sinks as the real
-  // headshot pops up and the hero's pale-indigo wash fades to off-white
-  // (both at 2.5s).
+  // One timeline, in seconds. The frame drops in from above first (settles at
+  // ~1.55s, see hero-frame-drop in index.astro); the avatar rises as it lands
+  // and stays for 2.5s, then sinks as the real headshot pops up and the hero's
+  // pale-indigo wash fades to off-white (both at 4.05s).
   const FRAME_LANDS = 1.55; // the frame's drop finishes; the avatar rises after
   const RISE_END = 1.9;    // avatar finishes rising into frame
-  const WIGGLE_END = 2.6;  // the wave wiggle stops (just before the sink)
-  const PHOTO_POP = 2.9;   // headshot starts popping up
-  const GONE = 3.3;        // avatar fully below the frame edge
-  const CLEANUP = 3.8;     // remove the avatar stage from the page
+  const WIGGLE_END = 3.7;  // the wave wiggle stops (just before the sink)
+  const PHOTO_POP = 4.05;  // headshot pops up (2.5s after the frame settles)
+  const GONE = 4.45;       // avatar fully below the frame edge
+  const CLEANUP = 4.9;     // remove the avatar stage from the page
 
   /** Ease helpers: turn a 0..1 progress value into a nicer 0..1 curve. */
   const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
