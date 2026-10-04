@@ -219,10 +219,29 @@
             })
       )
     )
-      .then(() => runIntro(root))
+      // Don't start the clock until the tab is actually visible. If the page
+      // was opened in a background tab, wait for the visitor to switch to it
+      // first, so the greeting isn't spent unseen.
+      .then(() => whenVisible(() => runIntro(root)))
       .catch(() => bailOut(root));
 
     document.addEventListener('astro:before-swap', () => window.clearTimeout(watchdog), { once: true });
+  }
+
+  // Run `fn` now if the tab is visible, otherwise the moment it becomes
+  // visible (the visitor switches to this tab).
+  function whenVisible(fn: () => void) {
+    if (document.visibilityState === 'visible') {
+      fn();
+      return;
+    }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        document.removeEventListener('visibilitychange', onVisible);
+        fn();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
   }
 
   // astro:page-load fires on first load AND after view-transition navigation,
