@@ -1312,21 +1312,42 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     max-width: 340px;
   }
 
+  /* A slow, subtle "breathing" — the frame swells and relaxes by a whisper.
+     Starts only after every other intro animation has finished (the underline
+     draw is the last one), so it never competes for attention. Reduced-motion
+     users skip it entirely. */
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-portrait {
+      /* Revisit: underline draws at 3.5s + 0.7s draw = done at 4.2s. */
+      animation: hero-breathe 7s ease-in-out 4.3s infinite;
+      animation-play-state: paused;
+    }
+
+    :global(html.first-visit) .hero-portrait {
+      /* First visit: frame drop (1.4s @ 150ms) AND breathing (underline draws
+         at 4.55s + 0.7s = done at 5.25s). */
+      animation:
+        hero-frame-drop 1.4s cubic-bezier(0.22, 1, 0.36, 1) 150ms both,
+        hero-breathe 7s ease-in-out 5.3s infinite;
+      animation-play-state: paused, paused;
+    }
+
+    :global(html.is-visible) .hero-portrait {
+      animation-play-state: running, running;
+    }
+
+    @keyframes hero-breathe {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.03); }
+    }
+  }
+
   /* The frame drops in from above the viewport and lands with a pronounced
      bounce. FIRST VISIT ONLY (the .first-visit class on <html> is set by the
      AvatarIntro script while the greeting plays), and paused until the tab is
      visible (.is-visible). Because it only ever plays once per session, it
      can afford to be big and slow. Reduced-motion users skip it entirely. */
   @media (prefers-reduced-motion: no-preference) {
-    :global(html.first-visit) .hero-portrait {
-      animation: hero-frame-drop 1.4s cubic-bezier(0.22, 1, 0.36, 1) 150ms both;
-      animation-play-state: paused;
-    }
-
-    :global(html.first-visit.is-visible) .hero-portrait {
-      animation-play-state: running;
-    }
-
     /* Fall from well above, overshoot clearly below home, rebound up, settle.
        The bounce is doubled: a big overshoot, a big rebound, then a second
        smaller overshoot + settle. transform + opacity only. */
