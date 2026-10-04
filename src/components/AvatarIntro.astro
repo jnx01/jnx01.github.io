@@ -123,15 +123,17 @@
 </style>
 
 <script>
-  // One timeline, in seconds. Matches the hero's pale-indigo phase (1.8s):
-  // avatar-1 (neutral) shows for 0.8s, avatar-2 (waving) for 1.0s, then the
-  // real headshot pops up as the hero background turns warm off-white.
+  // One timeline, in seconds. Matches the hero's pale-indigo phase (2.5s):
+  // avatar-1 (neutral) shows until 1.1s, avatar-2 (waving) is fully in by
+  // 1.4s, then the real headshot pops up as the hero background turns warm
+  // off-white.
   const RISE_END = 0.35;   // avatar finishes rising into frame
-  const CROSSFADE = 0.8;   // neutral -> waving pose swap midpoint
-  const WIGGLE_END = 1.6;  // the wave wiggle stops
-  const PHOTO_POP = 1.8;   // headshot starts popping up
-  const GONE = 2.2;        // avatar fully below the frame edge
-  const CLEANUP = 2.7;     // remove the avatar stage from the page
+  const CROSSFADE = 1.1;   // neutral -> waving pose swap midpoint (avatar-1 holds until here)
+  const WAVE_IN = 1.4;     // avatar-2 (waving) fully visible
+  const WIGGLE_END = 2.0;  // the wave wiggle stops
+  const PHOTO_POP = 2.5;   // headshot starts popping up (matches hero wash)
+  const GONE = 2.9;        // avatar fully below the frame edge
+  const CLEANUP = 3.4;     // remove the avatar stage from the page
 
   /** Ease helpers: turn a 0..1 progress value into a nicer 0..1 curve. */
   const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -166,8 +168,9 @@
       stage.style.transform = `translateY(${(1 - up) * 104 + down * 104}%)`;
 
       // 2. Swap poses: the neutral pose fades OUT while the waving pose
-      //    fades IN, so the two never ghost through each other.
-      const swap = between(t, CROSSFADE - 0.15, CROSSFADE + 0.15);
+      //    fades IN, so the two never ghost through each other. The swap
+      //    starts just before CROSSFADE and completes at WAVE_IN (1.4s).
+      const swap = between(t, CROSSFADE - 0.15, WAVE_IN);
       waving.style.opacity = String(swap);
       neutral.style.opacity = String(1 - swap);
 
