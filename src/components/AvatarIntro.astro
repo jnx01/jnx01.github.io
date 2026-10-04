@@ -118,13 +118,13 @@
   // One timeline, in seconds. The avatar is already inside the frame when the
   // frame drops in from above (settles at ~1.55s, see hero-frame-drop in
   // index.astro). Once the frame lands, the wave wiggle and the "Hi There!"
-  // greeting play for 2s, then the avatar sinks as the real headshot pops up
-  // and the hero's pale-indigo wash fades to off-white (both at 3.55s).
+  // greeting play for 1.7s, then the avatar sinks as the real headshot pops up
+  // and the hero's pale-indigo wash fades to off-white (both at 3.25s).
   const FRAME_LANDS = 1.55; // the frame's drop finishes; the greeting starts
-  const WIGGLE_END = 3.4;  // the wave wiggle stops (just before the sink)
-  const PHOTO_POP = 3.55;  // headshot pops up (2s after the frame settles)
-  const GONE = 3.95;       // avatar fully below the frame edge
-  const CLEANUP = 4.4;     // remove the avatar stage from the page
+  const WIGGLE_END = 3.1;  // the wave wiggle stops (just before the sink)
+  const PHOTO_POP = 3.25;  // headshot pops up (1.7s after the frame settles)
+  const GONE = 3.65;       // avatar fully below the frame edge
+  const CLEANUP = 4.1;     // remove the avatar stage from the page
 
   /** Ease helpers: turn a 0..1 progress value into a nicer 0..1 curve. */
   const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
