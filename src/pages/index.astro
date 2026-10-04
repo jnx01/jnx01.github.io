@@ -1056,8 +1056,9 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
   @media (prefers-reduced-motion: no-preference) {
     .hero::after {
       opacity: 1;
-      /* wait 1.8s, then fade out over 1.4s. `forwards` keeps it at 0. */
-      animation: hero-wash-out 1.4s var(--ease-out) 1.8s forwards;
+      /* Hold the pale indigo for 2.5s (while the avatar greets), then fade
+         out over 1.4s. `forwards` keeps it at 0. */
+      animation: hero-wash-out 1.4s var(--ease-out) 2.5s forwards;
     }
   }
 
