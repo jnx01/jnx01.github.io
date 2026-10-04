@@ -8,7 +8,7 @@
  *
  *   Trainee Consultant     1 block   data warehousing
  *   Consultant I           2 blocks  ETL and data science ops
- *   Engineer II            3 blocks  APIs, agentic skills, evals
+ *   Engineer II            3 blocks  AI agents, APIs, agentic skills, evals
  *
  * The bars fill in on scroll, left to right, so the growth reads as motion.
  * Reduced motion / no JS: all blocks visible, no animation.
@@ -31,7 +31,7 @@ const stages = [
     role: 'Engineer II',
     when: '2025',
     blocks: 3,
-    note: 'APIs, agentic skills, evals',
+    note: 'AI agents, APIs, agentic skills, evals',
   },
 ];
 
@@ -43,7 +43,7 @@ const maxBlocks = 3;
   <div
     class="scope-track"
     role="img"
-    aria-label="Three roles at Teradata with widening scope: Trainee Consultant in 2023 (data warehousing), Consultant I in 2024 (ETL and data science ops), Engineer II in 2025 (APIs, agentic skills, and evaluations)."
+    aria-label="Three roles at Teradata with widening scope: Trainee Consultant in 2023 (data warehousing), Consultant I in 2024 (ETL and data science ops), Engineer II in 2025 (AI agents, APIs, agentic skills, and evaluations)."
   >
     {stages.map((stage, s) => (
       <div class="scope-stage">
