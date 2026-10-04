@@ -115,16 +115,16 @@
 </style>
 
 <script>
-  // One timeline, in seconds. The frame drops in from above first (settles at
-  // ~1.55s, see hero-frame-drop in index.astro); the avatar rises as it lands
-  // and stays for 2.5s, then sinks as the real headshot pops up and the hero's
-  // pale-indigo wash fades to off-white (both at 4.05s).
-  const FRAME_LANDS = 1.55; // the frame's drop finishes; the avatar rises after
-  const RISE_END = 1.9;    // avatar finishes rising into frame
-  const WIGGLE_END = 3.7;  // the wave wiggle stops (just before the sink)
-  const PHOTO_POP = 4.05;  // headshot pops up (2.5s after the frame settles)
-  const GONE = 4.45;       // avatar fully below the frame edge
-  const CLEANUP = 4.9;     // remove the avatar stage from the page
+  // One timeline, in seconds. The avatar is already inside the frame when the
+  // frame drops in from above (settles at ~1.55s, see hero-frame-drop in
+  // index.astro). Once the frame lands, the wave wiggle and the "Hi There!"
+  // greeting play for 2s, then the avatar sinks as the real headshot pops up
+  // and the hero's pale-indigo wash fades to off-white (both at 3.55s).
+  const FRAME_LANDS = 1.55; // the frame's drop finishes; the greeting starts
+  const WIGGLE_END = 3.4;  // the wave wiggle stops (just before the sink)
+  const PHOTO_POP = 3.55;  // headshot pops up (2s after the frame settles)
+  const GONE = 3.95;       // avatar fully below the frame edge
+  const CLEANUP = 4.4;     // remove the avatar stage from the page
 
   /** Ease helpers: turn a 0..1 progress value into a nicer 0..1 curve. */
   const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -152,23 +152,23 @@
     const tick = () => {
       const t = (performance.now() - start) / 1000;
 
-      // 1. Rise into the frame (once the frame has landed), then sink back
-      //    down at the end.
-      const up = easeOut(between(t, FRAME_LANDS, RISE_END));
+      // 1. The avatar is already in place inside the dropping frame — no
+      //    rise. It only sinks out at the end, as the photo pops up.
       const down = easeIn(between(t, PHOTO_POP, GONE));
-      stage.style.transform = `translateY(${(1 - up) * 104 + down * 104}%)`;
+      stage.style.transform = `translateY(${down * 104}%)`;
 
-      // 2. The "Hi There!" greeting fades in once the avatar has risen, and
+      // 2. The "Hi There!" greeting fades in once the frame has landed, and
       //    fades out as the avatar starts sinking.
       if (greeting) {
         greeting.style.opacity = String(
-          between(t, RISE_END, RISE_END + 0.3) * (1 - between(t, PHOTO_POP, GONE))
+          between(t, FRAME_LANDS, FRAME_LANDS + 0.3) * (1 - between(t, PHOTO_POP, GONE))
         );
       }
 
       // 3. The wave: a small rotation wiggle on the whole figure sells the
-      //    gesture (the raised arm is baked into the waving pose).
-      const wiggling = between(t, RISE_END, WIGGLE_END) * (1 - between(t, WIGGLE_END, WIGGLE_END + 0.2));
+      //    gesture (the raised arm is baked into the waving pose). Starts
+      //    only once the frame has settled.
+      const wiggling = between(t, FRAME_LANDS, WIGGLE_END) * (1 - between(t, WIGGLE_END, WIGGLE_END + 0.15));
       const wiggle = Math.sin(t * Math.PI * 5) * 2.2 * wiggling; // degrees
       stage.style.rotate = `${wiggle}deg`;
 
