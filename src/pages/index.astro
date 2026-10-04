@@ -1319,7 +1319,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
   @media (prefers-reduced-motion: no-preference) {
     .hero-portrait {
       /* Revisit: underline draws at 3.5s + 0.7s draw = done at 4.2s. */
-      animation: hero-breathe 7s ease-in-out 4.3s infinite;
+      animation: hero-breathe 9s ease-in-out 4.3s infinite;
       animation-play-state: paused;
     }
 
@@ -1328,7 +1328,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
          at 4.55s + 0.7s = done at 5.25s). */
       animation:
         hero-frame-drop 1.4s cubic-bezier(0.22, 1, 0.36, 1) 150ms both,
-        hero-breathe 7s ease-in-out 5.3s infinite;
+        hero-breathe 9s ease-in-out 5.3s infinite;
       animation-play-state: paused, paused;
     }
 
@@ -1336,9 +1336,13 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
       animation-play-state: running, running;
     }
 
+    /* Extra stops approximate a sine curve, so the swell and relax have no
+       perceptible speed change at the turning points. */
     @keyframes hero-breathe {
       0%, 100% { transform: scale(1); }
-      50%      { transform: scale(1.025); }
+      25%      { transform: scale(1.014); }
+      50%      { transform: scale(1.02); }
+      75%      { transform: scale(1.014); }
     }
   }
 
