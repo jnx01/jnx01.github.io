@@ -1,4 +1,5 @@
 .venv/
+.venv-*/
 __pycache__/
 *.pyc
 .DS_Store
@@ -12,8 +13,7 @@ dist/
 .env
 .env.*
 
-# Local-only source materials and planning docs — kept out of the public repo.
-# (The site only needs the processed assets in public/, not the originals.)
+# Local-only source materials (resumes, original photos/videos) — kept out of
+# the public repo. The site only needs the processed assets in public/.
 assets-source/
-planning/
 

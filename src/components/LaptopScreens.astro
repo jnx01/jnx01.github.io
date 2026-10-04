@@ -1,0 +1,229 @@
+---
+/**
+ * LaptopScreens — the pictures shown on the homepage laptop's screen
+ * (planning/ARCHITECTURE.md §10).
+ *
+ * RULE: every screen is a small, still copy of something that is REAL and
+ * already on this site. Nothing is invented. They are snapshots, not live
+ * copies: no scripts, no animation, nothing to wait for.
+ *
+ *   0  The site wordmark (the name, as in the nav)
+ *   1  Teradata: the "40 REST endpoints" grid from /work/teradata
+ *   2  SignChatter: a real hand-keypoint frame (src/assets/sign-keypoints.json)
+ *   3  Experiments: the routing curve, from the same numbers as /work/experiments
+ *   4  Research: the two-pillar diagram from /research
+ *   5  Experience: two roles joined by a line, then "more" dots
+ *   6  The wordmark again, for the Recognition stop and the closing lid
+ *      (a separate layer, so the cross-fade from "5" to the name is a
+ *      normal one-step fade instead of scrolling through 4, 3, 2, 1)
+ *
+ * All seven are stacked on top of each other. The journey script sets each
+ * layer's `opacity` (0 to 1) from one number, so they cross-fade as the
+ * laptop moves. Only opacity changes.
+ *
+ * Every drawing uses the same small canvas: 320 x 204 units (the shape of
+ * the laptop screen). Colors come from the site's tokens.
+ */
+import keypoints from '../assets/sign-keypoints.json';
+import { budgets, random, router } from './figures/routing-data';
+
+// ---- Screen 1: 40 endpoint squares (10 columns x 4 rows) ------------------
+const squares = Array.from({ length: 40 }, (_, i) => ({
+  x: 43 + (i % 10) * 24, // 18 wide square + 6 gap
+  y: 38 + Math.floor(i / 10) * 24,
+}));
+
+// ---- Screen 2: one real hand frame ----------------------------------------
+// The JSON is frames -> hands -> 21 points of [x, y], each 0 to 1 across the
+// whole video frame. In the video the hand is small, so we find the box that
+// holds the hand and scale it up to fill the screen (keeping its shape).
+const frames = keypoints.frames.map((f) => (f.length > 0 ? f[0] : null));
+const hand = frames[Math.floor(frames.length / 2)];
+const handSize = 120; // the longest side of the hand, in drawing units
+const xs = hand ? hand.map((p) => p[0]) : [0];
+const ys = hand ? hand.map((p) => p[1]) : [0];
+const minX = Math.min(...xs), maxX = Math.max(...xs);
+const minY = Math.min(...ys), maxY = Math.max(...ys);
+const handScale = handSize / Math.max(maxX - minX, maxY - minY || 1);
+// Centre the hand in the 320 x 190 area above the caption.
+const handX = (n: number) => 160 + (n - (minX + maxX) / 2) * handScale;
+const handY = (n: number) => 92 + (n - (minY + maxY) / 2) * handScale;
+
+// ---- Screen 3: the routing chart ------------------------------------------
+// Same recipe as RoutingCurve.astro, just a smaller canvas.
+const W = 320, H = 204;
+const padL = 34, padR = 14, padT = 36, padB = 34;
+const xMin = 0, xMax = 100; // budget %
+const yMin = 25, yMax = 42; // accuracy %
+const cx = (b: number) => padL + ((b - xMin) / (xMax - xMin)) * (W - padL - padR);
+const cy = (a: number) => padT + (1 - (a - yMin) / (yMax - yMin)) * (H - padT - padB);
+const toPath = (vals: number[]) =>
+  vals.map((v, i) => `${i === 0 ? 'M' : 'L'} ${cx(budgets[i]).toFixed(1)} ${cy(v).toFixed(1)}`).join(' ');
+const randomPath = toPath(random);
+const routerPath = toPath(router);
+const yTicks = [25, 30, 35, 40];
+
+// Screen 5 (Experience) is drawn by hand below: two roles and "more" dots.
+---
+
+<div class="screens">
+  <!-- 0 and 6. Wordmark (layer 6 is the same picture, used at the end) -->
+  {[0, 6].map((n) => (
+    <div class="screen" data-screen={n}>
+      <svg viewBox="0 0 320 204" aria-hidden="true">
+        <text x="160" y="108" text-anchor="middle" class="t-display t-xl">Jahanzeb Naeem</text>
+        <text x="160" y="130" text-anchor="middle" class="t-mono t-muted">AI Engineer</text>
+      </svg>
+    </div>
+  ))}
+
+  <!-- 1. Teradata: 40 REST endpoints -->
+  <div class="screen" data-screen="1">
+    <svg viewBox="0 0 320 204" aria-hidden="true">
+      <text x="43" y="22" class="t-mono t-muted">TERADATA</text>
+      {squares.map((sq) => (
+        <rect x={sq.x} y={sq.y} width="18" height="18" rx="1.5" class="accent-fill" />
+      ))}
+      <text x="160" y="160" text-anchor="middle" class="t-mono t-ink"><tspan class="t-strong">40</tspan> REST endpoints.</text>
+      <text x="160" y="178" text-anchor="middle" class="t-mono t-ink"><tspan class="t-strong">Two</tspan> services. <tspan class="t-strong">One</tspan> owner.</text>
+    </svg>
+  </div>
+
+  <!-- 2. SignChatter: a real hand frame -->
+  <div class="screen" data-screen="2">
+    <svg viewBox="0 0 320 204" aria-hidden="true">
+      {hand && keypoints.connections.map(([a, b]) => (
+        <line
+          class="bone"
+          x1={handX(hand[a][0])} y1={handY(hand[a][1])}
+          x2={handX(hand[b][0])} y2={handY(hand[b][1])}
+        />
+      ))}
+      {hand && hand.map((pt) => (
+        <circle class="joint" r="2.6" cx={handX(pt[0])} cy={handY(pt[1])} />
+      ))}
+      <text x="160" y="196" text-anchor="middle" class="t-mono t-muted">SIGNCHATTER · MEDIAPIPE KEYPOINTS</text>
+    </svg>
+  </div>
+
+  <!-- 3. Experiments: accuracy vs budget -->
+  <div class="screen" data-screen="3">
+    <svg viewBox="0 0 320 204" aria-hidden="true">
+      <text x={padL} y="18" class="t-mono t-muted">ACCURACY VS BUDGET</text>
+      {yTicks.map((t) => (
+        <g>
+          <line x1={padL} y1={cy(t)} x2={W - padR} y2={cy(t)} class="grid-line" />
+          <text x={padL - 5} y={cy(t) + 3} text-anchor="end" class="t-mono t-muted t-sm">{t}%</text>
+        </g>
+      ))}
+      {budgets.map((b) => (
+        <text x={cx(b)} y={H - padB + 14} text-anchor="middle" class="t-mono t-muted t-sm">{b}%</text>
+      ))}
+      <path d={randomPath} class="line line-random" />
+      {random.map((v, i) => <circle cx={cx(budgets[i])} cy={cy(v)} r="2.6" class="dot-random" />)}
+      <path d={routerPath} class="line line-router" />
+      {router.map((v, i) => <circle cx={cx(budgets[i])} cy={cy(v)} r="3" class="accent-fill" />)}
+      <line x1="196" y1="14" x2="212" y2="14" class="line line-router" />
+      <text x="216" y="17" class="t-mono t-ink t-sm">Router</text>
+      <line x1="196" y1="26" x2="212" y2="26" class="line line-random" />
+      <text x="216" y="29" class="t-mono t-ink t-sm">Random</text>
+    </svg>
+  </div>
+
+  <!-- 4. Research: the two pillars -->
+  <div class="screen" data-screen="4">
+    <svg viewBox="0 0 320 204" aria-hidden="true">
+      <path d="M 120 64 C 120 96, 70 96, 70 126" class="connector" />
+      <path d="M 200 64 C 200 96, 250 96, 250 126" class="connector" />
+      <g>
+        <rect x="75" y="24" width="170" height="40" rx="6" class="node node-theme" />
+        <text x="160" y="49" text-anchor="middle" class="t-body t-md">Efficient &amp; Reliable AI</text>
+      </g>
+      <g>
+        <rect x="20" y="126" width="100" height="40" rx="6" class="node" />
+        <text x="70" y="151" text-anchor="middle" class="t-body t-md">Efficiency</text>
+      </g>
+      <g>
+        <rect x="200" y="126" width="100" height="40" rx="6" class="node" />
+        <text x="250" y="151" text-anchor="middle" class="t-body t-md">Reliability</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- 5. Experience: the timeline -->
+  <div class="screen" data-screen="5">
+    <svg viewBox="0 0 320 204" aria-hidden="true">
+      <text x="20" y="24" class="t-mono t-muted">EXPERIENCE</text>
+      <!-- One vertical line joins the two dots, then carries on to the "more" dots -->
+      <line x1="76" y1="62" x2="76" y2="132" class="connector" />
+      <!-- Row 1: Teradata (now) -->
+      <text x="20" y="66" class="t-mono t-muted t-sm">2023 -</text>
+      <circle cx="76" cy="62" r="4" class="accent-fill" />
+      <text x="92" y="66" class="t-body t-md t-strong">Teradata</text>
+      <!-- Row 2: Bahria University -->
+      <text x="20" y="116" class="t-mono t-muted t-sm">2022-23</text>
+      <circle cx="76" cy="112" r="4" class="accent-fill" />
+      <text x="92" y="116" class="t-body t-md t-strong">Bahria University, CoE AI</text>
+      <!-- Three dots: there is more history -->
+      <circle cx="76" cy="146" r="2" class="muted-fill" />
+      <circle cx="76" cy="158" r="2" class="muted-fill" />
+      <circle cx="76" cy="170" r="2" class="muted-fill" />
+    </svg>
+  </div>
+</div>
+
+<style>
+  .screens {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: var(--color-bg);
+  }
+
+  /* All screens sit on top of each other; the script sets their opacity. */
+  .screen {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+  }
+
+  .screen svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* IMPORTANT: without this, Chrome draws SVG text in the wrong place when
+       the laptop is tilted in 3D (text drifts down and gets cut off). */
+    text-rendering: geometricPrecision;
+  }
+
+  /* ---- Text styles (sizes are in drawing units, not px) ---- */
+  .t-display { font-family: var(--font-display); font-weight: 600; fill: var(--color-ink); }
+  .t-body { font-family: var(--font-body); fill: var(--color-ink); }
+  .t-mono { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.04em; fill: var(--color-ink); }
+  .t-xl { font-size: 28px; letter-spacing: -0.01em; }
+  .t-md { font-size: 14px; }
+  .t-sm { font-size: 10px; }
+  .t-muted { fill: var(--color-ink-muted); }
+  .t-ink { fill: var(--color-ink); font-size: 12px; }
+  .t-strong { font-weight: 600; }
+
+  /* ---- Shared drawing styles ---- */
+  .accent-fill { fill: var(--color-accent); }
+  .muted-fill { fill: var(--color-ink-muted); }
+  .grid-line { stroke: var(--color-border); stroke-width: 1; }
+
+  /* Hand */
+  .bone { stroke: var(--color-accent); stroke-width: 1.6; stroke-linecap: round; opacity: 0.85; }
+  .joint { fill: var(--color-ink); }
+
+  /* Routing chart */
+  .line { fill: none; stroke-width: 2; }
+  .line-router { stroke: var(--color-accent); }
+  .line-random { stroke: var(--color-ink-muted); stroke-dasharray: 4 3; stroke-width: 1.5; }
+  .dot-random { fill: var(--color-ink-muted); }
+
+  /* Pillars */
+  .node { fill: var(--color-bg); stroke: var(--color-border); stroke-width: 1.5; }
+  .node-theme { fill: var(--color-bg-accent); stroke: var(--color-accent); }
+  .connector { fill: none; stroke: var(--color-accent); stroke-width: 1.5; }
+</style>

@@ -1,0 +1,316 @@
+---
+/**
+ * RouterBand — "The Router" (modification strategy 03, moment H2).
+ *
+ * A slim ambient visualization that sits directly under the homepage hero:
+ * a stream of dots (queries) flows in from the left, hits a small "router"
+ * node, and splits — most glide to the small model, about a quarter rise
+ * along an accent path to the big model.
+ *
+ * This is NOT decoration: it depicts the flagship experiment
+ * (budgeted_model_routing) running live, and the readout shows that
+ * experiment's REAL measured numbers:
+ *
+ *   budget 25%  ->  router 33.6% accuracy  vs  random 30.7%  vs  always-small 27.9%
+ *   time: router@25% 14.2s  vs  always-big 26.4s  vs  always-small 12.2s
+ *
+ * The ~75/25 dot split matches the 25% budget.
+ *
+ * Accessibility & performance rules (strategy §G, amended):
+ *   - the whole band is aria-hidden decoration; the same information is
+ *     conveyed by the visible caption + a screen-reader-only sentence
+ *   - dots only animate when the band is on screen, the tab is visible,
+ *     and the user has NOT asked for reduced motion
+ *   - reduced motion / no JS: one static frame (a few dots frozen along the
+ *     paths) with the same readout — identical information
+ *   - transform-only animation, no layout work, no library
+ */
+---
+
+<div class="router-band" data-router-band>
+  <!-- Screen-reader version: the finding in one plain sentence. -->
+  <p class="visually-hidden">
+    A visualization of my model-routing experiment: at a 25 percent budget,
+    a simple routing rule sends only the hardest quarter of queries to the
+    large model and reaches 33.6 percent accuracy, versus 30.7 percent for
+    random allocation and 27.9 percent for always using the small model,
+    in 14.2 seconds instead of 26.4.
+  </p>
+
+  <!-- The visualization itself. Pure SVG; dots are <circle> elements whose
+       offset-path / offset-distance do all the movement. -->
+  <svg
+    class="router-svg"
+    viewBox="0 0 800 120"
+    role="presentation"
+    aria-hidden="true"
+    preserveAspectRatio="xMidYMid meet"
+  >
+    <!-- The three paths. Queries enter from the left, hit the router node,
+         then split: LOW path to the small model, HIGH path to the big one. -->
+    <path class="rb-path"        d="M -10 60 L 330 60" />
+    <path class="rb-path"        d="M 350 60 C 430 60, 470 92, 560 92 L 668 92" />
+    <path class="rb-path rb-hi"  d="M 350 60 C 430 60, 470 28, 560 28 L 668 28" />
+
+    <!-- Router node -->
+    <g class="rb-node">
+      <rect x="330" y="46" width="20" height="28" rx="4" />
+      <text x="340" y="92" text-anchor="middle" class="rb-node-label">router</text>
+    </g>
+
+    <!-- Model nodes -->
+    <g class="rb-node">
+      <rect x="668" y="80" width="24" height="24" rx="4" />
+      <text x="680" y="116" text-anchor="middle" class="rb-node-label">Qwen3-1.7B</text>
+    </g>
+    <g class="rb-node rb-node-hi">
+      <rect x="668" y="16" width="24" height="24" rx="4" />
+      <text x="680" y="8" text-anchor="middle" class="rb-node-label">Qwen3-4B</text>
+    </g>
+
+    <!-- The dots. 16 total: 12 take the low path, 4 the high path (75/25).
+         Each dot's offset-path is set in CSS; offset-distance animates from
+         -30% to 130% so dots fully enter and leave the band. The `style`
+         attribute only carries per-dot timing (delay + duration variety). -->
+    <!-- Low-path dots -->
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -0.0s;  animation-duration: 7.2s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -1.8s;  animation-duration: 7.6s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -3.4s;  animation-duration: 6.9s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -5.1s;  animation-duration: 7.4s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -6.6s;  animation-duration: 7.1s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -8.2s;  animation-duration: 7.8s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -9.7s;  animation-duration: 7.0s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -11.3s; animation-duration: 7.5s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -12.9s; animation-duration: 7.3s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -14.4s; animation-duration: 6.8s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -16.0s; animation-duration: 7.7s" />
+    <circle class="rb-dot rb-dot-lo" r="3.5" style="animation-delay: -17.5s; animation-duration: 7.2s" />
+    <!-- High-path dots (accent) -->
+    <circle class="rb-dot rb-dot-hi" r="3.5" style="animation-delay: -2.6s;  animation-duration: 7.4s" />
+    <circle class="rb-dot rb-dot-hi" r="3.5" style="animation-delay: -7.4s;  animation-duration: 7.0s" />
+    <circle class="rb-dot rb-dot-hi" r="3.5" style="animation-delay: -12.1s; animation-duration: 7.6s" />
+    <circle class="rb-dot rb-dot-hi" r="3.5" style="animation-delay: -16.8s; animation-duration: 7.1s" />
+  </svg>
+
+  <!-- The real numbers, in quiet mono. This is the point of the band. -->
+  <p class="rb-readout" aria-hidden="true">
+    <span class="rb-readout-item">budget <strong>25%</strong></span>
+    <span class="rb-readout-sep">·</span>
+    <span class="rb-readout-item">router <strong>33.6%</strong></span>
+    <span class="rb-readout-sep">·</span>
+    <span class="rb-readout-item">random <strong>30.7%</strong></span>
+    <span class="rb-readout-sep">·</span>
+    <span class="rb-readout-item">always-small <strong>27.9%</strong></span>
+    <span class="rb-readout-sep">·</span>
+    <span class="rb-readout-item"><strong>14.2s</strong> vs 26.4s all-large</span>
+  </p>
+</div>
+
+<style>
+  /* ---- Layout --------------------------------------------------------------
+     A slim band: the SVG track on top, the readout beneath. Full content
+     width, quiet hairline rules above and below to set it apart from the
+     hero and the proof strip without a tinted background. */
+  .router-band {
+    margin-top: var(--space-12);
+    padding-block: var(--space-6);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .router-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 120px;
+  }
+
+  /* ---- Static drawing ------------------------------------------------------ */
+  .rb-path {
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: 1.5;
+  }
+
+  /* The high path (to the big model) is the accent: it is the interesting
+     decision the router makes. */
+  .rb-hi {
+    stroke: var(--color-accent);
+    stroke-opacity: 0.35;
+  }
+
+  .rb-node rect {
+    fill: var(--color-bg);
+    stroke: var(--color-ink-muted);
+    stroke-width: 1.5;
+  }
+
+  .rb-node-hi rect {
+    stroke: var(--color-accent);
+  }
+
+  .rb-node-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    fill: var(--color-ink-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .rb-dot {
+    fill: var(--color-ink-muted);
+  }
+
+  .rb-dot-hi {
+    fill: var(--color-accent);
+  }
+
+  /* ---- The readout ---------------------------------------------------------- */
+  .rb-readout {
+    margin-top: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    letter-spacing: 0.02em;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    justify-content: center;
+  }
+
+  .rb-readout strong {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  .rb-readout-sep {
+    opacity: 0.5;
+  }
+
+  /* ---- Motion ----------------------------------------------------------------
+     Each dot travels its path via offset-path + offset-distance. The two
+     paths are defined once here; per-dot delay/duration live inline so the
+     stream feels organic rather than metronomic.
+
+     Dots only animate when ALL of these hold:
+       - user has not asked for reduced motion
+       - the band is on screen (.is-live is toggled by the observer below)
+       - the tab is visible (handled by the script pausing via the same class)
+     Otherwise they freeze as a static frame — which still shows the split. */
+  @media (prefers-reduced-motion: no-preference) {
+    .rb-dot-lo {
+      offset-path: path('M -10 60 L 330 60 C 380 60, 430 78, 470 88 C 510 96, 540 92, 560 92 L 668 92');
+    }
+
+    .rb-dot-hi {
+      offset-path: path('M -10 60 L 330 60 C 380 60, 430 42, 470 32 C 510 24, 540 28, 560 28 L 668 28');
+    }
+
+    .rb-dot {
+      offset-rotate: 0deg; /* dots are round; no need to rotate along the path */
+      animation-name: rb-travel;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      animation-play-state: paused; /* frozen until the band is live */
+    }
+
+    .router-band.is-live .rb-dot {
+      animation-play-state: running;
+    }
+
+    @keyframes rb-travel {
+      from { offset-distance: 0%; }
+      to   { offset-distance: 100%; }
+    }
+  }
+
+  /* Reduced motion / no-JS: show a static frame. The dots keep their CSS
+     offset-path but with no animation they sit at offset-distance 0 (off
+     stage left) — so instead we place a few dots manually along the paths
+     using offset-distance with no animation, purely as a still image. */
+  @media (prefers-reduced-motion: reduce) {
+    .rb-dot-lo {
+      offset-path: path('M -10 60 L 330 60 C 380 60, 430 78, 470 88 C 510 96, 540 92, 560 92 L 668 92');
+    }
+
+    .rb-dot-hi {
+      offset-path: path('M -10 60 L 330 60 C 380 60, 430 42, 470 32 C 510 24, 540 28, 560 28 L 668 28');
+    }
+
+    /* Spread the 16 dots along their paths as a frozen frame. */
+    .rb-dot:nth-of-type(1)  { offset-distance: 12%; }
+    .rb-dot:nth-of-type(2)  { offset-distance: 30%; }
+    .rb-dot:nth-of-type(3)  { offset-distance: 48%; }
+    .rb-dot:nth-of-type(4)  { offset-distance: 66%; }
+    .rb-dot:nth-of-type(5)  { offset-distance: 84%; }
+    .rb-dot:nth-of-type(6)  { offset-distance: 22%; }
+    .rb-dot:nth-of-type(7)  { offset-distance: 40%; }
+    .rb-dot:nth-of-type(8)  { offset-distance: 58%; }
+    .rb-dot:nth-of-type(9)  { offset-distance: 76%; }
+    .rb-dot:nth-of-type(10) { offset-distance: 92%; }
+    .rb-dot:nth-of-type(11) { offset-distance: 8%; }
+    .rb-dot:nth-of-type(12) { offset-distance: 55%; }
+    .rb-dot:nth-of-type(13) { offset-distance: 35%; }
+    .rb-dot:nth-of-type(14) { offset-distance: 62%; }
+    .rb-dot:nth-of-type(15) { offset-distance: 80%; }
+    .rb-dot:nth-of-type(16) { offset-distance: 45%; }
+  }
+</style>
+
+<script>
+  // Start/stop the dot stream based on visibility — an ambient loop may only
+  // run while anyone can actually see it (modification strategy 03 §2).
+  //
+  // Two gates, both must be open:
+  //   1. the band is inside the viewport (IntersectionObserver)
+  //   2. the tab is visible (document.visibilityState)
+  //
+  // The class .is-live is the single switch the CSS watches.
+
+  // Undoes everything setup did (view transitions run setup again on every
+  // visit to the page; without this, listeners would pile up and observers
+  // would keep watching elements that no longer exist).
+  let teardown: (() => void) | null = null;
+
+  function setupRouterBand() {
+    const band = document.querySelector('[data-router-band]');
+    if (!band) return; // not on this page
+
+    // If the user prefers reduced motion, never go live — the CSS already
+    // shows the static frame, so there is nothing to do.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let onScreen = false;
+
+    const update = () => {
+      const tabVisible = document.visibilityState === 'visible';
+      band.classList.toggle('is-live', onScreen && tabVisible);
+    };
+
+    let io: IntersectionObserver | null = null;
+    if ('IntersectionObserver' in window) {
+      io = new IntersectionObserver(
+        (entries) => {
+          onScreen = entries[0].isIntersecting;
+          update();
+        },
+        { threshold: 0.2 } // at least a fifth of the band visible
+      );
+      io.observe(band);
+    } else {
+      onScreen = true; // very old browser: just run
+    }
+
+    document.addEventListener('visibilitychange', update);
+
+    teardown = () => {
+      io?.disconnect();
+      document.removeEventListener('visibilitychange', update);
+      teardown = null;
+    };
+  }
+
+  // Run on first load and after every view-transition page swap.
+  document.addEventListener('astro:page-load', setupRouterBand);
+  // Clean up just before leaving the page.
+  document.addEventListener('astro:before-swap', () => teardown?.());
+</script>

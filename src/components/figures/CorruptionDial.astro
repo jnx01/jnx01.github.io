@@ -1,0 +1,383 @@
+---
+/**
+ * CorruptionDial — "Try it yourself" for the RAG corruption experiment
+ * (modification strategy 03, moment E2).
+ *
+ * A four-state segmented control — Clean / Remove 1 / Remove All /
+ * Contaminated (a discrete control, not a fake-continuous dial: the
+ * experiment had four conditions, so the UI has four states).
+ *
+ * Switching state:
+ *   - animates a mini pipeline diagram (question -> 10-paragraph corpus ->
+ *     BM25 -> top-4 -> model -> answer): supporting paragraphs visibly
+ *     vanish or get swapped for look-alikes
+ *   - updates the REAL answer F1 (0.649 -> 0.440 -> 0.337 -> 0.314)
+ *   - shows the REAL example failure: what the model actually said in that
+ *     condition (Ender's Game / The Bone People, correct answer 1985)
+ *
+ * Data (real, from rag_corruption_test REPORT.md):
+ *   Clean:         F1 0.649, recall 0.712
+ *   Remove 1:      F1 0.440, recall 0.800
+ *   Remove All:    F1 0.337
+ *   Contaminated:  F1 0.314
+ *
+ * Accessibility: the control is a real radiogroup — fully keyboard-
+ * operable. The F1 readout is aria-live. The static CorruptionBars above
+ * is the fallback; this widget adds interactivity, never replaces the data.
+ */
+
+const conditions = [
+  {
+    id: 'clean',
+    label: 'Clean',
+    f1: '0.649',
+    // 10 paragraphs: 2 supporting (accent), 8 distractors (muted).
+    supports: 2,
+    contaminated: false,
+    quote: 'The model answered “1985”. Correct.',
+    quoteKind: 'good',
+  },
+  {
+    id: 'remove1',
+    label: 'Remove 1',
+    f1: '0.440',
+    supports: 1,
+    contaminated: false,
+    quote: 'The model answered "I cannot answer the question based on the provided evidence."',
+    quoteKind: 'bad',
+  },
+  {
+    id: 'removeall',
+    label: 'Remove All',
+    f1: '0.337',
+    supports: 0,
+    contaminated: false,
+    quote: 'With both supporting paragraphs gone, the model could not answer.',
+    quoteKind: 'bad',
+  },
+  {
+    id: 'contaminated',
+    label: 'Contaminated',
+    f1: '0.314',
+    supports: 0,
+    contaminated: true,
+    quote: 'Misleading look-alikes made it slightly worse than missing evidence.',
+    quoteKind: 'bad',
+  },
+];
+---
+
+<div class="corruption-widget" data-corruption-widget>
+  <!-- The four-state control: a real radiogroup, keyboard-operable. -->
+  <fieldset class="cd-control">
+    <legend class="cd-legend">Evidence condition</legend>
+    <div class="cd-options" role="radiogroup" aria-label="Evidence condition">
+      {conditions.map((c, i) => (
+        <label class="cd-option">
+          <input
+            type="radio"
+            name="cd-condition"
+            value={c.id}
+            checked={i === 0}
+            data-cd-radio={c.id}
+            aria-label={c.label}
+          />
+          <span class="cd-chip">{c.label}</span>
+        </label>
+      ))}
+    </div>
+  </fieldset>
+
+  <!-- The mini pipeline diagram -->
+  <div class="cd-pipeline" aria-hidden="true">
+    <div class="cd-stage">
+      <span class="cd-stage-label">Question</span>
+      <span class="cd-box cd-box-q">?</span>
+    </div>
+    <div class="cd-arrow">→</div>
+    <div class="cd-stage">
+      <span class="cd-stage-label">Corpus (10)</span>
+      <span class="cd-corpus" data-cd-corpus>
+        <!-- 10 paragraph dots, filled by the script -->
+      </span>
+    </div>
+    <div class="cd-arrow">→</div>
+    <div class="cd-stage">
+      <span class="cd-stage-label">BM25 top-4</span>
+      <span class="cd-box cd-box-retrieve" data-cd-retrieve>4</span>
+    </div>
+    <div class="cd-arrow">→</div>
+    <div class="cd-stage">
+      <span class="cd-stage-label">Model</span>
+      <span class="cd-box cd-box-model">AI</span>
+    </div>
+    <div class="cd-arrow">→</div>
+    <div class="cd-stage">
+      <span class="cd-stage-label">Answer F1</span>
+      <span class="cd-box cd-box-f1" data-cd-f1>0.649</span>
+    </div>
+  </div>
+
+  <!-- The real example failure -->
+  <blockquote class="cd-quote" data-cd-quote aria-live="polite" aria-atomic="true">
+    <p class="cd-quote-text" data-cd-quote-text>
+      The model answered “1985”. Correct.
+    </p>
+    <cite class="cd-quote-cite">
+      Real example: Ender's Game / The Bone People (correct answer: 1985)
+    </cite>
+  </blockquote>
+
+  <p class="cd-caption">
+    Four measured conditions, not a continuous dial. Data: rag_corruption_test.
+  </p>
+</div>
+
+<style>
+  .corruption-widget {
+    margin-block: var(--space-6) var(--space-2);
+    padding: var(--space-6);
+    background: var(--color-bg-tint);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  /* The segmented control. */
+  .cd-control {
+    border: none;
+    padding: 0;
+    margin: 0 0 var(--space-6);
+  }
+
+  .cd-legend {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-3);
+    padding: 0;
+  }
+
+  .cd-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .cd-option {
+    position: relative;
+  }
+
+  .cd-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .cd-chip {
+    display: inline-block;
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-out);
+    user-select: none;
+  }
+
+  .cd-option input:checked + .cd-chip {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  .cd-option input:focus-visible + .cd-chip {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  /* The pipeline diagram. */
+  .cd-pipeline {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: var(--space-4);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .cd-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .cd-stage-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .cd-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1.5px solid var(--color-ink-muted);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+    background: var(--color-bg);
+  }
+
+  .cd-box-f1 {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    font-weight: 600;
+    width: 56px;
+  }
+
+  .cd-arrow {
+    color: var(--color-ink-muted);
+    font-size: var(--text-sm);
+  }
+
+  /* The corpus: 10 dots, 2 supporting (accent) + 8 distractors (muted). */
+  .cd-corpus {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    width: 56px;
+  }
+
+  .cd-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-border);
+    transition: all 300ms var(--ease-out);
+  }
+
+  .cd-dot--support {
+    background: var(--color-accent);
+  }
+
+  .cd-dot--removed {
+    background: var(--color-border);
+    opacity: 0.25;
+    transform: scale(0.6);
+  }
+
+  .cd-dot--contaminated {
+    background: var(--color-accent);
+    opacity: 0.35;
+  }
+
+  /* The example quote. */
+  .cd-quote {
+    margin: var(--space-6) 0 0;
+    padding: var(--space-4);
+    border-left: 3px solid var(--color-accent);
+    background: var(--color-bg);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  .cd-quote-text {
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+    line-height: 1.6;
+    margin: 0 0 var(--space-2);
+  }
+
+  .cd-quote-cite {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    font-style: normal;
+  }
+
+  .cd-caption {
+    margin-top: var(--space-4);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    text-align: center;
+  }
+</style>
+
+<script>
+  // Wire the four-state control to the pipeline diagram, the F1 readout,
+  // and the example quote. All data is real (see the constants at the top).
+  function setupCorruptionDial() {
+    const widget = document.querySelector('[data-corruption-widget]');
+    if (!widget) return;
+
+    const corpus = widget.querySelector('[data-cd-corpus]');
+    const f1Box = widget.querySelector('[data-cd-f1]');
+    const quoteText = widget.querySelector('[data-cd-quote-text]');
+    const radios = widget.querySelectorAll('[data-cd-radio]');
+
+    // The real conditions (must match the constants above).
+    const conditions = {
+      clean:        { supports: 2, contaminated: false, f1: '0.649',
+                      quote: 'The model answered "1985". Correct.' },
+      remove1:      { supports: 1, contaminated: false, f1: '0.440',
+                      quote: 'The model answered "I cannot answer the question based on the provided evidence."' },
+      removeall:    { supports: 0, contaminated: false, f1: '0.337',
+                      quote: 'With both supporting paragraphs gone, the model could not answer.' },
+      contaminated: { supports: 0, contaminated: true,  f1: '0.314',
+                      quote: 'Misleading look-alikes made it slightly worse than missing evidence.' },
+    };
+
+    // Build the 10 corpus dots once: 2 supporting + 8 distractors.
+    const dots = [];
+    for (let i = 0; i < 10; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'cd-dot' + (i < 2 ? ' cd-dot--support' : '');
+      corpus.appendChild(dot);
+      dots.push(dot);
+    }
+
+    const update = (id) => {
+      const c = conditions[id];
+      if (!c) return;
+
+      // Update the corpus dots: supporting paragraphs vanish or get
+      // replaced by look-alikes depending on the condition.
+      dots.forEach((dot, i) => {
+        dot.className = 'cd-dot';
+        if (i < 2) {
+          // The two supporting paragraphs.
+          if (i < c.supports) {
+            dot.classList.add('cd-dot--support');
+          } else if (c.contaminated) {
+            dot.classList.add('cd-dot--contaminated');
+          } else {
+            dot.classList.add('cd-dot--removed');
+          }
+        }
+      });
+
+      // Update the F1 and the quote.
+      f1Box.textContent = c.f1;
+      quoteText.textContent = c.quote;
+    };
+
+    radios.forEach((radio) => {
+      radio.addEventListener('change', () => update(radio.value));
+    });
+
+    // Set the initial state.
+    update('clean');
+  }
+
+  document.addEventListener('astro:page-load', setupCorruptionDial);
+</script>

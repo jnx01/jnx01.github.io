@@ -40,13 +40,15 @@ GitHub Pages hosts the result. That's the whole loop.
 ├── src/
 │   ├── pages/        ← one file per page (the URL matches the filename)
 │   ├── layouts/      ← shared page shells (header, footer, SEO tags)
-│   ├── components/   ← reusable building blocks (nav, cards, charts…)
-│   ├── content/      ← the writing: case studies and notes (Markdown)
+│   ├── components/   ← reusable building blocks (nav, cards, laptop…)
+│   │   └── figures/  ← the data visualizations (charts, grids, diagrams)
+│   ├── content/      ← the writing: case studies and notes (Markdown/MDX)
 │   ├── styles/       ← the design system (colors, fonts, spacing, motion)
-│   └── site.config.ts ← one place for values that change: resume link, email, social URLs
+│   ├── assets/       ← imported data (the sign-language keypoints JSON)
+│   └── site.config.ts ← one place for values that change: resume link, email, social URLs, analytics
 ├── public/           ← files served as-is (images, favicon, robots.txt)
 ├── assets-source/    ← originals (resumes, headshot) — NOT published
-├── planning/         ← strategy docs and working notes — NOT published
+├── planning/         ← architecture doc + working notes — NOT published
 ├── scripts/          ← one-off helpers (e.g. preparing the headshot)
 └── dist/             ← the built site (generated; never edit by hand)
 ```
@@ -73,10 +75,12 @@ So a page is mostly: "Base layout + some content + a few components."
 Some content is written directly into a page (the homepage, About). Other
 content is **data-driven** so it's easy to add more without touching design:
 
-- **Case studies** live as Markdown files in `src/content/work/`. One file =
+- **Case studies** live as MDX files in `src/content/work/`. One file =
   one case study. A single dynamic route (`src/pages/work/[...slug].astro`)
-  turns each file into a page at `/work/<name>/`.
-- **Notes** work the same way in `src/content/notes/`.
+  turns each file into a page at `/work/<name>/`. MDX (instead of plain
+  Markdown) lets a case study embed its figures inline — e.g. the experiments
+  page drops interactive charts into the text.
+- **Notes** work the same way in `src/content/notes/` (plain Markdown).
 
 This means adding a new case study or note is just adding one Markdown file —
 no new page code needed.
@@ -96,22 +100,40 @@ variables, so the whole site stays consistent — and restyling means editing
 one file.
 
 - **Colors:** warm off-white background, near-black text, one indigo accent.
+  An optional dark theme (warm near-black background, lighter indigo accent)
+  is defined in the same file and toggled from the nav.
 - **Fonts:** Newsreader (headlines), Inter (body), JetBrains Mono (data).
-- **Motion:** a small shared vocabulary (fade/rise reveals, a self-drawing
-  diagram, animated charts), all of it disabled for users who prefer reduced
-  motion.
+- **Motion:** a shared vocabulary (fade/rise reveals, self-drawing diagrams,
+  animated charts, and on the homepage a scroll-driven laptop that travels
+  down the page), all of it disabled for users who prefer reduced motion.
 
 ---
 
 ## The interactive bits
 
-The site is deliberately light on JavaScript. The few dynamic behaviors:
+The site is deliberately light on JavaScript. The dynamic behaviors:
 
 - **Reveal on scroll** — elements gently fade/rise in as you scroll.
 - **Page transitions** — navigating between pages cross-fades instead of a
   hard reload.
 - **Animated figures** — the research diagram and experiment charts draw
-  themselves when they scroll into view.
+  themselves when they scroll into view. Two of them (the budget slider and
+  the corruption dial) are interactive: drag/switch them to explore the real
+  measured data.
+- **The homepage journey** — on wide screens, a line-art laptop travels down
+  the homepage as you scroll, opening at each section and showing a small
+  picture of the real work on its screen. A dashed path draws behind it, and
+  the section you're reading tints pale indigo. Hidden on small screens, with
+  reduced motion, or without JS.
+- **Small ambient loops** — a few gentle repeating touches (the hero
+  underline redraws, the "now" dot pulses). All pause off-screen and respect
+  reduced motion.
+- **Avatar greeting** — on the first visit of a session, a cartoon avatar
+  waves hello in the hero's portrait frame, then the real photo pops in.
+  Everyone else (and reduced-motion users) just see the photo.
+- **Light/dark theme** — a light-bulb toggle in the top-right of the nav
+  switches between the default light theme and a warm dark theme. The choice
+  is remembered and applied before the page paints, so there's no flash.
 
 All of these are progressive enhancements: with JavaScript off or reduced
 motion on, every page still shows its full content.

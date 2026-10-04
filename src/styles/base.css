@@ -21,6 +21,12 @@ html {
   scroll-behavior: smooth;
 }
 
+/* When a link jumps to an in-page anchor (e.g. #main, or a heading with an
+   id), leave room at the top so the sticky nav does not cover the target. */
+[id] {
+  scroll-margin-top: 5rem;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-ink);
@@ -32,6 +38,11 @@ body {
   text-rendering: optimizeLegibility;
   /* Prevent mobile browsers from inflating text on rotation. */
   -webkit-text-size-adjust: 100%;
+  /* A short fade when the light/dark theme toggle flips the color tokens.
+     Only background and text color transition, so it stays cheap. */
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out);
 }
 
 /* ---- Headings -------------------------------------------------------------- */
@@ -83,7 +94,7 @@ video {
 /* ---- Selection ---------------------------------------------------------------- */
 ::selection {
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-on-accent);
 }
 
 /* ---- Skip link -----------------------------------------------------------------
@@ -114,6 +125,24 @@ video {
   max-width: var(--content-max);
   margin-inline: auto;
   padding-inline: var(--space-6);
+}
+
+/* ---- Visually hidden -----------------------------------------------------------
+   Hides an element from sighted users while keeping it available to screen
+   readers. Used for text that carries the same information as a decorative
+   visualization (e.g. the router band's plain-language sentence).
+   -------------------------------------------------------------------------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0); /* older browsers */
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ---- Reduced motion --------------------------------------------------------------

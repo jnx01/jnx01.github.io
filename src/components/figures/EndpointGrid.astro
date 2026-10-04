@@ -1,0 +1,145 @@
+---
+/**
+ * EndpointGrid — 40 REST endpoints, visualized as a grid of squares
+ * (modification strategy 03, moment T1-revised).
+ *
+ * The page says "~40 REST endpoints across two FastAPI services." This
+ * makes that number physical: 40 squares, one per endpoint, filling in on
+ * scroll like a progress bar made of bricks. Once the reader scrolls past
+ * the grid, the filled squares pulse gently.
+ *
+ * Below: "40 REST endpoints. Two services. One owner."
+ *
+ * Reduced motion / no JS: all 40 squares visible, no animation.
+ */
+
+const total = 40;
+---
+
+<div class="endpoint-grid" data-endpoint-grid data-reveal="fade">
+  <div class="grid-track" role="img" aria-label="40 squares representing 40 REST endpoints, filling in on scroll">
+    {Array.from({ length: total }, (_, i) => (
+      <span
+        class="endpoint-square"
+        data-endpoint-square
+        data-index={i}
+        style={`--delay: ${i * 30}ms;`}
+      />
+    ))}
+  </div>
+  <p class="endpoint-caption">
+    <strong>40</strong> REST endpoints. <strong>Two</strong> services. <strong>One</strong> owner.
+  </p>
+</div>
+
+<style>
+  .endpoint-grid {
+    margin-block: var(--space-6) var(--space-2);
+    padding: var(--space-6);
+    background: var(--color-bg-tint);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-align: center;
+  }
+
+  .grid-track {
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    gap: 4px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .endpoint-square {
+    aspect-ratio: 1;
+    background: var(--color-border);
+    border-radius: 1px;
+    transition: background 200ms var(--ease-out);
+  }
+
+  /* Filled state: accent color. The --delay custom property staggers the
+     fill so they light up left-to-right, top-to-bottom. */
+  .endpoint-square.is-filled {
+    background: var(--color-accent);
+  }
+
+  /* All squares pulse gently once the reader scrolls PAST the diagram
+     (the .is-past class is toggled by the script below). */
+  .endpoint-grid.is-past .endpoint-square.is-filled {
+    animation: endpoint-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes endpoint-pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.5; }
+  }
+
+  .endpoint-caption {
+    margin-top: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+  }
+
+  .endpoint-caption strong {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  /* Reduced motion: all squares visible immediately, no stagger, no pulse. */
+  @media (prefers-reduced-motion: reduce) {
+    .endpoint-square {
+      background: var(--color-accent);
+    }
+  }
+</style>
+
+<script>
+  // Fill the squares on scroll, staggered left-to-right, top-to-bottom.
+  function setupEndpointGrid() {
+    const grid = document.querySelector('[data-endpoint-grid]');
+    if (!grid) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      // Reduced motion: fill everything immediately.
+      grid.querySelectorAll('[data-endpoint-square]').forEach((s) => s.classList.add('is-filled'));
+      return;
+    }
+
+    const squares = grid.querySelectorAll('[data-endpoint-square]');
+
+    const fill = () => {
+      squares.forEach((sq) => {
+        const delay = parseInt(sq.style.getPropertyValue('--delay'), 10);
+        setTimeout(() => sq.classList.add('is-filled'), delay);
+      });
+    };
+
+    if ('IntersectionObserver' in window) {
+      // Fill the squares when the grid enters view.
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            fill();
+            io.disconnect();
+          }
+        },
+        { threshold: 0.3 }
+      );
+      io.observe(grid);
+
+      // Pulse all squares when the reader scrolls PAST the grid.
+      const ioPast = new IntersectionObserver(
+        (entries) => {
+          grid.classList.toggle('is-past', !entries[0].isIntersecting);
+        },
+        { rootMargin: '-100% 0px 0px 0px' } // triggers when the grid leaves the top of the viewport
+      );
+      ioPast.observe(grid);
+    } else {
+      fill();
+    }
+  }
+
+  document.addEventListener('astro:page-load', setupEndpointGrid);
+</script>

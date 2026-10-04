@@ -16,6 +16,7 @@
 import '@fontsource-variable/newsreader';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
+import '@fontsource/caveat';
 
 import '../styles/tokens.css';
 import '../styles/base.css';
@@ -29,7 +30,7 @@ import Footer from '../components/Footer.astro';
 // strategy §G) instead of a full browser reload. Browsers without support
 // fall back to normal navigation automatically.
 import { ClientRouter } from 'astro:transitions';
-import { ANALYTICS } from '../site.config';
+import { ANALYTICS, LINKEDIN_URL, GITHUB_URL } from '../site.config';
 
 interface Props {
   title: string;        // becomes "<title> — Jahanzeb Naeem" in the browser tab
@@ -54,10 +55,7 @@ const personSchema = {
   jobTitle: 'AI Engineer',
   worksFor: { '@type': 'Organization', name: 'Teradata' },
   address: { '@type': 'PostalAddress', addressLocality: 'Islamabad', addressCountry: 'PK' },
-  sameAs: [
-    'https://www.linkedin.com/in/jna1',
-    'https://github.com/jnx01',
-  ],
+  sameAs: [LINKEDIN_URL, GITHUB_URL],
 };
 
 ---
@@ -73,10 +71,41 @@ const personSchema = {
          the full page. Placed first in <head> to avoid a flash. -->
     <script is:inline>
       document.documentElement.classList.add('js');
+
+      // Theme (light/dark): apply the saved choice, or the OS preference,
+      // BEFORE first paint so there is no flash of the wrong theme.
+      // The toggle button lives in Nav.astro; it writes localStorage.theme.
+      function getTheme() {
+        const saved = localStorage.getItem('theme');
+        if (saved === 'light' || saved === 'dark') return saved;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        // Keep the browser chrome color in sync with the page background.
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', theme === 'dark' ? '#161614' : '#fafaf8');
+      }
+      applyTheme(getTheme());
+
+      // View transitions swap in the NEW page's <html> element, which has
+      // neither the "js" class nor the theme (both are only set by this
+      // script). Put them back after every swap, or the "js" styles
+      // (reveals, laptop layout) and the chosen theme would stop working
+      // after the first client-side navigation.
+      document.addEventListener('astro:after-swap', () => {
+        document.documentElement.classList.add('js');
+        applyTheme(getTheme());
+      });
     </script>
 
+    <!-- Browser chrome color: matches the page background so the tab bar /
+         mobile URL bar blends in. The inline script above keeps it in sync
+         with the light/dark toggle. -->
+    <meta name="theme-color" content="#fafaf8" />
+
     <!-- Primary SEO metadata -->
-    <title>{title} — Jahanzeb Naeem</title>
+    <title>{title} · Jahanzeb Naeem</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
 
@@ -148,6 +177,62 @@ const personSchema = {
       // astro:page-load fires on initial load and after each client-side
       // navigation, so it covers both cases with one listener.
       document.addEventListener('astro:page-load', setupReveals);
+    </script>
+
+    <!-- Proof-strip count-up (modification strategy 03, moment A): when a
+         number marked [data-count-to] is revealed, count it from 0 up to its
+         real value over ~600ms, once. Evidence that feels counted, not
+         claimed (strategy §E).
+
+         The final value is always in the HTML, so no-JS and reduced-motion
+         users simply see the number. The script only runs when reduced
+         motion is NOT requested. -->
+    <script is:inline>
+      function setupCountUps() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        const els = document.querySelectorAll('[data-count-to]:not([data-counted])');
+        if (!els.length) return;
+
+        // Start every counter at 0 NOW (while it may still be off-screen),
+        // so the count is visible when it happens. Without this, an element
+        // already in view at load would flash its final value and the count
+        // would be invisible. The real value returns if JS never runs.
+        els.forEach((el) => {
+          el.textContent = '0' + (el.dataset.countSuffix || '');
+        });
+
+        const run = (el) => {
+          el.dataset.counted = '1'; // never count twice
+          const target = parseInt(el.dataset.countTo, 10);
+          const suffix = el.dataset.countSuffix || '';
+          const duration = 1400; // ms — slow enough to watch the number climb
+          const start = performance.now();
+
+          const tick = (now) => {
+            const t = Math.min((now - start) / duration, 1);
+            // Ease-out so the number settles rather than stops abruptly.
+            const eased = 1 - Math.pow(1 - t, 3);
+            el.textContent = Math.round(eased * target) + suffix;
+            if (t < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        };
+
+        // Count when the element's reveal fires (it gets .is-revealed), or
+        // immediately if it's already revealed (e.g. above the fold).
+        const io = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              run(entry.target);
+              io.unobserve(entry.target);
+            }
+          }
+        }, { rootMargin: '0px 0px -10% 0px' });
+
+        els.forEach((el) => io.observe(el));
+      }
+      document.addEventListener('astro:page-load', setupCountUps);
     </script>
 
     <!-- Hero portrait parallax (motion moment #1, strategy §E/§F): the

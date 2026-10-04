@@ -1,0 +1,340 @@
+---
+/**
+ * BudgetSlider — "Try it yourself" for the routing experiment
+ * (modification strategy 03, moment E1).
+ *
+ * A budget slider (0–100%). Dragging it:
+ *   (a) moves a marker along the REAL measured router curve and shows the
+ *       accuracy at that budget, next to the random and always-small
+ *       baselines
+ *   (b) updates a mini dot-flow split matching the budget
+ *   (c) updates a time readout interpolated between the measured timings
+ *
+ * Honesty rule (strategy §E1): between the five measured budgets
+ * (10/25/50/75/100%), accuracy and time are linearly interpolated, and the
+ * caption says so. No invented precision.
+ *
+ * Data (real, from budgeted_model_routing REPORT.md):
+ *   budget:   10%    25%    50%    75%    100%
+ *   random:  29.0   30.7   33.5   36.4   39.3
+ *   router:  30.7   33.6   36.4   38.6   39.3
+ *   always-small: 27.9 flat
+ *   time: all-small 12.2s · router@25% 14.2s · router@50% 17.7s · all-big 26.4s
+ *
+ * Accessibility: the slider is a native <input type="range"> — fully
+ * keyboard-operable. The readout is aria-live so screen readers hear the
+ * numbers change. The static RoutingCurve above is the fallback; this
+ * widget adds interactivity, it never replaces the data.
+ */
+
+// The four shared measured budgets come from routing-data.ts — the same
+// numbers as the static RoutingCurve chart and the homepage laptop screen.
+// This widget adds the fifth measured point (100% budget: both policies
+// equal always-big at 39.3%).
+import { budgets as sharedBudgets, random as sharedRandom, router } from './routing-data';
+
+const budgets = [...sharedBudgets, 100];
+const routerAcc = [...router, 39.3];
+const randomAcc = [...sharedRandom, 39.3];
+const alwaysSmall = 27.9;
+// Real timings: 0% = 12.2s, 25% = 14.2s, 50% = 17.7s, 100% = 26.4s.
+const timePoints = [
+  { b: 0, t: 12.2 },
+  { b: 25, t: 14.2 },
+  { b: 50, t: 17.7 },
+  { b: 100, t: 26.4 },
+];
+
+// Linear interpolation between the measured points.
+function lerp(points: { b: number; t: number }[], budget: number): number {
+  if (budget <= points[0].b) return points[0].t;
+  for (let i = 1; i < points.length; i++) {
+    if (budget <= points[i].b) {
+      const { b: b0, t: t0 } = points[i - 1];
+      const { b: b1, t: t1 } = points[i];
+      return t0 + ((budget - b0) / (b1 - b0)) * (t1 - t0);
+    }
+  }
+  return points[points.length - 1].t;
+}
+
+// Same for accuracy (piecewise-linear between measured budgets).
+function lerpAcc(vals: number[], budget: number): number {
+  const pts = budgets.map((b, i) => ({ b, t: vals[i] }));
+  return lerp(pts, budget);
+}
+
+// Chart geometry (matches RoutingCurve so the two read as one figure).
+const W = 560, H = 300;
+const padL = 44, padR = 20, padT = 20, padB = 40;
+const xMin = 0, xMax = 100;
+const yMin = 25, yMax = 42;
+const x = (b: number) => padL + ((b - xMin) / (xMax - xMin)) * (W - padL - padR);
+const y = (a: number) => padT + (1 - (a - yMin) / (yMax - yMin)) * (H - padT - padB);
+
+const toPath = (vals: number[]) =>
+  vals.map((v, i) => `${i === 0 ? 'M' : 'L'} ${x(budgets[i]).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+
+const routerPath = toPath(routerAcc);
+const randomPath = toPath(randomAcc);
+const yTicks = [25, 30, 35, 40];
+
+// The initial state: 25% budget (the sweet spot from the report).
+const initialBudget = 25;
+const initialRouter = lerpAcc(routerAcc, initialBudget).toFixed(1);
+const initialRandom = lerpAcc(randomAcc, initialBudget).toFixed(1);
+const initialTime = lerp(timePoints, initialBudget).toFixed(1);
+---
+
+<div class="budget-widget" data-budget-widget>
+  <figure class="chart">
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-labelledby="bs-title bs-desc" class="chart-svg">
+      <title id="bs-title">Interactive: accuracy versus budget for smart routing</title>
+      <desc id="bs-desc">
+        Drag the budget slider to move a marker along the measured router
+        curve. The readout shows the router's accuracy, random allocation,
+        and estimated time at that budget.
+      </desc>
+
+      <!-- Gridlines + axes -->
+      {yTicks.map((t) => (
+        <g class="gridline">
+          <line x1={padL} y1={y(t)} x2={W - padR} y2={y(t)} />
+          <text x={padL - 8} y={y(t) + 4} text-anchor="end" class="axis-label">{t}%</text>
+        </g>
+      ))}
+      {budgets.map((b) => (
+        <text x={x(b)} y={H - padB + 20} text-anchor="middle" class="axis-label">{b}%</text>
+      ))}
+      <text x={padL + (W - padL - padR) / 2} y={H - 6} text-anchor="middle" class="axis-title">
+        budget (share of queries sent to the big model)
+      </text>
+
+      <!-- Always-small baseline: flat muted line -->
+      <line x1={padL} y1={y(alwaysSmall)} x2={W - padR} y2={y(alwaysSmall)} class="line line-flat" />
+
+      <!-- Random (dashed) + router (accent) curves -->
+      <path d={randomPath} class="line line-random" />
+      <path d={routerPath} class="line line-router" />
+
+      <!-- The marker: rides the router curve, moved by the slider -->
+      <circle class="bs-marker" r="6" cx={x(initialBudget)} cy={y(parseFloat(initialRouter))} data-bs-marker />
+      <circle class="bs-marker-halo" r="12" cx={x(initialBudget)} cy={y(parseFloat(initialRouter))} data-bs-halo />
+    </svg>
+  </figure>
+
+  <!-- The slider -->
+  <div class="bs-control">
+    <label for="bs-range" class="bs-label">
+      Big-model budget: <strong data-bs-budget>{initialBudget}%</strong>
+    </label>
+    <input
+      type="range"
+      id="bs-range"
+      min="10"
+      max="100"
+      step="1"
+      value={initialBudget}
+      data-bs-range
+      aria-describedby="bs-readout"
+    />
+  </div>
+
+  <!-- The readout: real numbers, updating live -->
+  <p class="bs-readout" id="bs-readout" aria-live="polite" aria-atomic="true">
+    <span class="bs-item">router <strong data-bs-router>{initialRouter}%</strong></span>
+    <span class="bs-sep">·</span>
+    <span class="bs-item">random <strong data-bs-random>{initialRandom}%</strong></span>
+    <span class="bs-sep">·</span>
+    <span class="bs-item">always-small <strong>{alwaysSmall}%</strong></span>
+    <span class="bs-sep">·</span>
+    <span class="bs-item">~<strong data-bs-time>{initialTime}s</strong></span>
+  </p>
+
+  <!-- Mini dot-flow: the split visualized -->
+  <div class="bs-flow" aria-hidden="true">
+    <div class="bs-flow-track">
+      <div class="bs-flow-bar bs-flow-small" data-bs-bar-small></div>
+      <div class="bs-flow-bar bs-flow-big" data-bs-bar-big></div>
+    </div>
+    <div class="bs-flow-labels">
+      <span>→ small model <strong data-bs-pct-small>{100 - initialBudget}%</strong></span>
+      <span>→ big model <strong data-bs-pct-big>{initialBudget}%</strong></span>
+    </div>
+  </div>
+
+  <p class="bs-caption">
+    Interpolated between the five measured budgets (10/25/50/75/100%).
+    Data: budgeted_model_routing.
+  </p>
+</div>
+
+<style>
+  .budget-widget {
+    margin-block: var(--space-6) var(--space-2);
+    padding: var(--space-6);
+    background: var(--color-bg-tint);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .budget-widget .chart {
+    margin-block: 0 var(--space-4);
+  }
+
+  .chart-svg {
+    width: 100%;
+    height: auto;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  .gridline line { stroke: var(--color-border); stroke-width: 1; stroke-dasharray: 2 4; }
+  .axis-label, .axis-title { font-family: var(--font-mono); font-size: 11px; fill: var(--color-ink-muted); }
+  .line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .line-random { stroke: var(--color-ink-muted); stroke-dasharray: 5 5; }
+  .line-router { stroke: var(--color-accent); }
+  .line-flat { stroke: var(--color-border); stroke-width: 1.5; }
+
+  /* The marker on the router curve. */
+  .bs-marker { fill: var(--color-accent); }
+  .bs-marker-halo { fill: none; stroke: var(--color-accent); stroke-width: 1.5; opacity: 0.4; }
+
+  /* The slider. */
+  .bs-control { margin-top: var(--space-4); }
+  .bs-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    margin-bottom: var(--space-2);
+  }
+  .bs-label strong { color: var(--color-ink); }
+
+  input[type='range'] {
+    width: 100%;
+    accent-color: var(--color-accent);
+    cursor: pointer;
+  }
+
+  /* The readout. */
+  .bs-readout {
+    margin-top: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    justify-content: center;
+  }
+  .bs-readout strong { color: var(--color-ink); font-weight: 600; }
+  .bs-sep { opacity: 0.5; }
+
+  /* The mini dot-flow split. */
+  .bs-flow { margin-top: var(--space-4); }
+  .bs-flow-track {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--color-border);
+  }
+  .bs-flow-bar { height: 100%; transition: width 200ms var(--ease-out); }
+  .bs-flow-small { background: var(--color-ink-muted); }
+  .bs-flow-big { background: var(--color-accent); }
+  .bs-flow-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+  }
+  .bs-flow-labels strong { color: var(--color-ink); }
+
+  .bs-caption {
+    margin-top: var(--space-4);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    text-align: center;
+  }
+</style>
+
+<script>
+  // Wire the slider to the marker, the readout, and the dot-flow split.
+  // All data is interpolated between the real measured points (see the
+  // constants at the top of this file).
+  function setupBudgetSlider() {
+    const widget = document.querySelector('[data-budget-widget]');
+    if (!widget) return;
+
+    const range = widget.querySelector('[data-bs-range]');
+    const marker = widget.querySelector('[data-bs-marker]');
+    const halo = widget.querySelector('[data-bs-halo]');
+    const out = {
+      budget: widget.querySelector('[data-bs-budget]'),
+      router: widget.querySelector('[data-bs-router]'),
+      random: widget.querySelector('[data-bs-random]'),
+      time: widget.querySelector('[data-bs-time]'),
+      pctSmall: widget.querySelector('[data-bs-pct-small]'),
+      pctBig: widget.querySelector('[data-bs-pct-big]'),
+      barSmall: widget.querySelector('[data-bs-bar-small]'),
+      barBig: widget.querySelector('[data-bs-bar-big]'),
+    };
+
+    // The real measured data (must match the constants above).
+    const budgets = [10, 25, 50, 75, 100];
+    const routerAcc = [30.7, 33.6, 36.4, 38.6, 39.3];
+    const randomAcc = [29.0, 30.7, 33.5, 36.4, 39.3];
+    const timePoints = [
+      { b: 0, t: 12.2 }, { b: 25, t: 14.2 }, { b: 50, t: 17.7 }, { b: 100, t: 26.4 },
+    ];
+
+    const lerp = (pts, b) => {
+      if (b <= pts[0].b) return pts[0].t;
+      for (let i = 1; i < pts.length; i++) {
+        if (b <= pts[i].b) {
+          const { b: b0, t: t0 } = pts[i - 1];
+          const { b: b1, t: t1 } = pts[i];
+          return t0 + ((b - b0) / (b1 - b0)) * (t1 - t0);
+        }
+      }
+      return pts[pts.length - 1].t;
+    };
+    const lerpAcc = (vals, b) => lerp(budgets.map((bb, i) => ({ b: bb, t: vals[i] })), b);
+
+    // Chart geometry (must match the SVG above).
+    const W = 560, H = 300, padL = 44, padR = 20, padT = 20, padB = 40;
+    const x = (b) => padL + (b / 100) * (W - padL - padR);
+    const y = (a) => padT + (1 - (a - 25) / (42 - 25)) * (H - padT - padB);
+
+    const update = () => {
+      const b = parseInt(range.value, 10);
+      const rA = lerpAcc(routerAcc, b);
+      const rR = lerpAcc(randomAcc, b);
+      const t = lerp(timePoints, b);
+
+      out.budget.textContent = b + '%';
+      out.router.textContent = rA.toFixed(1) + '%';
+      out.random.textContent = rR.toFixed(1) + '%';
+      out.time.textContent = t.toFixed(1) + 's';
+      out.pctSmall.textContent = (100 - b) + '%';
+      out.pctBig.textContent = b + '%';
+      out.barSmall.style.width = (100 - b) + '%';
+      out.barBig.style.width = b + '%';
+
+      const cx = x(b), cy = y(rA);
+      marker.setAttribute('cx', cx);
+      marker.setAttribute('cy', cy);
+      halo.setAttribute('cx', cx);
+      halo.setAttribute('cy', cy);
+    };
+
+    range.addEventListener('input', update);
+    update(); // set the initial state
+  }
+
+  document.addEventListener('astro:page-load', setupBudgetSlider);
+</script>

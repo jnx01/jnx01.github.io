@@ -55,7 +55,20 @@ versions are generated from it.
 
 3. Rebuild: `npm run build`.
 
-That's it — the hero and About page update automatically.
+That's it — the homepage hero updates automatically. (The About page uses the
+talk photo instead — see the next section.)
+
+---
+
+## 2b. Update the talk photo
+
+The talk photo (homepage "The person" section + About page) was prepared by
+hand — there is no script for it. The original is `assets-source/talk.jpeg`;
+the web versions are `public/images/talk-1000.*` and `talk-2000.*`
+(AVIF/WebP/JPEG, 1000w and 2000w).
+
+To replace it: crop/brighten the new photo to a 3:2 landscape, export the six
+files with the same names into `public/images/`, and rebuild.
 
 ---
 
@@ -87,9 +100,9 @@ Notes are Markdown files in `src/content/notes/`.
 
 Case studies are Markdown/MDX files in `src/content/work/`.
 
-1. To **edit** one, open `teradata.md`, `signchatter.md`, or
+1. To **edit** one, open `teradata.mdx`, `signchatter.mdx`, or
    `experiments.mdx` and change the text.
-2. To **add** a new one, create a new `.md` file with frontmatter:
+2. To **add** a new one, create a new `.mdx` file with frontmatter:
 
    ```markdown
    ---
@@ -113,6 +126,41 @@ Case studies are Markdown/MDX files in `src/content/work/`.
 
 ---
 
+## 4b. Add a figure to a case study
+
+Figures (charts, grids, diagrams) are components in `src/components/figures/`.
+Because they are components, the case study file must be `.mdx` (plain `.md`
+can't import components).
+
+1. In the case study's frontmatter area (top of the file), import the figure:
+
+   ```mdx
+   import RoutingCurve from '../../components/figures/RoutingCurve.astro';
+   ```
+
+2. Drop it into the body where it belongs: `<RoutingCurve />`
+3. Rebuild.
+
+**Every number in a figure must be real** — traceable to a repo artifact.
+The data lives as constants at the top of the figure's file, with a comment
+citing the source repo.
+
+---
+
+## 4c. Update the routing chart data
+
+The budgeted-model-routing numbers appear in three places (the full chart on
+`/work/experiments`, the small copy on the homepage laptop screen, and the
+small chart on `/research`). They all read from ONE file:
+`src/components/figures/routing-data.ts`. Edit the numbers there and all
+three charts update on the next build.
+
+(The interactive budget slider has its own copy inside its client-side
+script — it can't import at runtime. If you change the routing data, update
+the slider's script copy too; the comment in the file marks it.)
+
+---
+
 ## 5. Change colors, fonts, or spacing
 
 All design tokens live in `src/styles/tokens.css`.
@@ -121,6 +169,11 @@ All design tokens live in `src/styles/tokens.css`.
 2. Edit the variable you want — e.g. `--color-accent: #4f46e5;` changes the
    indigo accent everywhere it's used.
 3. Save. The whole site updates consistently.
+
+**Dark theme:** the same variables are defined a second time under
+`[data-theme='dark']` in the same file. If you change a light-theme color,
+check whether the dark-theme version needs a matching tweak. Test both themes
+with the light-bulb toggle in the nav.
 
 ---
 
@@ -138,6 +191,31 @@ Other contact spots:
 - Contact page layout: `src/pages/contact.astro`.
 - Footer (on every page): `src/components/Footer.astro`.
 - Top navigation items: `src/components/Nav.astro` (the `items` list).
+
+**Analytics** also live in `src/site.config.ts`: to turn visitor tracking off,
+set `ANALYTICS.ENABLED` to `false` and rebuild — no tracking script loads.
+
+---
+
+## 6b. The homepage journey (the scroll laptop)
+
+The homepage has a scroll-driven laptop that travels down the page on wide
+screens (≥1100px, JS on, motion allowed). It is self-contained in
+`src/pages/index.astro` (the engine script + styles) plus two components:
+`src/components/Laptop.astro` (the drawing) and
+`src/components/LaptopScreens.astro` (the screen pictures).
+
+- **To change what a screen shows:** edit `LaptopScreens.astro`. Rule: every
+  screen must be a small copy of something real that is already on the site.
+- **To change the journey (timing, poses, stops):** edit the `LOOKS` table
+  and the waypoint code in `index.astro`'s journey script — the comments
+  explain each step in plain language.
+- **To disable it entirely:** the laptop, path, and section tint are already
+  gated behind `(min-width: 1100px) and (prefers-reduced-motion: no-preference)`
+  plus the `js` class. To turn it off for everyone, remove the
+  `data-journey-laptop` / `data-journey-path` markup and the two `<script>`
+  blocks (focus tint + journey engine) from `index.astro` — the page falls
+  back to the plain layout automatically.
 
 ---
 
@@ -176,7 +254,19 @@ and want the social card to match, re-run the og-image step (see
 
 - **A change isn't showing up:** make sure you saved the file, and that the
   dev server is running (`npm run dev`). For production, always `npm run build`.
+  If you're using `npm run preview`, remember it serves the LAST build and does
+  NOT rebuild on change — and an old preview server can keep running on a port
+  even after you rebuild. If the page looks stale or is missing recent work,
+  stop the old server (`npx astro preview stop`), rebuild, and start it again.
 - **Build fails:** read the error message — it names the file and line. Most
   often it's a typo in a frontmatter block (missing quote or colon).
 - **A note/case study isn't appearing:** check that `draft: false` and that
   the frontmatter matches the required fields exactly.
+- **An `import` in a case study renders as literal text:** the file is `.md`,
+  not `.mdx`. Rename it to `.mdx` (only MDX files can import components), then
+  restart the dev server (it caches aggressively).
+- **Animations or the laptop break after clicking an internal link:** the site
+  uses view transitions, which swap the page's DOM. Any new script you add must
+  initialize on `astro:page-load` (not just on first load) and clean up on
+  `astro:before-swap` — copy the pattern from an existing script in
+  `Base.astro` or `index.astro`.

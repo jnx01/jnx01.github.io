@@ -1,0 +1,190 @@
+---
+/**
+ * QuestionMap — a calm side diagram for "Questions I'm sitting with".
+ *
+ * It shows the SIX open questions as small dots in a column, with two hubs
+ * (Efficiency on the left, Reliability on the right). A thin line joins each
+ * dot to the pillar(s) the question touches. Hover a question in the list and
+ * its dot and lines light up (CSS only, no script).
+ *
+ * The mapping below is my reading of the questions (same order as the list in
+ * research.astro, `q` = position in that list). If you reword a question,
+ * check which pillar it belongs to here.
+ *   1  smaller model saves money?                    -> Efficiency
+ *   2  detect RAG evidence degradation?              -> Reliability
+ *   3  is an LLM-graded metric trustworthy?          -> Reliability
+ *   4  how small before reliability collapses?       -> both
+ *   5  do cheap-evaluator disagreements generalize?  -> Reliability
+ *   6  is test-time reasoning worth 3x the tokens?   -> both
+ *
+ * Only shown on wide screens (>= 900px); it is an extra, not needed to read
+ * the page. Animation: lines draw once when it scrolls into view. Reduced
+ * motion / no JS: shown already drawn.
+ */
+
+// The dots, top to bottom. `y` is the height in the drawing; `e` / `r` say
+// which pillar(s) the dot is joined to. Dots are grouped (efficiency-only
+// first, then both, then reliability-only) so the lines do not cross much.
+const dots = [
+  { q: 1, y: 50, e: true, r: false },
+  { q: 4, y: 110, e: true, r: true },
+  { q: 6, y: 170, e: true, r: true },
+  { q: 2, y: 230, e: false, r: true },
+  { q: 3, y: 290, e: false, r: true },
+  { q: 5, y: 350, e: false, r: true },
+];
+
+const hubY = 200; // both hubs sit at this height
+const dotX = 180; // all dots sit on this vertical line
+const dotR = 8;
+
+// A smooth curve from a hub's inner edge to the side of a dot.
+const fromEfficiency = (y: number) => `M 114 ${hubY} C 150 ${hubY}, 140 ${y}, ${dotX - dotR} ${y}`;
+const fromReliability = (y: number) => `M 246 ${hubY} C 210 ${hubY}, 220 ${y}, ${dotX + dotR} ${y}`;
+---
+
+<figure class="question-map" data-reveal="fade">
+  <svg
+    viewBox="0 0 360 380"
+    role="img"
+    aria-label="Diagram: six open questions joined to the pillars they touch. One touches only Efficiency, two touch both, and three touch only Reliability."
+  >
+    <!-- Lines first, so the hubs and dots sit on top of them -->
+    {dots.map((d, i) => (
+      <g class={`link link-${d.q}`} style={`--i:${i}`}>
+        {d.e && <path d={fromEfficiency(d.y)} pathLength="1" />}
+        {d.r && <path d={fromReliability(d.y)} pathLength="1" />}
+      </g>
+    ))}
+
+    <!-- The two hubs -->
+    <g class="hub">
+      <rect x="10" y={hubY - 17} width="104" height="34" rx="8" />
+      <text x="62" y={hubY + 5} text-anchor="middle">Efficiency</text>
+    </g>
+    <g class="hub">
+      <rect x="246" y={hubY - 17} width="104" height="34" rx="8" />
+      <text x="298" y={hubY + 5} text-anchor="middle">Reliability</text>
+    </g>
+
+    <!-- The six question dots -->
+    {dots.map((d, i) => (
+      <circle class={`dot dot-${d.q}`} style={`--i:${i}`} cx={dotX} cy={d.y} r={dotR} />
+    ))}
+  </svg>
+  <figcaption class="map-caption">Hover a question to see which pillar it touches.</figcaption>
+</figure>
+
+<style>
+  /* Small screens: hidden (the list alone is enough). */
+  .question-map {
+    display: none;
+    margin: 0;
+  }
+
+  @media (min-width: 900px) {
+    .question-map {
+      display: block;
+      width: 100%;
+      max-width: 360px;
+    }
+  }
+
+  .question-map svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .map-caption {
+    margin-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+    color: var(--color-ink-muted);
+    text-align: center;
+  }
+
+  /* ---- Resting look ---- */
+  .link path {
+    fill: none;
+    stroke: var(--color-ink-muted);
+    stroke-opacity: 0.45;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    transition: stroke 200ms var(--ease-out), stroke-opacity 200ms var(--ease-out),
+      stroke-width 200ms var(--ease-out);
+  }
+
+  .hub rect {
+    fill: var(--color-bg);
+    stroke: var(--color-accent);
+    stroke-width: 1.5;
+  }
+
+  .hub text {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    fill: var(--color-ink);
+  }
+
+  .dot {
+    fill: var(--color-bg);
+    stroke: var(--color-ink-muted);
+    stroke-width: 1.5;
+    transition: fill 200ms var(--ease-out), stroke 200ms var(--ease-out);
+  }
+
+  /* ---- Hover: lights up the dot and its lines ----------------------------------
+     The list is in research.astro, so we look for a hovered list item from
+     the section around both (class `exploring-grid`). :has() does the work,
+     no script needed. Item N in the list = dot N here. */
+  :global(.exploring-grid:has(.question-list li:nth-child(1):hover)) .link-1 path,
+  :global(.exploring-grid:has(.question-list li:nth-child(2):hover)) .link-2 path,
+  :global(.exploring-grid:has(.question-list li:nth-child(3):hover)) .link-3 path,
+  :global(.exploring-grid:has(.question-list li:nth-child(4):hover)) .link-4 path,
+  :global(.exploring-grid:has(.question-list li:nth-child(5):hover)) .link-5 path,
+  :global(.exploring-grid:has(.question-list li:nth-child(6):hover)) .link-6 path {
+    stroke: var(--color-accent);
+    stroke-opacity: 1;
+    stroke-width: 2.5;
+  }
+
+  :global(.exploring-grid:has(.question-list li:nth-child(1):hover)) .dot-1,
+  :global(.exploring-grid:has(.question-list li:nth-child(2):hover)) .dot-2,
+  :global(.exploring-grid:has(.question-list li:nth-child(3):hover)) .dot-3,
+  :global(.exploring-grid:has(.question-list li:nth-child(4):hover)) .dot-4,
+  :global(.exploring-grid:has(.question-list li:nth-child(5):hover)) .dot-5,
+  :global(.exploring-grid:has(.question-list li:nth-child(6):hover)) .dot-6 {
+    fill: var(--color-accent);
+    stroke: var(--color-accent);
+  }
+
+  /* ---- Draw-on animation: once, when the diagram scrolls into view ---- */
+  @media (prefers-reduced-motion: no-preference) {
+    .js .link path {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      transition:
+        stroke-dashoffset 800ms var(--ease-out) calc(200ms + var(--i) * 120ms),
+        stroke 200ms var(--ease-out), stroke-opacity 200ms var(--ease-out),
+        stroke-width 200ms var(--ease-out);
+    }
+
+    .js .dot {
+      opacity: 0;
+      transition:
+        opacity 300ms var(--ease-out) calc(300ms + var(--i) * 120ms),
+        fill 200ms var(--ease-out), stroke 200ms var(--ease-out);
+    }
+
+    .js .is-revealed .link path {
+      stroke-dashoffset: 0;
+    }
+
+    .js .is-revealed .dot {
+      opacity: 1;
+    }
+  }
+</style>

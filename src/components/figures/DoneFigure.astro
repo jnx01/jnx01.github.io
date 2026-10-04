@@ -1,0 +1,295 @@
+---
+/**
+ * DoneFigure — a small picture next to each "Research I've done" item on the
+ * Research page.
+ *
+ * RULE (same as the laptop screens): every picture is a small copy of
+ * something REAL that is already on this site. Nothing is invented.
+ *
+ *   kind="hand"     SignChatter: one real hand-keypoint frame
+ *                   (src/assets/sign-keypoints.json)
+ *   kind="routing"  Experiments: smart router vs random, from the same
+ *                   numbers as /work/experiments (routing-data.ts)
+ *   kind="bars"     Bahria research work: the two accuracy numbers that are
+ *                   already written in the text next to it
+ *
+ * Motion: when the picture scrolls into view it draws itself ONCE, then
+ * stays still. Only opacity / transform / stroke-dashoffset change. With
+ * reduced motion (or no JS) it is simply shown, already drawn.
+ *
+ * Accessibility: each picture is role="img" with a short description. The
+ * same facts are in the text beside it.
+ */
+import keypoints from '../../assets/sign-keypoints.json';
+import { budgets, random, router } from './routing-data';
+
+interface Props {
+  kind: 'hand' | 'routing' | 'bars';
+}
+const { kind } = Astro.props;
+
+// All three pictures use the same drawing area: 320 x 200 units.
+const W = 320;
+const H = 200;
+
+// ---- kind="hand": one real frame, scaled up to fill the picture -----------
+// The JSON is frames -> hands -> 21 points of [x, y] (each 0 to 1 across the
+// whole video frame). We find the box around the hand and scale it up.
+const frames = keypoints.frames.map((f) => (f.length > 0 ? f[0] : null));
+const hand = frames[Math.floor(frames.length / 2)];
+const xs = hand ? hand.map((p) => p[0]) : [0];
+const ys = hand ? hand.map((p) => p[1]) : [0];
+const minX = Math.min(...xs), maxX = Math.max(...xs);
+const minY = Math.min(...ys), maxY = Math.max(...ys);
+const handScale = 170 / Math.max(maxX - minX, maxY - minY || 1);
+const handX = (n: number) => W / 2 + (n - (minX + maxX) / 2) * handScale;
+const handY = (n: number) => H / 2 + (n - (minY + maxY) / 2) * handScale;
+
+// ---- kind="routing": the accuracy-vs-budget chart --------------------------
+const padL = 38, padR = 14, padT = 14, padB = 34;
+const xMin = 0, xMax = 100; // budget %
+const yMin = 25, yMax = 42; // accuracy %
+const cx = (b: number) => padL + ((b - xMin) / (xMax - xMin)) * (W - padL - padR);
+const cy = (a: number) => padT + (1 - (a - yMin) / (yMax - yMin)) * (H - padT - padB);
+const toPath = (vals: number[]) =>
+  vals.map((v, i) => `${i === 0 ? 'M' : 'L'} ${cx(budgets[i]).toFixed(1)} ${cy(v).toFixed(1)}`).join(' ');
+const yTicks = [25, 30, 35, 40];
+
+// ---- kind="bars": two accuracy bars (0 to 100%) ----------------------------
+const barLeft = 16;
+const barWidth = W - 32;
+const barX = (pct: number) => barLeft + (pct / 100) * barWidth;
+
+const descriptions = {
+  hand: 'One frame of hand keypoints from the SignChatter dataset: 21 joints joined by lines.',
+  routing: 'Chart: smart routing scores higher accuracy than random allocation at every budget.',
+  bars: 'Bars: crowd-threat detection reached 97% test accuracy; popularity prediction reached 73 to 86%.',
+};
+const captions = {
+  hand: 'One real frame of hand keypoints, from the SignChatter dataset.',
+  routing: 'Accuracy vs budget: smart router vs random. Data: budgeted_model_routing.',
+  bars: 'Test accuracy of the two projects.',
+};
+---
+
+<figure class="done-figure" data-reveal="fade">
+  <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={descriptions[kind]}>
+    {kind === 'hand' && (
+      <g>
+        {hand && keypoints.connections.map(([a, b], i) => (
+          <line
+            class="bone"
+            pathLength="1"
+            style={`--i:${i}`}
+            x1={handX(hand[a][0])} y1={handY(hand[a][1])}
+            x2={handX(hand[b][0])} y2={handY(hand[b][1])}
+          />
+        ))}
+        {hand && hand.map((pt, i) => (
+          <circle class="joint" style={`--i:${i}`} r="3" cx={handX(pt[0])} cy={handY(pt[1])} />
+        ))}
+      </g>
+    )}
+
+    {kind === 'routing' && (
+      <g>
+        {yTicks.map((t) => (
+          <g>
+            <line x1={padL} y1={cy(t)} x2={W - padR} y2={cy(t)} class="grid-line" />
+            <text x={padL - 6} y={cy(t) + 3} text-anchor="end" class="axis-label">{t}%</text>
+          </g>
+        ))}
+        {budgets.map((b) => (
+          <text x={cx(b)} y={H - padB + 14} text-anchor="middle" class="axis-label">{b}%</text>
+        ))}
+        <text x={padL + (W - padL - padR) / 2} y={H - 6} text-anchor="middle" class="axis-title">budget</text>
+
+        <path d={toPath(random)} class="line line-random" />
+        {random.map((v, i) => <circle cx={cx(budgets[i])} cy={cy(v)} r="2.8" class="dot dot-random" />)}
+        <path d={toPath(router)} class="line line-router" pathLength="1" />
+        {router.map((v, i) => <circle cx={cx(budgets[i])} cy={cy(v)} r="3.2" class="dot dot-router" style={`--i:${i}`} />)}
+
+        <!-- Legend: top-left, where the chart is empty -->
+        <line x1="50" y1="46" x2="66" y2="46" class="line line-router-key" />
+        <text x="70" y="49" class="axis-label">Smart router</text>
+        <line x1="50" y1="60" x2="66" y2="60" class="line line-random-key" />
+        <text x="70" y="63" class="axis-label">Random</text>
+      </g>
+    )}
+
+    {kind === 'bars' && (
+      <g>
+        <!-- Row 1: crowd-threat detection, 97% -->
+        <text x={barLeft} y="46" class="bar-label">Crowd-threat detection · DenseNet3D</text>
+        <rect x={barLeft} y="56" width={barWidth} height="14" rx="3" class="bar-track" />
+        <rect x={barLeft} y="56" width={barX(97) - barLeft} height="14" rx="3" class="bar bar-solid" />
+        <text x={W - 16} y="46" text-anchor="end" class="bar-value">97%</text>
+
+        <!-- Row 2: popularity prediction, 73 to 86% (a range) -->
+        <text x={barLeft} y="116" class="bar-label">Short-video popularity prediction</text>
+        <rect x={barLeft} y="126" width={barWidth} height="14" rx="3" class="bar-track" />
+        <rect x={barLeft} y="126" width={barX(86) - barLeft} height="14" rx="3" class="bar bar-range" style="--i:1" />
+        <rect x={barLeft} y="126" width={barX(73) - barLeft} height="14" rx="3" class="bar bar-solid" style="--i:1" />
+        <text x={W - 16} y="116" text-anchor="end" class="bar-value">73-86%</text>
+
+        <text x={barLeft} y="172" class="axis-label">0%</text>
+        <text x={W - 16} y="172" text-anchor="end" class="axis-label">100%</text>
+      </g>
+    )}
+  </svg>
+  <figcaption class="done-caption">{captions[kind]}</figcaption>
+</figure>
+
+<style>
+  .done-figure {
+    margin: 0;
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .done-figure svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    padding: var(--space-3);
+    background: var(--color-bg-accent);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+  }
+
+  .done-caption {
+    margin-top: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+    color: var(--color-ink-muted);
+  }
+
+  /* ---- Text in the drawings (sizes are in drawing units) ---- */
+  .axis-label,
+  .axis-title {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    fill: var(--color-ink-muted);
+  }
+  .bar-label {
+    font-family: var(--font-body);
+    font-size: 11px;
+    fill: var(--color-ink);
+  }
+  .bar-value {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    fill: var(--color-accent);
+  }
+
+  /* ---- Hand ---- */
+  .bone {
+    stroke: var(--color-accent);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .joint {
+    fill: var(--color-ink);
+  }
+
+  /* ---- Routing chart ---- */
+  .grid-line {
+    stroke: var(--color-border);
+    stroke-width: 1;
+  }
+  .line {
+    fill: none;
+    stroke-width: 2;
+  }
+  .line-router,
+  .line-router-key {
+    stroke: var(--color-accent);
+  }
+  .line-random,
+  .line-random-key {
+    stroke: var(--color-ink-muted);
+    stroke-dasharray: 4 3;
+    stroke-width: 1.5;
+  }
+  .dot-router {
+    fill: var(--color-accent);
+  }
+  .dot-random {
+    fill: var(--color-ink-muted);
+  }
+
+  /* ---- Bars ---- */
+  .bar-track {
+    fill: var(--color-bg);
+  }
+  .bar-solid {
+    fill: var(--color-accent);
+  }
+  /* The lighter part shows the range (73% up to 86%). */
+  .bar-range {
+    fill: var(--color-accent);
+    opacity: 0.35;
+  }
+  .bar {
+    transform-box: fill-box;
+    transform-origin: left center;
+  }
+
+  /* ---- Draw-on animation: once, when the figure scrolls into view ----------
+     Starting states only exist with JS on and motion allowed. Without them
+     the picture is just drawn. `.is-revealed` is added by the site's reveal
+     observer (Base.astro). */
+  @media (prefers-reduced-motion: no-preference) {
+    /* hand: bones draw one after another, then the joints pop in */
+    .js .bone {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      transition: stroke-dashoffset 600ms var(--ease-out) calc(150ms + var(--i) * 35ms);
+    }
+    .js .joint {
+      opacity: 0;
+      transition: opacity 300ms var(--ease-out) calc(400ms + var(--i) * 25ms);
+    }
+    .js .is-revealed .bone {
+      stroke-dashoffset: 0;
+    }
+    .js .is-revealed .joint {
+      opacity: 1;
+    }
+
+    /* routing: the router line draws, then its dots; the random line fades in */
+    .js .line-router {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      transition: stroke-dashoffset 1000ms var(--ease-out) 300ms;
+    }
+    .js .line-random,
+    .js .dot-random {
+      opacity: 0;
+      transition: opacity 500ms var(--ease-out) 100ms;
+    }
+    .js .dot-router {
+      opacity: 0;
+      transition: opacity 300ms var(--ease-out) calc(500ms + var(--i) * 180ms);
+    }
+    .js .is-revealed .line-router {
+      stroke-dashoffset: 0;
+    }
+    .js .is-revealed .line-random,
+    .js .is-revealed .dot-random,
+    .js .is-revealed .dot-router {
+      opacity: 1;
+    }
+
+    /* bars: grow from the left */
+    .js .bar {
+      transform: scaleX(0);
+      transition: transform 900ms var(--ease-out) calc(200ms + var(--i, 0) * 250ms);
+    }
+    .js .is-revealed .bar {
+      transform: scaleX(1);
+    }
+  }
+</style>

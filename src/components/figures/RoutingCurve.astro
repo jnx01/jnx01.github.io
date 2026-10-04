@@ -13,10 +13,9 @@
  * what reduced-motion users see described in text.
  */
 
-// The real data points.
-const budgets = [10, 25, 50, 75];
-const random = [29.0, 30.7, 33.5, 36.4];
-const router = [30.7, 33.6, 36.4, 38.6];
+// The real data points. They live in routing-data.ts so the small chart on
+// the homepage laptop screen uses exactly the same numbers.
+import { budgets, random, router } from './routing-data';
 
 // Chart geometry: map data to SVG coordinates.
 const W = 560, H = 300;

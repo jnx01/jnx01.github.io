@@ -142,3 +142,28 @@ code {
   color: var(--color-ink-muted);
   font-style: italic;
 }
+
+/* A single centered figure (e.g. the SignChatter keypoints gif). Capped in
+   size so a tall phone recording doesn't become a wall; the caption matches
+   .figure-caption above. */
+.prose .figure-center {
+  margin-block: var(--space-6) var(--space-2);
+  text-align: center;
+}
+
+.prose .figure-center img {
+  display: inline-block; /* override the global block so text-align centers it */
+  width: auto;
+  max-width: 100%;
+  max-height: 420px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tint);
+}
+
+.prose .figure-center figcaption {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-ink-muted);
+  font-style: italic;
+}

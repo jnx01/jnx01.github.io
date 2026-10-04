@@ -3,7 +3,7 @@
 The personal website of **Jahanzeb Naeem**, AI engineer. A static site built
 with Astro, deployed to GitHub Pages.
 
-Live at **https://jnx01.github.io** (once deployed).
+Live at **https://jnx01.github.io**.
 
 ---
 
@@ -25,8 +25,8 @@ npm run preview # preview the production build locally
 - **`docs/02-editing-and-maintenance.md`** — step-by-step recipes for common
   tasks (update the headshot, add a note, change text, deploy).
 - **`requirements.txt`** — every dependency and why it's included.
-- **`planning/`** — the strategy and audit docs the site was built from, plus
-  the local working log (not published).
+- **`planning/`** — the architecture doc (`ARCHITECTURE.md`) and the working
+  log (`WORKING-NOTES.md`) the site was built from.
 
 ---
 
@@ -37,7 +37,7 @@ npm run preview # preview the production build locally
 | Framework | **Astro** | Content-driven static sites; ships near-zero JS; first-class content collections and GitHub Pages support |
 | Content | **Markdown / MDX** | Case studies and notes are plain files; MDX lets them embed interactive charts inline |
 | Styling | **Vanilla CSS** (custom properties) | The design is bespoke and small — no framework needed; tokens keep it consistent |
-| Fonts | **Fontsource variable fonts** | Self-hosted Newsreader / Inter / JetBrains Mono — no external requests, one file per family |
+| Fonts | **Fontsource variable fonts** | Self-hosted Newsreader / Inter / JetBrains Mono (+ Caveat for the avatar greeting) — no external requests, one file per family |
 | Language | **TypeScript** (strict) | Type-safe content schemas and component props |
 | Images | **sharp** (bundled with Astro) | Crops/grades/exports the headshot and screenshots to AVIF/WebP/JPEG |
 | Analytics | **GoatCounter** | Privacy-friendly, cookie-free visitor stats; one toggle in `src/site.config.ts` |
@@ -60,11 +60,13 @@ src/content/     case studies + notes (Markdown/MDX)
 src/styles/      design tokens + base/typography/layout/motion
 src/site.config.ts  single source of truth for the resume link, email, social URLs, analytics
 public/          static assets served as-is
-scripts/         one-off helpers (headshot pipeline)
+scripts/         one-off helpers (headshot pipeline, keypoints extraction)
+docs/            how-it-works + editing/maintenance guides
+planning/        architecture doc + working notes
 
 # Local-only (gitignored, not in the public repo):
 assets-source/   original resumes/headshot/photos
-planning/        strategy docs + working notes
+.venv-signs/     local Python env for the keypoints script (regenerable)
 ```
 
 ## Design principles
@@ -72,7 +74,8 @@ planning/        strategy docs + working notes
 - **Engineered evidence** — every claim is backed by an artifact (a shipped
   product, a repo, a paper, a number).
 - **Restraint** — light-first, generous whitespace, one accent color, motion
-  that explains rather than decorates.
+  that explains rather than decorates. An optional dark theme is available
+  from the light-bulb toggle in the nav.
 - **Accessible & fast** — semantic HTML, keyboard-navigable, reduced-motion
   support, near-zero JavaScript.
 

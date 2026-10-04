@@ -1,5 +1,5 @@
 ---
-title: "Routing to a smaller model beats random — even on a tight budget"
+title: "Routing to a smaller model beats random, even on a tight budget"
 date: 2026-09-26
 summary: "A short writeup of the budgeted model-routing experiment: what I tested, what the numbers said, and where the result is fragile."
 draft: false
@@ -7,7 +7,7 @@ draft: false
 
 I recently ran a small experiment to answer a practical question: if you can
 only afford to send *some* queries to a big, expensive model, can a simple
-rule pick which ones — and beat just picking at random?
+rule pick which ones, and beat just picking at random?
 
 ## The setup
 
@@ -21,7 +21,7 @@ per-subject gain.
 
 The router beat random at every budget I tested. At a 25% budget it reached
 33.6% accuracy against random's 30.7%; at 50% it captured most of the big
-model's benefit (36.4% vs 33.5%). The sweet spot was a 50% budget — most of
+model's benefit (36.4% vs 33.5%). The sweet spot was a 50% budget: most of
 the value, half the cost.
 
 ## Where it's fragile

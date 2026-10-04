@@ -1,0 +1,248 @@
+---
+/**
+ * AvatarIntro — a one-time cartoon-avatar greeting on the homepage hero.
+ *
+ * What the visitor sees (first visit per browser session only):
+ *   1. A cartoon avatar (neutral pose) rises into the portrait frame.
+ *   2. It crossfades to the waving pose, with a little wiggle on the arm.
+ *   3. It slides back down out of the frame.
+ *   4. The real headshot photo pops up from the bottom edge and stays.
+ *
+ * The avatar is two PNG cutouts with transparent backgrounds:
+ *   /images/avatar/avatar-1.png  — neutral standing pose
+ *   /images/avatar/avatar-2.png  — waving pose (same canvas, aligned)
+ *
+ * Safety rules (each one skips the animation and shows the photo directly):
+ *   - The visitor asked for reduced motion (prefers-reduced-motion).
+ *   - The animation already played this session (sessionStorage flag).
+ *   - JavaScript is off or an image fails to load.
+ *
+ * Performance: the two PNGs are only fetched when the intro will play.
+ */
+---
+
+<div class="avatar-intro" data-avatar-intro>
+  <!-- The two avatar poses, stacked. Hidden until the script plays. -->
+  <div class="avatar-intro-stage" data-avatar-stage aria-hidden="true">
+    <img class="avatar-pose avatar-pose--neutral" src="/images/avatar/avatar-1.png" alt="" />
+    <img class="avatar-pose avatar-pose--waving" src="/images/avatar/avatar-2.png" alt="" />
+    <span class="avatar-greeting" data-avatar-greeting>Hi There!</span>
+  </div>
+  <!-- The real photo (the Headshot component is slotted in here). -->
+  <div class="avatar-intro-photo" data-avatar-photo>
+    <slot />
+  </div>
+</div>
+
+<style>
+  .avatar-intro {
+    position: relative;
+    /* Clips the avatar when it slides down and the photo when it rises,
+       so both enter/leave exactly at the frame edge. */
+    overflow: hidden;
+    border-radius: var(--radius-md);
+    /* The frame chrome (warm matte, hairline border) lives on the wrapper —
+       not on the photo — so the frame stays put while the avatar and the
+       photo swap places inside it. */
+    background: var(--color-bg-tint);
+    border: 1px solid var(--color-border);
+    padding: var(--space-3);
+  }
+
+  /* The slotted Headshot normally brings its own matte + border; inside the
+     intro the wrapper provides them, so strip the inner copy to avoid a
+     double frame. */
+  .avatar-intro .avatar-intro-photo > :global(.headshot) {
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  /* ---- The avatar stage ------------------------------------------------ */
+
+  .avatar-intro-stage {
+    position: absolute;
+    inset: var(--space-3); /* match the wrapper's padding */
+    display: none;         /* the script turns it on only when playing */
+  }
+
+  .avatar-intro.is-playing .avatar-intro-stage {
+    display: block;
+  }
+
+  .avatar-pose {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* The avatar figure is bottom-anchored so it rises from the frame edge. */
+    object-position: bottom;
+    /* Black-and-white, to match the headshot photo. */
+    filter: grayscale(1);
+  }
+
+  /* The waving pose starts invisible; the script crossfades to it. */
+  .avatar-pose--waving {
+    opacity: 0;
+  }
+
+  /* "Hi There!" — handwriting greeting above the avatar's head.
+     Appears (script-driven) when the waving pose shows. */
+  .avatar-greeting {
+    position: absolute;
+    /* The avatar image has ~9% transparent headroom, and object-fit:contain
+       adds more — 19% lands the text just above the visible hair. */
+    top: 19%;
+    left: 50%;
+    transform: translateX(-50%) rotate(-4deg);
+    font-family: 'Caveat', cursive;
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(2.2rem, 6vw, 3.2rem);
+    /* Darker shade of pale indigo: between --color-bg-accent and --color-accent. */
+    color: #7c74d8;
+    opacity: 0;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  /* ---- The photo hand-off ---------------------------------------------- */
+
+  /* While the intro plays, the photo waits just below the frame edge.
+     (100% of its own height + the wrapper's bottom padding + a margin.) */
+  .avatar-intro.is-playing .avatar-intro-photo {
+    transform: translateY(calc(100% + var(--space-3) + 4px));
+  }
+
+  /* The pop-up: a soft overshoot ease makes the photo feel springy. */
+  .avatar-intro.is-done .avatar-intro-photo {
+    transform: translateY(0);
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+</style>
+
+<script>
+  // One timeline, in seconds. Matches the hero's pale-indigo phase (1.8s):
+  // avatar-1 (neutral) shows for 0.8s, avatar-2 (waving) for 1.0s, then the
+  // real headshot pops up as the hero background turns warm off-white.
+  const RISE_END = 0.35;   // avatar finishes rising into frame
+  const CROSSFADE = 0.8;   // neutral -> waving pose swap midpoint
+  const WIGGLE_END = 1.6;  // the wave wiggle stops
+  const PHOTO_POP = 1.8;   // headshot starts popping up
+  const GONE = 2.2;        // avatar fully below the frame edge
+  const CLEANUP = 2.7;     // remove the avatar stage from the page
+
+  /** Ease helpers: turn a 0..1 progress value into a nicer 0..1 curve. */
+  const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+  const easeIn = (t: number) => t * t * t;
+  /** Progress of `now` between `start` and `end`, clamped to 0..1. */
+  const between = (now: number, start: number, end: number) =>
+    Math.min(1, Math.max(0, (now - start) / (end - start)));
+
+  /** Show the photo immediately and remove every trace of the intro. */
+  function bailOut(root: HTMLElement) {
+    root.classList.remove('is-playing');
+    root.classList.remove('is-done');
+    root.querySelector('[data-avatar-stage]')?.remove();
+  }
+
+  function runIntro(root: HTMLElement) {
+    const stage = root.querySelector<HTMLElement>('[data-avatar-stage]');
+    const neutral = root.querySelector<HTMLElement>('.avatar-pose--neutral');
+    const waving = root.querySelector<HTMLElement>('.avatar-pose--waving');
+    const greeting = root.querySelector<HTMLElement>('[data-avatar-greeting]');
+    if (!stage || !neutral || !waving) return;
+
+    const start = performance.now();
+    let popped = false;
+
+    const tick = () => {
+      const t = (performance.now() - start) / 1000;
+
+      // 1. Rise into the frame, then sink back down at the end.
+      const up = easeOut(between(t, 0, RISE_END));
+      const down = easeIn(between(t, PHOTO_POP, GONE));
+      stage.style.transform = `translateY(${(1 - up) * 104 + down * 104}%)`;
+
+      // 2. Swap poses: the neutral pose fades OUT while the waving pose
+      //    fades IN, so the two never ghost through each other.
+      const swap = between(t, CROSSFADE - 0.15, CROSSFADE + 0.15);
+      waving.style.opacity = String(swap);
+      neutral.style.opacity = String(1 - swap);
+
+      // 2b. The "Hi There!" greeting fades in just after the wave pose
+      //     lands, and fades out as the avatar starts sinking.
+      if (greeting) {
+        greeting.style.opacity = String(
+          between(t, CROSSFADE + 0.15, CROSSFADE + 0.4) * (1 - between(t, PHOTO_POP, GONE))
+        );
+      }
+
+      // 3. The wave: a small rotation wiggle on the whole figure sells the
+      //    gesture (the raised arm is baked into the waving pose).
+      const wiggling = between(t, CROSSFADE, WIGGLE_END) * (1 - between(t, WIGGLE_END, WIGGLE_END + 0.2));
+      const wiggle = Math.sin(t * Math.PI * 5) * 2.2 * wiggling; // degrees
+      stage.style.rotate = `${wiggle}deg`;
+
+      // 4. Hand over to the real photo.
+      if (!popped && t >= PHOTO_POP) {
+        popped = true;
+        root.classList.add('is-done'); // CSS springs the photo up
+      }
+
+      // 5. Finished: remove the avatar stage.
+      if (t >= CLEANUP) {
+        root.classList.remove('is-playing', 'is-done');
+        stage.remove();
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function setupAvatarIntro() {
+    const root = document.querySelector<HTMLElement>('[data-avatar-intro]');
+    if (!root) return; // not on the homepage
+
+    // Skip rules: reduced motion, or already greeted this session.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Dev mode: play on EVERY page load so the animation is easy to test.
+    // Production keeps the once-per-session behavior.
+    if (!import.meta.env.DEV) {
+      if (sessionStorage.getItem('avatar-greeted') === '1') return;
+      sessionStorage.setItem('avatar-greeted', '1');
+    }
+
+    root.classList.add('is-playing');
+
+    // Watchdog: if the images have not loaded within 6 seconds (slow
+    // network, missing file), give up gracefully and show the photo.
+    const watchdog = window.setTimeout(() => {
+      if (!root.classList.contains('is-done')) bailOut(root);
+    }, 6000);
+
+    // Start only once both pose images are ready (or give up on error).
+    const imgs = Array.from(root.querySelectorAll('img.avatar-pose'));
+    Promise.all(
+      imgs.map((img) =>
+        img.complete
+          ? Promise.resolve()
+          : new Promise((res, rej) => {
+              img.addEventListener('load', res, { once: true });
+              img.addEventListener('error', rej, { once: true });
+            })
+      )
+    )
+      .then(() => runIntro(root))
+      .catch(() => bailOut(root));
+
+    document.addEventListener('astro:before-swap', () => window.clearTimeout(watchdog), { once: true });
+  }
+
+  // astro:page-load fires on first load AND after view-transition navigation,
+  // so returning to the homepage within a session is handled too (the
+  // sessionStorage flag then keeps the photo showing instantly).
+  document.addEventListener('astro:page-load', setupAvatarIntro);
+</script>

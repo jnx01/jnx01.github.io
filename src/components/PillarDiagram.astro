@@ -38,6 +38,14 @@
     <path class="connector" d="M 260 76 C 260 130, 160 130, 160 168" />
     <path class="connector" d="M 340 76 C 340 130, 440 130, 440 168" />
 
+    <!-- Traveling pulse (modification strategy 03, moment C): a dot of
+         accent light circulates from the theme down each connector, on a
+         slow loop — the two pillars as a living system, constantly fed by
+         the theme. Pure decoration; the connectors already carry the
+         meaning. Reduced motion: dots hidden. -->
+    <circle class="pulse" r="4" />
+    <circle class="pulse pulse-2" r="4" />
+
     <!-- Pillar nodes (bottom left + right) -->
     <g class="node node-pillar">
       <rect x="60" y="168" width="200" height="56" rx="8" />
@@ -94,6 +102,13 @@
     stroke-linecap: round;
   }
 
+  /* Pulse dots are hidden by default (reduced motion, no-JS, old browsers).
+     They only appear inside the no-preference media query below, where the
+     animation lives. */
+  .pulse {
+    opacity: 0;
+  }
+
   /* The draw-on animation. Each path's length is ~120 units; we set the
      dash equal to the length and animate the offset to zero when the parent
      figure is revealed. Gated behind reduced-motion like everything else. */
@@ -111,6 +126,35 @@
 
     .js .pillar-diagram.is-revealed .connector {
       stroke-dashoffset: 0;
+    }
+
+    /* The traveling pulse. Each dot rides its connector via offset-path,
+       looping slowly. The second dot is staggered so the two pillars are
+       fed alternately, not simultaneously.
+
+       No `.js` gate here (Astro scopes styles with attribute selectors, and
+       `.js` lives on <html> which has no scope attribute, so `.js …` would
+       never match — same lesson as the hero underline). The no-JS guarantee
+       holds anyway: the dots sit at opacity 0 unless the animation runs, so
+       without JS they simply never appear. The diagram's meaning is carried
+       by the connectors, which are unaffected. */
+    .pulse {
+      fill: var(--color-accent);
+      offset-path: path('M 260 76 C 260 130, 160 130, 160 168');
+      animation: pillar-pulse 4s linear infinite;
+      opacity: 0;
+    }
+
+    .pulse-2 {
+      offset-path: path('M 340 76 C 340 130, 440 130, 440 168');
+      animation-delay: 2s; /* halfway behind the first dot */
+    }
+
+    @keyframes pillar-pulse {
+      0%   { offset-distance: 0%;   opacity: 0; }
+      10%  { opacity: 1; }
+      85%  { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0; }
     }
   }
 </style>

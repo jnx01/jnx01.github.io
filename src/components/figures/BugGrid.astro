@@ -1,0 +1,122 @@
+---
+/**
+ * BugGrid — 35+ critical bugs, visualized as squares turning green
+ * (modification strategy 03, moment T2).
+ *
+ * The page says "resolved more than 35 critical bugs." This makes that
+ * number physical: 36 squares ("35+"), starting red (the bug), turning
+ * green one by one on scroll (the fix). Two rows of 18.
+ *
+ * Below: "35+ critical bugs. Caught by CI, fixed before customers saw them."
+ *
+ * Reduced motion / no JS: all squares green, no animation.
+ */
+
+const total = 36;
+---
+
+<div class="bug-grid" data-bug-grid data-reveal="fade">
+  <div class="grid-track" role="img" aria-label="36 squares representing the 35+ critical bugs, turning from red to green on scroll">
+    {Array.from({ length: total }, (_, i) => (
+      <span
+        class="bug-square"
+        data-bug-square
+        data-index={i}
+        style={`--delay: ${i * 40}ms;`}
+      />
+    ))}
+  </div>
+  <p class="bug-caption">
+    <strong>35+</strong> critical bugs caught and resolved.
+  </p>
+</div>
+
+<style>
+  .bug-grid {
+    margin-block: var(--space-6) var(--space-2);
+    padding: var(--space-6);
+    background: var(--color-bg-tint);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-align: center;
+  }
+
+  .grid-track {
+    display: grid;
+    grid-template-columns: repeat(18, 1fr);
+    gap: 4px;
+    max-width: 432px;
+    margin: 0 auto;
+  }
+
+  .bug-square {
+    aspect-ratio: 1;
+    background: #dc2626; /* red — the bug */
+    border-radius: 1px;
+    transition: background 300ms var(--ease-out);
+  }
+
+  /* Fixed state: green. The --delay custom property staggers the fix so
+     they turn left-to-right, top-to-bottom. */
+  .bug-square.is-fixed {
+    background: #16a34a; /* green — the fix */
+  }
+
+  .bug-caption {
+    margin-top: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+  }
+
+  .bug-caption strong {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  /* Reduced motion: all squares green immediately, no stagger. */
+  @media (prefers-reduced-motion: reduce) {
+    .bug-square {
+      background: #16a34a;
+    }
+  }
+</style>
+
+<script>
+  // Turn the squares green on scroll, staggered left-to-right, top-to-bottom.
+  function setupBugGrid() {
+    const grid = document.querySelector('[data-bug-grid]');
+    if (!grid) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      grid.querySelectorAll('[data-bug-square]').forEach((s) => s.classList.add('is-fixed'));
+      return;
+    }
+
+    const squares = grid.querySelectorAll('[data-bug-square]');
+
+    const fix = () => {
+      squares.forEach((sq) => {
+        const delay = parseInt(sq.style.getPropertyValue('--delay'), 10);
+        setTimeout(() => sq.classList.add('is-fixed'), delay);
+      });
+    };
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            fix();
+            io.disconnect();
+          }
+        },
+        { threshold: 0.3 }
+      );
+      io.observe(grid);
+    } else {
+      fix();
+    }
+  }
+
+  document.addEventListener('astro:page-load', setupBugGrid);
+</script>

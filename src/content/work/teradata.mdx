@@ -2,23 +2,26 @@
 title: "Production AI at Teradata"
 kind: industry
 weight: 1
-summary: "Production AI across several enterprise systems — owning the API layer of a Text-to-SQL agent, authoring agentic skills, and hardening evaluation and retrieval."
+summary: "Production AI across several enterprise systems: owning the API layer of a Text-to-SQL agent, authoring agentic skills, and hardening evaluation and retrieval."
 stack: ["FastAPI", "MCP", "LangGraph", "HNSW", "Docker", "Kubernetes", "AWS", "PyTorch"]
 links: []
 confidential: true
 featured: true
 ---
 
+import EndpointGrid from '../../components/figures/EndpointGrid.astro';
+import BugGrid from '../../components/figures/BugGrid.astro';
+
 ## Context
 
 Teradata builds data and analytics platforms used by large enterprises. I work
 on the GenAI and Agentic AI team, where the central challenge is turning
 natural-language questions into correct, executable SQL against real
-enterprise schemas — a problem that has to work outside the notebook, under
+enterprise schemas, a problem that has to work outside the notebook, under
 production constraints, for customers who cannot afford wrong answers.
 
 Over three years I've worked across several distinct production AI systems
-rather than a single product — an enterprise Text-to-SQL agent, the agentic
+rather than a single product: an enterprise Text-to-SQL agent, the agentic
 skills platform, the schema-mapping engine, and the VectorStore retrieval
 pipeline. This case study covers them in turn.
 
@@ -29,16 +32,18 @@ that isn't already public.
 ## The Text-to-SQL agent
 
 My deepest ownership was the **API layer of the enterprise Text-to-SQL
-agent** — the seam between the backend and the rest of the product. I designed
+agent**, the seam between the backend and the rest of the product. I designed
 and built roughly forty REST endpoints across two FastAPI services, covering
 prompt handling, metadata ingestion, script execution, job orchestration, and
 initialization. I took this layer from before the product launched through
 the onboarding of its first enterprise customers.
 
+<EndpointGrid />
+
 ## The agentic skills platform
 
 On a separate track, I **authored agentic skills for Teradata's AI
-platform** — most notably a train-eval skill for in-database ML training,
+platform**, most notably a train-eval skill for in-database ML training,
 evaluation, and interpretation, invoked through MCP tool calls. These skills
 are validated in CI with LLM-graded correctness and tool-use metrics, so a
 regression in how the agent reasons shows up as a failing test, not a
@@ -47,7 +52,7 @@ surprised customer.
 ## Evaluation as a through-line
 
 The part of the work I'm most proud of is that evaluation isn't an
-afterthought — it's the method, and it runs across every project I touched.
+afterthought; it's the method, and it runs across every project I touched.
 A few examples:
 
 - **Schema mapping.** Working on the AI-driven schema-mapping engine, I
@@ -55,25 +60,27 @@ A few examples:
   strategies, embedding models, and prompt designs for automated
   client-to-IDM mapping.
 - **Retrieval robustness.** With the VectorStore team, I helped harden the
-  RAG pipeline — in-database embedding generation, HNSW vector search, and
+  RAG pipeline: in-database embedding generation, HNSW vector search, and
   extending support for custom tokenizers and small language models.
 - **CI as a safety net.** I built the CI pipeline (60 automated tests, 75%
   coverage) and resolved more than 35 critical bugs, then led
   deployments across AWS and on-premises environments.
 
+<BugGrid />
+
 Earlier internal work included benchmarking modulation-classification models
-with in-database ML at scale — feature augmentation across tables on the
-order of a trillion rows — which is where I learned what "large" really means
+with in-database ML at scale (feature augmentation across tables on the
+order of a trillion rows), which is where I learned what “large” really means
 for enterprise data.
 
 ## Outcomes
 
-These systems reached enterprise customers ahead of general availability —
+These systems reached enterprise customers ahead of general availability,
 including analytics and migration work for one of the world's largest banks.
 I partnered with those customers and with engineering teams to onboard them,
 delivered consulting solutions for earlier clients, authored customer-facing
 documentation and notebooks, and mentored three junior engineers. I was
-promoted twice in under two years — from Data Science Trainee Consultant to
+promoted twice in under two years: from Data Science Trainee Consultant to
 Data Science & ETL Consultant I to Data Science Engineer II.
 
 ## What I took from it

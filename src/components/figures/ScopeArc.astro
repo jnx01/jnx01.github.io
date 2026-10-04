@@ -1,0 +1,202 @@
+---
+/**
+ * ScopeArc — the two promotions at Teradata, drawn as widening scope.
+ *
+ * The About page says "promoted twice" in a parenthetical. This makes the
+ * progression physical: three roles left to right, and under each a bar of
+ * blocks that grows as the scope widens. The block counts track the scope:
+ *
+ *   Trainee Consultant     1 block   data warehousing
+ *   Consultant I           2 blocks  ETL and data science ops
+ *   Engineer II            3 blocks  APIs, agentic skills, evals
+ *
+ * The bars fill in on scroll, left to right, so the growth reads as motion.
+ * Reduced motion / no JS: all blocks visible, no animation.
+ */
+
+const stages = [
+  {
+    role: 'Trainee Consultant',
+    when: '2023',
+    blocks: 1,
+    note: 'Data warehousing',
+  },
+  {
+    role: 'Consultant I',
+    when: '2024',
+    blocks: 2,
+    note: 'ETL and data science ops',
+  },
+  {
+    role: 'Engineer II',
+    when: '2025',
+    blocks: 3,
+    note: 'APIs, agentic skills, evals',
+  },
+];
+
+// The widest bar (3 blocks) sets the scale; each block is one unit wide.
+const maxBlocks = 3;
+---
+
+<div class="scope-arc" data-scope-arc data-reveal="fade">
+  <div
+    class="scope-track"
+    role="img"
+    aria-label="Three roles at Teradata with widening scope: Trainee Consultant in 2023 (data warehousing), Consultant I in 2024 (ETL and data science ops), Engineer II in 2025 (APIs, agentic skills, and evaluations)."
+  >
+    {stages.map((stage, s) => (
+      <div class="scope-stage">
+        <p class="scope-when">{stage.when}</p>
+        <p class="scope-role">{stage.role}</p>
+        <div class="scope-blocks" style={`--blocks: ${stage.blocks}; --max: ${maxBlocks};`}>
+          {Array.from({ length: stage.blocks }, (_, i) => (
+            <span
+              class="scope-block"
+              data-scope-block
+              style={`--delay: ${(s * 3 + i) * 90}ms;`}
+            />
+          ))}
+        </div>
+        <p class="scope-note">{stage.note}</p>
+      </div>
+    ))}
+  </div>
+  <p class="scope-caption">
+    Two promotions in under two years. The scope widened each time.
+  </p>
+</div>
+
+<style>
+  .scope-arc {
+    margin-block: var(--space-8) var(--space-4);
+    padding: var(--space-6);
+    background: var(--color-bg-tint);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  /* Three stages side by side on desktop, stacked on mobile. */
+  .scope-track {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 640px) {
+    .scope-track {
+      grid-template-columns: repeat(3, 1fr);
+      align-items: end; /* bars grow upward from a shared baseline */
+    }
+  }
+
+  .scope-when {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .scope-role {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-top: var(--space-1);
+  }
+
+  /* The bar of blocks. Its WIDTH is blocks/max of the column, so the growth
+     is visible at a glance: 1/4, 2/4, 4/4. Each block is a fixed-size square
+     unit, so the bar's length maps directly to the scope. */
+  .scope-blocks {
+    display: grid;
+    grid-template-columns: repeat(var(--blocks), 1fr);
+    gap: 4px;
+    margin-top: var(--space-3);
+    height: 22px;
+    /* The bar only takes up blocks/max of the available column width. */
+    width: calc(var(--blocks) / var(--max) * 100%);
+  }
+
+  .scope-block {
+    background: var(--color-accent);
+    border-radius: 2px;
+    /* Hidden until filled on scroll (JS). Without JS the reduced-motion
+       rule below keeps them visible. */
+    opacity: 0;
+    transform: scaleY(0.3);
+    transform-origin: bottom;
+    transition:
+      opacity 300ms var(--ease-out),
+      transform 300ms var(--ease-out);
+    transition-delay: var(--delay);
+  }
+
+  .scope-block.is-filled {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+
+  .scope-note {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    line-height: 1.5;
+    min-height: 2.5em; /* keeps the three stage tops aligned */
+  }
+
+  .scope-caption {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    text-align: center;
+  }
+
+  /* Reduced motion / no JS: every block visible, no stagger. */
+  @media (prefers-reduced-motion: reduce) {
+    .scope-block {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // Fill the blocks on scroll, left to right, so the widening scope reads
+  // as growth. One pass, no loop.
+  function setupScopeArc() {
+    const arc = document.querySelector('[data-scope-arc]');
+    if (!arc) return;
+
+    const blocks = arc.querySelectorAll('[data-scope-block]');
+
+    // Reduced motion: show everything immediately.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      blocks.forEach((b) => b.classList.add('is-filled'));
+      return;
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      blocks.forEach((b) => b.classList.add('is-filled'));
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            blocks.forEach((b) => b.classList.add('is-filled'));
+            io.disconnect();
+          }
+        }
+      },
+      { rootMargin: '0px 0px -15% 0px' }
+    );
+    io.observe(arc);
+  }
+
+  // Run on first load and after every view-transition page swap.
+  document.addEventListener('astro:page-load', setupScopeArc);
+</script>

@@ -1,0 +1,226 @@
+---
+/**
+ * Laptop — a flat line-art laptop for the homepage scroll journey
+ * (planning/ARCHITECTURE.md §10).
+ *
+ * It is DECORATION: the whole thing is aria-hidden. Whatever is shown on its
+ * screen (the default slot) must be a real artifact from the site.
+ *
+ * HOW IT WORKS (in simple words)
+ * Think of the laptop as a drawing seen from straight above (a "plan view"):
+ *   - the BASE is a flat rectangle lying on the floor,
+ *   - the LID is another rectangle sitting on top of it, hinged at the top
+ *     (back) edge.
+ * Then CSS 3D turns the whole drawing to look at it from different angles.
+ * Four numbers (CSS variables) control everything. Set them on the
+ * `.laptop-scene` element (a script will do this on scroll in a later module):
+ *
+ *   --open   0 to 1      lid angle. 0 = shut, 1 = fully open (about 100deg)
+ *   --elev   0deg to ~70deg  camera height. 0deg = looking straight down at
+ *            the laptop (a closed laptop then shows its lid, like a book
+ *            standing up). ~62deg = a normal "looking at a laptop" view.
+ *   --spin   angle in degrees, e.g. -90deg. Turns the laptop on a turntable.
+ *            -90deg with --elev 0deg = closed laptop standing UPRIGHT
+ *            (portrait), like a book on a shelf.
+ *   --s      a plain number, e.g. 1. Size multiplier. Bigger = "closer to
+ *            the reader", smaller = "further away" (the depth effect).
+ *
+ * Optional: --laptop-w (default 360px) sets the width of the laptop.
+ * --shadow (0 to 1) sets how strong the floor shadow is.
+ *
+ * Only `transform` changes while scrolling, so it stays cheap to animate.
+ * No filters on anything inside the 3D group (filters would flatten it).
+ */
+---
+
+<div class="laptop-scene" data-laptop aria-hidden="true">
+  <!-- Soft floor shadow. Outside the 3D group, so it can be a plain gradient. -->
+  <div class="laptop-shadow"></div>
+
+  <div class="laptop">
+    <!-- BASE: the keyboard deck, lying flat. -->
+    <div class="laptop-base">
+      <div class="laptop-keys"></div>
+      <div class="laptop-trackpad"></div>
+      <!-- The thin front face of the base, so it has a little thickness
+           when seen from a low angle. -->
+      <div class="laptop-front-edge"></div>
+    </div>
+
+    <!-- LID: hinged at the top edge. It has two faces:
+         - outer face: seen when the laptop is shut (plain, with a small mark)
+         - inner face: the screen, seen when the laptop is open -->
+    <div class="laptop-lid">
+      <div class="laptop-lid-outer"><span class="laptop-mark"></span></div>
+      <div class="laptop-lid-inner">
+        <div class="laptop-screen"><slot /></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .laptop-scene {
+    /* Sizes: everything is a fraction of the laptop width, so changing
+       --laptop-w scales the whole drawing. */
+    --w: var(--laptop-w, 360px);
+    --d: calc(var(--w) * 0.66); /* depth of the base = height of the lid */
+    --edge: 1.5px solid var(--color-ink); /* the one "line-art" stroke */
+
+    position: relative;
+    width: var(--w);
+    height: var(--w);
+    /* Perspective is what makes the far edge look smaller than the near one. */
+    perspective: calc(var(--w) * 4.5);
+    pointer-events: none; /* decoration: never intercepts clicks */
+  }
+
+  /* The 3D group. Its transform is the only thing a scroll script changes. */
+  .laptop {
+    position: absolute;
+    left: 0;
+    top: calc((var(--w) - var(--d)) / 2);
+    width: var(--w);
+    height: var(--d);
+    transform-style: preserve-3d;
+    /* Order matters: spin (turntable) happens first, then the camera tilt,
+       then the size change. */
+    transform: scale(var(--s, 1)) rotateX(var(--elev, 0deg)) rotateZ(var(--spin, 0deg));
+  }
+
+  /* ---- Base ---------------------------------------------------------------- */
+  .laptop-base {
+    position: absolute;
+    inset: 0;
+    background: var(--color-bg-tint);
+    border: var(--edge);
+    /* Small corners at the hinge side, bigger at the front edge. */
+    border-radius: 6px 6px 16px 16px;
+    transform-style: preserve-3d; /* so the front edge can stand out */
+  }
+
+  /* Key grid: two sets of faint lines (rows and columns). */
+  .laptop-keys {
+    position: absolute;
+    top: 7%;
+    left: 5%;
+    right: 5%;
+    height: 54%;
+    --line: color-mix(in srgb, var(--color-ink) 16%, transparent);
+    background:
+      repeating-linear-gradient(to bottom, transparent 0 calc(100% / 5 - 1.5px), var(--line) calc(100% / 5 - 1.5px) calc(100% / 5)),
+      repeating-linear-gradient(to right, transparent 0 calc(100% / 14 - 1.5px), var(--line) calc(100% / 14 - 1.5px) calc(100% / 14));
+    border-radius: 4px;
+  }
+
+  .laptop-trackpad {
+    position: absolute;
+    bottom: 7%;
+    left: 33%;
+    width: 34%;
+    height: 24%;
+    border: 1.5px solid color-mix(in srgb, var(--color-ink) 35%, transparent);
+    border-radius: 6px;
+  }
+
+  /* Hangs down from the front edge (rotateX(90deg) around its top edge
+     swings it away from the viewer, below the base). */
+  .laptop-front-edge {
+    position: absolute;
+    top: 100%;
+    left: 6px;
+    right: 6px;
+    height: 9px;
+    background: var(--color-ink);
+    border-radius: 0 0 6px 6px;
+    transform-origin: 50% 0;
+    transform: rotateX(90deg);
+  }
+
+  /* ---- Lid ----------------------------------------------------------------- */
+  .laptop-lid {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform-origin: 50% 0; /* the hinge is the top edge */
+    /* translateZ(1px) lifts the shut lid just above the base so the two flat
+       rectangles never fight over who is on top. */
+    transform: translateZ(1px) rotateX(calc(var(--open, 0) * 100deg));
+  }
+
+  /* Both faces hide when they are turned away from the camera, so only the
+     right one shows at any moment. */
+  .laptop-lid-outer,
+  .laptop-lid-inner {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+  }
+
+  .laptop-lid-outer {
+    /* A soft diagonal sheen (a lighter band across a slightly darker body)
+       so the shut lid reads as a metal laptop, not a blank card. */
+    background: linear-gradient(
+      115deg,
+      var(--color-bg-tint) 0 36%,
+      var(--color-bg) 50%,
+      var(--color-bg-tint) 64% 100%
+    );
+    border: var(--edge);
+    border-radius: 16px 16px 6px 6px;
+    display: grid;
+    place-items: center;
+  }
+
+  /* The hinge: a dark band along the hinge (top) edge of the lid. */
+  .laptop-lid-outer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 8%;
+    right: 8%;
+    height: 4%;
+    background: var(--color-ink);
+    border-radius: 0 0 4px 4px;
+  }
+
+  /* A small accent ring: the laptop's "logo". Deliberately NOT any real brand. */
+  .laptop-mark {
+    width: calc(var(--w) * 0.085);
+    height: calc(var(--w) * 0.085);
+    border: 2px solid var(--color-accent);
+    border-radius: 50%;
+  }
+
+  /* The inside of the lid (the screen side). Flipped 180deg around its
+     middle so it faces the other way, and so its top stays at the free edge
+     when the lid stands up. */
+  .laptop-lid-inner {
+    transform: rotateX(180deg);
+    background: var(--color-ink); /* the bezel */
+    border: var(--edge);
+    border-radius: 16px 16px 6px 6px;
+    padding: calc(var(--w) * 0.028);
+  }
+
+  .laptop-screen {
+    width: 100%;
+    height: 100%;
+    background: var(--color-bg);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ---- Shadow ---------------------------------------------------------------- */
+  .laptop-shadow {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    top: calc(var(--w) * 0.52);
+    height: calc(var(--w) * 0.3);
+    background: radial-gradient(ellipse at center, rgb(26 26 24 / 0.22), transparent 70%);
+    opacity: var(--shadow, 0);
+    transform: scale(var(--s, 1));
+  }
+</style>

@@ -41,6 +41,44 @@ const isCurrent = (href: string) => currentPath.startsWith(href);
         </li>
       ))}
     </ul>
+
+    <!-- Light/dark theme toggle. A simple light bulb: outline in light mode,
+         lit (filled, with rays) in dark mode. The actual theme flip is done
+         by the script below; the starting theme is applied in Base.astro
+         before first paint, so this button only ever switches the choice. -->
+    <button
+      type="button"
+      class="theme-toggle"
+      data-theme-toggle
+      aria-label="Switch to dark mode"
+      aria-pressed="false"
+    >
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+        <!-- Bulb glass -->
+        <path
+          class="bulb-glass"
+          d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linejoin="round"
+        />
+        <!-- Bulb base -->
+        <path
+          d="M9.5 18.5h5M10 21h4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+        />
+        <!-- Rays: only visible in dark mode (the bulb is "on") -->
+        <g class="bulb-rays" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <path d="M12 0.8v1.4" />
+          <path d="M4.2 4.4l1 1" />
+          <path d="M19.8 4.4l-1 1" />
+        </g>
+      </svg>
+    </button>
   </nav>
 </header>
 
@@ -52,6 +90,7 @@ const isCurrent = (href: string) => currentPath.startsWith(href);
     top: 0;
     z-index: 50;
     background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+    -webkit-backdrop-filter: blur(12px); /* older Safari needs the prefix */
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--color-border);
   }
@@ -84,6 +123,10 @@ const isCurrent = (href: string) => currentPath.startsWith(href);
     gap: var(--space-2) var(--space-6);
     list-style: none;
     padding: 0;
+    /* With three children (wordmark, list, toggle), space-between would
+       center the list. This pins the list to the right, next to the toggle. */
+    margin-left: auto;
+    margin-right: var(--space-4);
   }
 
   .nav-link {
@@ -119,4 +162,77 @@ const isCurrent = (href: string) => currentPath.startsWith(href);
       font-size: var(--text-xs);
     }
   }
+
+  /* ---- Theme toggle ------------------------------------------------------
+     A quiet icon button at the right end of the nav. Same ink color as the
+     wordmark; the accent ring appears on keyboard focus via the global
+     :focus-visible rule. */
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* 44px tap target on mobile without looking big (visual box is smaller). */
+    min-width: 44px;
+    min-height: 44px;
+    margin-block: calc((44px - 28px) / -2); /* keep the nav height unchanged */
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: color var(--duration-fast) var(--ease-out);
+  }
+
+  .theme-toggle:hover {
+    color: var(--color-ink);
+  }
+
+  /* The bulb's rays only show when the bulb is "on" (dark mode active).
+     [data-theme] lives on <html>, outside this component's scope, so the
+     selector needs :global. */
+  .bulb-rays {
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-out);
+  }
+
+  :global([data-theme='dark']) .bulb-rays {
+    opacity: 1;
+  }
+
+  /* In dark mode the bulb glass fills with the accent color: the lamp is lit. */
+  :global([data-theme='dark']) .bulb-glass {
+    fill: var(--color-accent);
+    stroke: var(--color-accent);
+  }
 </style>
+
+<script>
+  // Wires up the theme toggle. Runs on first load AND after every
+  // view-transition page swap (astro:page-load), because the swap replaces
+  // the nav with a fresh button that needs a fresh listener.
+  function setupThemeToggle() {
+    const btn = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+    if (!btn) return;
+
+    // Keep the button's label/state honest about the current theme.
+    const sync = () => {
+      const dark = document.documentElement.dataset.theme === 'dark';
+      btn.setAttribute('aria-pressed', String(dark));
+      btn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+    };
+
+    btn.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', next); // remember across visits
+      document.documentElement.dataset.theme = next;
+      // Keep the browser chrome color in sync (same values as Base.astro).
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', next === 'dark' ? '#161614' : '#fafaf8');
+      sync();
+    });
+
+    sync();
+  }
+  document.addEventListener('astro:page-load', setupThemeToggle);
+</script>

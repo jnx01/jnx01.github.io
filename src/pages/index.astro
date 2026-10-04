@@ -1,45 +1,124 @@
 ---
 /**
  * Home — the scroll narrative (strategy §D). Six movements:
- *   1. Hero            — editorial statement + headshot + scroll cue
+ *   1. Hero            — editorial statement + headshot + contact actions
  *   2. Proof strip     — quantified facts, no adjectives
  *   3. Selected work   — three flagship case studies, weighted
  *   4. Research teaser — theme + two pillars, link to /research
  *   5. Experience      — one-line-per-role compressed timeline
- *   6. Person + contact — 2–3 sentences of humanity + the three links
+ *   6. Person          — 2–3 sentences of humanity + the talk photo
  *
- * Every claim below is backed by the audit (planning/01-audit.md) or the
+ * Every claim below is backed by the audit (planning/ARCHITECTURE.md) or the
  * resumes. Nothing here is invented.
  */
 import Base from '../layouts/Base.astro';
 import Headshot from '../components/Headshot.astro';
+import AvatarIntro from '../components/AvatarIntro.astro';
 import Card from '../components/Card.astro';
+import Laptop from '../components/Laptop.astro';
+import LaptopScreens from '../components/LaptopScreens.astro';
 import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.config';
 ---
 
 <Base
   title="AI Engineer"
-  description="Jahanzeb Naeem builds and evaluates AI systems that have to work outside the notebook — production GenAI at Teradata, and honest experiments on efficiency and reliability."
+  description="Jahanzeb Naeem builds and evaluates AI systems that have to work outside the notebook: production GenAI at Teradata, and honest experiments on efficiency and reliability."
 >
+  <!-- THE JOURNEY LAPTOP (planning/ARCHITECTURE.md §10) -------------------------
+       One fixed, click-through laptop that follows the scroll. It stays
+       hidden (display: none) unless JS is on, motion is allowed and the
+       screen is >= 1100px wide. The script in this file moves it; see
+       "Journey laptop" below. It sits ABOVE the section backgrounds but
+       BELOW the section content, so it can never cover text.
+       The screen shows small still pictures of real work from this site
+       (see LaptopScreens.astro); the script cross-fades them as you scroll. -->
+  <!-- THE DASHED PATH (planning/ARCHITECTURE.md §10): the laptop's route down the
+       page. The faint dashed line is the road ahead; the solid accent line
+       is the trail the laptop has already travelled. The script draws it
+       (page-sized, scrolls with the page) from the same maths that moves the
+       laptop, so the laptop is always exactly on the line. -->
+  <svg class="journey-path" data-journey-path aria-hidden="true" focusable="false">
+    <path class="journey-path-ahead"></path>
+    <path class="journey-path-trail" pathLength="1"></path>
+  </svg>
+
+  <div class="journey-laptop" data-journey-laptop aria-hidden="true">
+    <Laptop>
+      <LaptopScreens />
+    </Laptop>
+  </div>
+
   <!-- 1. HERO -------------------------------------------------------------
       Asymmetric editorial composition: statement left, portrait right
-      (roughly a third of the width on desktop). No CTA buttons — the
-      scroll cue is the CTA (strategy §E). -->
+      (roughly a third of the width on desktop). The action row under the
+      statement carries the primary CTA (resume) plus the three contact
+      links, so a recruiter never has to scroll to act. -->
   <section class="hero">
     <div class="container hero-grid">
       <div class="hero-text">
-        <h1 class="hero-statement" data-reveal>
-          I build and evaluate AI systems that have to work outside the notebook.
+        <h1 class="hero-statement">
+          <span class="hero-line" data-reveal>I build and evaluate</span>
+          <span class="hero-line" data-reveal data-reveal-delay="1">AI systems that have to work</span>
+          <span class="hero-line" data-reveal data-reveal-delay="2">
+            <span class="hero-underline">
+              outside the notebook.<svg
+                class="hero-underline-stroke"
+                viewBox="0 0 300 12"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+                focusable="false"
+              ><path d="M3 8 C 60 3, 150 10, 297 6" /></svg>
+            </span>
+          </span>
         </h1>
         <p class="hero-byline" data-reveal data-reveal-delay="1">
           Jahanzeb Naeem · AI Engineer · Teradata · Islamabad
         </p>
-        <p class="hero-scroll">
-          <span class="scroll-cue" data-reveal="fade" data-reveal-delay="3">Scroll</span>
+        <!-- One-line summary: same facts as the page description and the
+             work cards (Teradata GenAI; self-directed efficiency and
+             reliability studies). Nothing new is claimed. -->
+        <p class="hero-summary" data-reveal data-reveal-delay="2">
+          Production GenAI at Teradata. Research on cheaper, more reliable agents.
         </p>
+        <!-- The action row: one primary button (the work index) + Email,
+             LinkedIn, GitHub, Resume as quiet text links. "Email" matches the
+             links visually, but instead of navigating it reveals the
+             obfuscated address in a small popup. Works on hover (desktop),
+             focus (keyboard), and click/tap (mobile). The address stays out
+             of any href, so scrapers get nothing actionable. -->
+        <div class="hero-cta" data-reveal data-reveal-delay="3">
+          <a class="btn-primary" href="/work/">See My Work</a>
+          <ul class="hero-links">
+            <li class="email-reveal">
+              <button
+                type="button"
+                class="link-draw email-reveal-btn"
+                aria-describedby="email-tooltip"
+              >
+                Email
+              </button>
+              <span class="email-tooltip" id="email-tooltip" role="tooltip">
+                {EMAIL_DISPLAY}
+              </span>
+            </li>
+            <li><a class="link-draw" href={LINKEDIN_URL} rel="me">LinkedIn</a></li>
+            <li><a class="link-draw" href={GITHUB_URL} rel="me">GitHub</a></li>
+            <!-- Quiet resume link (Google Drive, read-only) for recruiters
+                 who need a PDF. -->
+            <li><a class="link-draw" href={RESUME_URL}>Resume</a></li>
+          </ul>
+        </div>
       </div>
       <div class="hero-portrait" data-reveal="fade" data-reveal-delay="2" data-parallax>
-        <Headshot size="hero" />
+        <!-- Plain headshot with a thin-line border (the soft matte lives in
+             Headshot.astro). The two-sided flip card was removed on
+             2026-10-02 — see WORKING-NOTES.
+             AvatarIntro wraps it: on the FIRST visit of a session a 3D
+             avatar waves hello, then sinks away and this photo pops up.
+             Everyone else (and reduced-motion users) just see the photo. -->
+        <AvatarIntro>
+          <Headshot />
+        </AvatarIntro>
       </div>
     </div>
   </section>
@@ -47,24 +126,29 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
   <!-- 2. PROOF STRIP -------------------------------------------------------
       Four quantified facts. Numbers, not adjectives. Each is verifiable
       against the resumes/audit. -->
-  <section class="section section--tint" aria-label="Key facts">
+  <section class="section section--tint" data-tint-section data-tint-early data-content="right" aria-label="Key facts">
     <div class="container">
       <dl class="proof-strip">
+        <!-- Count-up (modification strategy 03, moment A): each number counts
+             from 0 to its value when scrolled into view — evidence that feels
+             counted, not claimed (strategy §E). data-count-to is the target,
+             data-count-suffix preserves the +/× suffixes. The full value is
+             in the markup, so no-JS and reduced-motion users see it as-is. -->
         <div class="proof-item" data-reveal>
           <dt class="proof-label">Enterprise AI systems shipped</dt>
-          <dd class="proof-value">3+</dd>
+          <dd class="proof-value" data-count-to="3" data-count-suffix="+">3+</dd>
         </div>
         <div class="proof-item" data-reveal data-reveal-delay="1">
           <dt class="proof-label">AI agent APIs architected</dt>
-          <dd class="proof-value">2</dd>
+          <dd class="proof-value" data-count-to="2">2</dd>
         </div>
         <div class="proof-item" data-reveal data-reveal-delay="2">
           <dt class="proof-label">Performance awards, 2 promotions</dt>
-          <dd class="proof-value">4×</dd>
+          <dd class="proof-value" data-count-to="4" data-count-suffix="×">4×</dd>
         </div>
         <div class="proof-item" data-reveal data-reveal-delay="3">
           <dt class="proof-label">Peer-reviewed AI paper</dt>
-          <dd class="proof-value">1</dd>
+          <dd class="proof-value" data-count-to="1">1</dd>
         </div>
       </dl>
 
@@ -72,14 +156,17 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
            (not logos — strategy §L avoids logo walls). The framing line keeps
            the relationships honest: employer, university, fellowship,
            publisher, and the Google Developers community program. -->
-      <div class="wordmark-row" data-reveal>
-        <span class="wordmark-lede">Orgs I've worked, collaborated &amp; published with</span>
+      <div class="wordmark-row">
+        <span class="wordmark-lede" data-reveal="fade">Orgs I've worked, collaborated &amp; published with</span>
+        <!-- Wordmark drift (modification strategy 03, moment B): each org
+             settles in from the right with a soft stagger, like credits
+             rolling into place. One pass, no loop. -->
         <ul class="wordmark-list">
-          <li>Teradata</li>
-          <li>Bahria University</li>
-          <li>Arbisoft</li>
-          <li>Springer</li>
-          <li>Google Developers</li>
+          <li data-reveal data-reveal-delay="1">Teradata</li>
+          <li data-reveal data-reveal-delay="2">Bahria University</li>
+          <li data-reveal data-reveal-delay="3">Arbisoft</li>
+          <li data-reveal data-reveal-delay="4">Springer</li>
+          <li data-reveal data-reveal-delay="4">Google Developers</li>
         </ul>
       </div>
     </div>
@@ -88,28 +175,32 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
   <!-- 3. SELECTED WORK -------------------------------------------------------
       Three flagships, weighted: Teradata largest, then SignChatter, then
       Experiments. Each links to its case study (built in the Work module). -->
-  <section class="section">
+  <section class="section" data-tint-section data-content="left">
     <div class="container stack" style="--stack-space: var(--space-8);">
       <div data-reveal>
-        <p class="section-kicker">Selected work</p>
         <h2 class="section-title">Three things I've built, in depth.</h2>
       </div>
 
       <div class="grid">
-        <div class="col-7" data-reveal>
+        <!-- Card deal (modification strategy 03, moment C): the three
+             flagships deal in weight order — Teradata first, then
+             SignChatter, then Experiments — 120ms apart. -->
+        <!-- data-journey-stop: the laptop pauses here and shows this card's
+             picture (screens 1, 2, 3 in order). -->
+        <div class="col-7" data-reveal data-journey-stop>
           <Card
             href="/work/teradata/"
             title="Production AI at Teradata"
-            meta="Industry · 2023–present"
+            meta="Industry · 2023-present"
           >
             <p>
-              Production AI across several enterprise systems — the API layer
-              of a Text-to-SQL agent, agentic skills, and evaluation &
-              retrieval work — from before launch through customer onboarding.
+              Production AI across several enterprise systems: the API layer
+              of a Text-to-SQL agent, agentic skills, and evaluation &amp;
+              retrieval work, from before launch through customer onboarding.
             </p>
           </Card>
         </div>
-        <div class="col-5" data-reveal data-reveal-delay="1">
+        <div class="col-5" data-reveal data-reveal-delay="2" data-journey-stop>
           <Card
             href="/work/signchatter/"
             title="SignChatter"
@@ -122,7 +213,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
             </p>
           </Card>
         </div>
-        <div class="col-12 experiments-card" data-reveal>
+        <div class="col-12 experiments-card" data-reveal data-reveal-delay="3" data-journey-stop>
           <Card
             href="/work/experiments/"
             title="Experiments in efficiency & reliability"
@@ -130,7 +221,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
           >
             <p>
               Four reproducible studies on making LLM systems and AI agents cheaper and more
-              robust — including nuanced, fragile findings reported honestly.
+              robust, including nuanced, fragile findings reported honestly.
             </p>
           </Card>
         </div>
@@ -141,10 +232,9 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
   <!-- 4. RESEARCH TEASER ------------------------------------------------------
       The theme sentence plus the two pillars, minimally. The full diagram
       and question list live on /research. -->
-  <section class="section section--accent">
+  <section class="section section--accent" data-tint-section data-content="right">
     <div class="container stack" style="--stack-space: var(--space-6);">
       <div data-reveal>
-        <p class="section-kicker">Research</p>
         <h2 class="section-title research-theme">
           Making AI systems efficient and reliable enough to deploy in the real
           world.
@@ -162,7 +252,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
         <div class="col-6 pillar" data-reveal data-reveal-delay="1">
           <h3>Reliability</h3>
           <p>
-            How do AI systems behave when evidence, models, or tasks degrade —
+            How do AI systems behave when evidence, models, or tasks degrade,
             and how would we know?
           </p>
         </div>
@@ -178,39 +268,44 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
 
   <!-- 5. EXPERIENCE, COMPRESSED -------------------------------------------------
       One line per role. The full timeline lives on /about. -->
-  <section class="section">
+  <section class="section" data-tint-section data-content="left">
     <div class="container stack" style="--stack-space: var(--space-8);">
       <div data-reveal>
-        <p class="section-kicker">Experience</p>
         <h2 class="section-title">Where I've worked.</h2>
       </div>
 
       <ol class="timeline" data-reveal>
         <li class="timeline-item">
-          <span class="timeline-when">2023 —</span>
+          <span class="timeline-when">
+            2023-
+            <!-- "Now" marker (modification strategy 03, moment D): a small
+                 accent dot that pulses gently on the current role — the
+                 timeline is alive, you're mid-journey. -->
+            <span class="timeline-now" aria-label="current role" role="img"></span>
+          </span>
           <span class="timeline-what">
-            <strong>Teradata</strong> — Data Science Engineer II, GenAI &amp;
+            <strong>Teradata</strong> · Data Science Engineer II, GenAI &amp;
             Agentic AI <span class="timeline-note">(promoted twice)</span>
           </span>
         </li>
         <li class="timeline-item">
-          <span class="timeline-when">2022–23</span>
+          <span class="timeline-when">2022-23</span>
           <span class="timeline-what">
-            <strong>Bahria University, Center of Excellence for AI</strong> —
+            <strong>Bahria University, Center of Excellence for AI</strong> ·
             Research Assistant
           </span>
         </li>
         <li class="timeline-item">
-          <span class="timeline-when">2022–24</span>
+          <span class="timeline-when">2022-24</span>
           <span class="timeline-what">
-            <strong>SignChatter</strong> — research that shipped
+            <strong>SignChatter</strong> · research that shipped
             <span class="timeline-note">&nbsp;(FYP → publication)</span>
           </span>
         </li>
         <li class="timeline-item">
           <span class="timeline-when">2022</span>
           <span class="timeline-what">
-            <strong>Arbisoft</strong> — Fellow
+            <strong>Arbisoft</strong> · Fellow
           </span>
         </li>
       </ol>
@@ -225,9 +320,8 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
       A compact grid of the signal-bearing awards — distinct from the
       text-heavy sections around it so it stops the scanner without reading
       as another prose line. The full list lives on /about. -->
-  <section class="section section--tint" aria-labelledby="recognition-heading">
+  <section class="section section--tint" data-tint-section data-content="right" aria-labelledby="recognition-heading">
     <div class="container">
-      <p class="section-kicker" data-reveal>Recognition</p>
       <h2 id="recognition-heading" class="section-title" data-reveal>
         A few things I'm proud of.
       </h2>
@@ -248,10 +342,9 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
       Personality as seasoning, not the main course (strategy §D).
       No tint here — the Recognition section above is tinted, so this one
       stays plain to keep the backgrounds alternating. -->
-  <section class="section">
+  <section class="section" data-tint-section>
     <div class="container stack" style="--stack-space: var(--space-6);">
       <div data-reveal>
-        <p class="section-kicker">The person</p>
         <h2 class="section-title">Outside of work.</h2>
       </div>
 
@@ -259,8 +352,8 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
         <div class="person-text" data-reveal>
           <p class="person-note">
             I've written professionally for international clients for over six
-            years — which is why this site reads the way it does. I love engaging
-            with the student community whenever I can through mentoring and 
+            years, which is why this site reads the way it does. I love engaging
+            with the student community whenever I can through mentoring and
             training sessions. And when I'm not working, I'm usually reading a
             book, watching a movie, or hiking Islamabad's Margalla Hills.&#32;
             <a class="link-draw" href="/about/">More about me →</a>
@@ -298,31 +391,6 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
           </figcaption>
         </figure>
       </div>
-
-      <ul class="contact-row" data-reveal>
-        <!-- "Email" matches the LinkedIn/GitHub links visually, but instead of
-             navigating it reveals the obfuscated address in a small popup.
-             Works on hover (desktop), focus (keyboard), and click/tap
-             (mobile). The address stays out of any href, so scrapers get
-             nothing actionable. -->
-        <li class="email-reveal">
-          <button
-            type="button"
-            class="link-draw email-reveal-btn"
-            aria-describedby="email-tooltip"
-          >
-            Email
-          </button>
-          <span class="email-tooltip" id="email-tooltip" role="tooltip">
-            {EMAIL_DISPLAY}
-          </span>
-        </li>
-        <li><a class="link-draw" href={LINKEDIN_URL} rel="me">LinkedIn</a></li>
-        <li><a class="link-draw" href={GITHUB_URL} rel="me">GitHub</a></li>
-        <!-- Quiet resume link (Google Drive, read-only) for recruiters who
-             need a PDF. No fanfare — just one accessible link. -->
-        <li><a class="link-draw" href={RESUME_URL}>Resume</a></li>
-      </ul>
     </div>
   </section>
 
@@ -350,44 +418,680 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
       });
     })();
   </script>
+
+  <!-- Section focus tint (planning/ARCHITECTURE.md §10): the section crossing the
+       middle of the screen fades to pale indigo; the others stay warm
+       off-white. Only one section is tinted at a time. The hero is left out
+       on purpose (it keeps today's look). Styles are in the <style> block
+       below; they only apply with JS on and motion allowed, so reduced-motion
+       and no-JS visitors still get today's fixed bands. -->
+  <script>
+    // Undoes the scroll listener of the previous setup (view transitions
+    // run setup again on every page swap; we must not pile listeners up).
+    let removeScrollListener: (() => void) | null = null;
+
+    function setupFocusTint() {
+      removeScrollListener?.();
+      removeScrollListener = null;
+
+      // Reduced motion: do nothing (the CSS does not apply either).
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const sections = Array.from(document.querySelectorAll<HTMLElement>('[data-tint-section]'));
+      if (!sections.length || !('IntersectionObserver' in window)) return;
+
+      // The key-facts strip (data-tint-early) must turn indigo the moment the
+      // journey laptop starts to turn and open, i.e. as soon as the visitor
+      // scrolls at all. That only happens on wide screens (no laptop below
+      // 1100px), so we only do it there.
+      const wide = window.matchMedia('(min-width: 1100px)');
+      const hasScrolled = () => wide.matches && window.scrollY > 4;
+
+      // Work out which section holds the middle line of the screen, and tint
+      // only that one.
+      const update = () => {
+        const middle = window.innerHeight / 2;
+        const early = hasScrolled();
+        for (const section of sections) {
+          const box = section.getBoundingClientRect();
+          // An "early" section counts as in focus before it reaches the
+          // middle line, once the visitor has started scrolling.
+          const reached = box.top <= middle || (early && section.hasAttribute('data-tint-early'));
+          section.classList.toggle('is-in-focus', reached && box.bottom > middle);
+        }
+      };
+
+      // A very thin band across the middle of the screen. The observer only
+      // tells us WHEN a section enters or leaves it; update() decides the winner.
+      const io = new IntersectionObserver(update, {
+        rootMargin: '-49% 0px -49% 0px',
+      });
+      sections.forEach((section) => io.observe(section));
+
+      // The "has the visitor scrolled yet?" answer changes right at the top
+      // of the page, which the observer does not report, so watch for that.
+      let wasScrolled = hasScrolled();
+      const onScroll = () => {
+        const now = hasScrolled();
+        if (now !== wasScrolled) {
+          wasScrolled = now;
+          update();
+        }
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      // Crossing the 1100px line (e.g. resizing the window) also changes the
+      // answer, so refresh the tint then too.
+      wide.addEventListener('change', update);
+      removeScrollListener = () => {
+        window.removeEventListener('scroll', onScroll);
+        wide.removeEventListener('change', update);
+        io.disconnect();
+      };
+
+      update(); // set the right state straight away (e.g. after a reload mid-page)
+    }
+
+    // Runs on first load and after every page swap (view transitions).
+    document.addEventListener('astro:page-load', setupFocusTint);
+    // Clean up just before leaving the page, so nothing keeps watching a
+    // page that is gone.
+    document.addEventListener('astro:before-swap', () => {
+      removeScrollListener?.();
+      removeScrollListener = null;
+    });
+  </script>
+
+  <!-- Journey laptop engine (planning/ARCHITECTURE.md §10).
+       HOW IT WORKS, in simple words:
+       1. After the page loads we measure where each section is, and make a
+          small table of "waypoints". Each waypoint says: "when the page is
+          scrolled to HERE, the laptop should look like THIS" (where it is,
+          how big, how tilted, how open).
+       2. On every scroll we find the two waypoints around the current scroll
+          position and blend between them smoothly.
+       3. We write the result into CSS variables / one transform. Only
+          transform and opacity change, so it stays cheap.
+       Native scrolling is never touched. -->
+  <script>
+    // Only run on wide screens with motion allowed (same gate as the CSS).
+    const WIDE_AND_MOTION = '(min-width: 1100px) and (prefers-reduced-motion: no-preference)';
+
+    // One "look" of the laptop.
+    type Pose = {
+      x: number; // centre, in px from the left of the screen
+      y: number; // centre, in px (from top of screen, or of the PAGE if page = true)
+      page: boolean; // true = y sticks to the page and scrolls away with it
+      s: number; // size: small = far from the reader, big = close
+      open: number; // 0 = shut, 1 = fully open
+      elev: number; // camera height in degrees (0 = top-down, ~60 = normal view)
+      spin: number; // turntable angle in degrees (-90 + elev 0 = standing upright)
+      shadow: number; // 0 to 1
+      alpha: number; // 0 = invisible, 1 = fully visible
+      screen: number; // which screen picture to show (0 to 6); in-between = cross-fade
+    };
+    type Waypoint = { at: number; pose: Pose };
+
+    // How each stop after the hero looks. Order matches the page:
+    // proof, selected work, research, experience, recognition.
+    // Selected work is the biggest ("closest to the reader"); the others are
+    // a bit smaller ("further away"). `elev` is the camera height.
+    // `screen` is the first screen picture of that stop. Selected work shows
+    // three (1, 2, 3 - one per card), so research starts at 4.
+    const LOOKS = [
+      { s: 0.8, elev: 58, screen: 0 }, // proof: the name
+      { s: 0.98, elev: 60, screen: 1 }, // work: Teradata, SignChatter, Experiments
+      { s: 0.8, elev: 56, screen: 4 }, // research: the two pillars
+      { s: 0.86, elev: 60, screen: 5 }, // experience: two roles + "more" dots
+      { s: 0.78, elev: 50, screen: 6 }, // recognition: the name again
+    ];
+
+    let stop: (() => void) | null = null; // undoes everything `start` did
+
+    function start() {
+      const wrapper = document.querySelector<HTMLElement>('[data-journey-laptop]');
+      const pathSvg = document.querySelector<SVGSVGElement>('[data-journey-path]');
+      const stageSections = Array.from(document.querySelectorAll<HTMLElement>('[data-content]'));
+      if (!wrapper || !pathSvg || !stageSections.length) return;
+      const aheadPath = pathSvg.querySelector<SVGPathElement>('.journey-path-ahead')!;
+      const trailPath = pathSvg.querySelector<SVGPathElement>('.journey-path-trail')!;
+      // The screen pictures, in order (data-screen="0" ... "6").
+      const screenLayers = Array.from(wrapper.querySelectorAll<HTMLElement>('[data-screen]')).sort(
+        (a, b) => Number(a.dataset.screen) - Number(b.dataset.screen),
+      );
+
+      let waypoints: Waypoint[] = [];
+      let size = 400; // laptop box width in px; re-read in measure()
+
+      // The route, as a list of sample points. We try every scroll position
+      // (every STEP px), ask "where is the laptop on the PAGE?", and join the
+      // dots. `routeScroll[k]` is the scroll position of dot k and
+      // `routeFraction[k]` is how far along the line (0 to 1) that dot is.
+      const STEP = 12;
+      let routeScroll: number[] = [];
+      let routeFraction: number[] = [];
+
+      const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
+      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+      const smooth = (t: number) => t * t * (3 - 2 * t); // gentle ease in/out
+
+      // Step 1: measure the page and build the waypoint table.
+      function measure() {
+        // Shrink the path layer first, so the page can get shorter again if
+        // the window was made wider (the layer must not hold the page open).
+        pathSvg!.setAttribute('height', '0');
+        const h = window.innerHeight;
+        const y0 = window.scrollY;
+        size = wrapper!.offsetWidth || 400;
+        const maxScroll = document.documentElement.scrollHeight - h;
+
+        // The two "stages": the empty 42% beside the content. Work out where
+        // the centre of each one is, from the first squeezed section.
+        const container = stageSections[0].querySelector<HTMLElement>(':scope > .container')!;
+        const box = container.getBoundingClientRect();
+        const pad = parseFloat(getComputedStyle(container).paddingLeft) || 0;
+        const contentLeft = box.left + pad;
+        const contentWidth = box.width - pad * 2;
+        const leftStageX = contentLeft + contentWidth * 0.21; // centre of the 42% column
+        const rightStageX = contentLeft + contentWidth * 0.79;
+
+        const list: Waypoint[] = [];
+
+        // Waypoint 0 (top of page): closed, standing upright, parked on the
+        // left, right next to the four stats (the key-facts strip). Its y
+        // follows the page, so it scrolls into view together with the stats.
+        const proofRect = stageSections[0].getBoundingClientRect();
+        list.push({
+          at: 0,
+          pose: {
+            x: leftStageX,
+            y: proofRect.top + y0 + proofRect.height / 2,
+            page: true,
+            s: 0.6, open: 0, elev: 0, spin: -90, shadow: 0, alpha: 1, screen: 0,
+          },
+        });
+
+        // One stop per section. We hold the laptop in place for a short
+        // stretch around the middle of each section, so it can be read.
+        stageSections.forEach((section, i) => {
+          const rect = section.getBoundingClientRect();
+          const middle = rect.top + y0 + rect.height / 2 - h / 2; // scroll position when centred
+          const hold = rect.height * 0.2;
+          // Content on the right means the laptop is on the left, and vice versa.
+          const onLeft = section.dataset.content === 'right';
+          const look = LOOKS[i] ?? LOOKS[LOOKS.length - 1];
+          const pose: Pose = {
+            x: onLeft ? leftStageX : rightStageX,
+            y: h * 0.5,
+            page: false,
+            s: look.s, open: 1, elev: look.elev,
+            spin: onLeft ? 16 : -16, // turn slightly toward the text
+            shadow: 0.9, alpha: 1, screen: look.screen,
+          };
+          // The first stop must not arrive before the visitor has scrolled a
+          // little (very tall windows would otherwise skip the hero pose).
+          const arriveAt = i === 0 ? Math.max(middle - hold, h * 0.25) : middle - hold;
+
+          // Some sections have extra stops (the selected-work cards). For each
+          // one we find the scroll position that centres it, and show the next
+          // screen picture there.
+          const stops = Array.from(section.querySelectorAll<HTMLElement>('[data-journey-stop]'));
+          if (!stops.length) {
+            list.push({ at: arriveAt, pose });
+            if (i < stageSections.length - 1) {
+              list.push({ at: middle + hold, pose });
+              return;
+            }
+            // The LAST stop (Recognition): the laptop does not leave. After
+            // the middle of the section the lid closes and it turns back
+            // upright, exactly like the starting pose, and then stays put on
+            // the page (it scrolls away with the page, like at the top).
+            // `y` is a little below the section centre, so the laptop ends up
+            // standing inside the section (not over "The person" below) and
+            // well inside the screen once the turn is finished.
+            list.push({ at: middle, pose });
+            list.push({
+              at: middle + h * 0.3,
+              pose: {
+                ...pose,
+                y: rect.top + y0 + rect.height * 0.65,
+                page: true,
+                s: 0.6, open: 0, elev: 0, spin: -90, shadow: 0, alpha: 1,
+              },
+            });
+            return;
+          }
+          const stopAt = stops.map((el) => {
+            const r = el.getBoundingClientRect();
+            return r.top + y0 + r.height / 2 - h / 2;
+          });
+          // Arrive early enough to show the first card's picture, then step
+          // through the cards, then leave once the last card has been read.
+          list.push({ at: Math.min(arriveAt, stopAt[0]), pose });
+          stopAt.forEach((at, k) => {
+            list.push({ at, pose: { ...pose, screen: look.screen + k } });
+          });
+          const lastK = stops.length - 1;
+          list.push({
+            at: Math.max(middle + hold, stopAt[lastK]),
+            pose: { ...pose, screen: look.screen + lastK },
+          });
+        });
+
+        // Tidy: never past the bottom of the page, always moving forward.
+        for (let i = 0; i < list.length; i++) {
+          list[i].at = clamp(list[i].at, 0, Math.max(0, maxScroll));
+          if (i > 0) list[i].at = Math.max(list[i].at, list[i - 1].at);
+        }
+        waypoints = list;
+        buildRoute(maxScroll);
+      }
+
+      // Step 2: work out the laptop's look at a given scroll position by
+      // blending between the two waypoints around it.
+      function poseAt(y: number) {
+        let i = 0;
+        while (i < waypoints.length - 2 && waypoints[i + 1].at <= y) i++;
+        const a = waypoints[i];
+        const b = waypoints[Math.min(i + 1, waypoints.length - 1)];
+        const span = b.at - a.at;
+        const t = span > 0 ? clamp((y - a.at) / span, 0, 1) : 1;
+        const e = smooth(t);
+
+        // The lid opens late (it only starts once the laptop has tipped over)
+        // and closes early (it shuts before the laptop fades).
+        const opening = b.pose.open > a.pose.open;
+        const lidT = smooth(opening ? clamp((t - 0.3) / 0.7, 0, 1) : clamp(t / 0.7, 0, 1));
+
+        // Page-anchored y values scroll away with the page.
+        const ay = a.pose.page ? a.pose.y - y : a.pose.y;
+        const by = b.pose.page ? b.pose.y - y : b.pose.y;
+        return {
+          x: lerp(a.pose.x, b.pose.x, e),
+          py: lerp(ay, by, e), // y on the screen
+          s: lerp(a.pose.s, b.pose.s, e),
+          open: lerp(a.pose.open, b.pose.open, lidT),
+          elev: lerp(a.pose.elev, b.pose.elev, e),
+          spin: lerp(a.pose.spin, b.pose.spin, e),
+          shadow: lerp(a.pose.shadow, b.pose.shadow, e),
+          alpha: lerp(a.pose.alpha, b.pose.alpha, e),
+          screen: lerp(a.pose.screen, b.pose.screen, e),
+        };
+      }
+
+      // Step 3: draw the route (the dashed line) by joining the laptop's
+      // positions for every scroll position from the top to the last stop.
+      function buildRoute(maxScroll: number) {
+        const doc = document.documentElement;
+        const pageWidth = doc.clientWidth;
+        const pageHeight = doc.scrollHeight;
+        pathSvg!.setAttribute('width', String(pageWidth));
+        pathSvg!.setAttribute('height', String(pageHeight));
+        pathSvg!.setAttribute('viewBox', `0 0 ${pageWidth} ${pageHeight}`);
+
+        const endAt = Math.min(waypoints[waypoints.length - 1].at, Math.max(0, maxScroll));
+        routeScroll = [];
+        routeFraction = [];
+        const lengths: number[] = [];
+        let d = '';
+        let total = 0;
+        let prevX = 0;
+        let prevY = 0;
+        for (let s = 0; ; s = Math.min(s + STEP, endAt)) {
+          const p = poseAt(s);
+          const pageY = s + p.py; // screen y -> page y
+          if (routeScroll.length) total += Math.hypot(p.x - prevX, pageY - prevY);
+          d += (routeScroll.length ? 'L' : 'M') + p.x.toFixed(1) + ' ' + pageY.toFixed(1);
+          routeScroll.push(s);
+          lengths.push(total);
+          prevX = p.x;
+          prevY = pageY;
+          if (s >= endAt) break;
+        }
+        // Turn lengths into fractions from 0 to 1 (the trail uses pathLength="1").
+        routeFraction = lengths.map((len) => (total > 0 ? len / total : 0));
+        aheadPath.setAttribute('d', d);
+        trailPath.setAttribute('d', d);
+      }
+
+      // How far along the route is the laptop at this scroll position (0 to 1)?
+      function routeFractionAt(y: number) {
+        const last = routeScroll.length - 1;
+        if (last < 1) return 0;
+        if (y >= routeScroll[last]) return 1;
+        let k = Math.min(last - 1, Math.max(0, Math.floor(y / STEP)));
+        const span = routeScroll[k + 1] - routeScroll[k];
+        const t = span > 0 ? clamp((y - routeScroll[k]) / span, 0, 1) : 1;
+        return lerp(routeFraction[k], routeFraction[k + 1], t);
+      }
+
+      // Step 4: write the result. One transform + a few CSS variables for the
+      // laptop, and one number for how much of the trail is drawn.
+      function render() {
+        const y = window.scrollY;
+        const p = poseAt(y);
+        const style = wrapper!.style;
+        style.transform = `translate3d(${(p.x - size / 2).toFixed(1)}px, ${(p.py - size / 2).toFixed(1)}px, 0)`;
+        style.setProperty('--s', p.s.toFixed(3));
+        style.setProperty('--open', p.open.toFixed(3));
+        style.setProperty('--elev', p.elev.toFixed(1) + 'deg');
+        style.setProperty('--spin', p.spin.toFixed(1) + 'deg');
+        style.setProperty('--shadow', p.shadow.toFixed(3));
+        style.setProperty('--alpha', p.alpha.toFixed(3));
+        // Screen pictures: a picture is fully shown when `screen` equals its
+        // number, and fades out as `screen` moves one step away from it.
+        screenLayers.forEach((layer, k) => {
+          layer.style.opacity = clamp(1 - Math.abs(p.screen - k), 0, 1).toFixed(3);
+        });
+        // Offset 1 = nothing drawn, 0 = whole line drawn.
+        trailPath.style.strokeDashoffset = (1 - routeFractionAt(y)).toFixed(4);
+      }
+
+      // Scroll events can fire many times per frame: do the work once per frame.
+      let queued = false;
+      const onScroll = () => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => {
+          queued = false;
+          render();
+        });
+      };
+
+      // Re-measure when the window or the page height changes (e.g. images load).
+      const remeasure = () => {
+        measure();
+        render();
+      };
+      const resizeObserver = new ResizeObserver(remeasure);
+      resizeObserver.observe(document.body);
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', remeasure);
+
+      measure();
+      render();
+      wrapper.classList.add('is-ready'); // fades the laptop in (see CSS)
+      pathSvg.classList.add('is-ready'); // and the path
+
+      stop = () => {
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('resize', remeasure);
+        resizeObserver.disconnect();
+        wrapper.classList.remove('is-ready');
+        pathSvg.classList.remove('is-ready');
+        stop = null;
+      };
+    }
+
+    // Start or stop whenever the screen size / motion setting changes.
+    const media = window.matchMedia(WIDE_AND_MOTION);
+    function sync() {
+      stop?.();
+      if (media.matches) start();
+    }
+    media.addEventListener('change', sync);
+
+    // The site uses view transitions: set up after every page swap, and
+    // clean up just before leaving.
+    document.addEventListener('astro:page-load', sync);
+    document.addEventListener('astro:before-swap', () => stop?.());
+  </script>
 </Base>
 
 <style>
+  /* ---- Section focus tint (planning/ARCHITECTURE.md §10) -------------------------
+     Sections 2-7 sit on warm off-white. The one in focus (the script adds
+     .is-in-focus) fades to pale indigo by raising the opacity of a tint
+     layer behind its content — opacity only, so it stays cheap.
+
+     Everything is gated: `:global(.js)` (JS is on) AND no-preference motion.
+     Outside that, the old fixed bands (.section--tint / .section--accent)
+     apply untouched, so no-JS and reduced-motion visitors see today's page.
+     (`.js` lives on <html>, which Astro does not scope, hence :global.) */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.js) section[data-tint-section] {
+      position: relative;
+      background: var(--color-bg); /* off-white, replaces the fixed bands */
+    }
+
+    :global(.js) section[data-tint-section]::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--color-bg-accent); /* pale indigo */
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-slow) var(--ease-out);
+    }
+
+    :global(.js) section[data-tint-section].is-in-focus::before {
+      opacity: 1;
+    }
+
+    /* No hard line between the hero and the key-facts strip.
+       1. The hero rests on the same warm off-white as an un-tinted section
+          (it used to be a slightly greyer tone, which showed as a faint edge).
+       2. When the strip turns indigo, its tint starts transparent at the top
+          and fades in over about 7rem, so the hero melts into it. */
+    :global(.js) .hero {
+      background: var(--color-bg);
+    }
+
+    :global(.js) section[data-tint-early]::before {
+      background: linear-gradient(to bottom, transparent 0, var(--color-bg-accent) 7rem);
+    }
+    /* Keep the content above the tint layer (and, on wide screens, above
+       the journey laptop, which sits at z-index 1 — see below). */
+    :global(.js) section[data-tint-section] > .container {
+      position: relative;
+      z-index: 2;
+    }
+  }
+
+  /* ---- Squeeze + alternate layout (planning/ARCHITECTURE.md §10) -------------------
+     On wide screens, sections 2-5 and Recognition squeeze their content into
+     about 58% of the width and take turns sitting on the right and the left
+     (data-content="left" | "right"). The empty ~42% is the stage the laptop
+     will use later. The hero and "The person" are left as they are.
+
+     Gated like the tint: JS on (:global(.js)), motion allowed, and the screen
+     at least 1100px wide. Everywhere else the sections stay full width, so
+     nobody sees an empty half with no laptop in it. */
+  @media (min-width: 1100px) and (prefers-reduced-motion: no-preference) {
+    /* Turn the container into two columns: content (58%) and stage (42%).
+       The `stack` spacing between children is margin-based, so it still works. */
+    :global(.js) section[data-content] > .container {
+      display: grid;
+      column-gap: 0;
+    }
+
+    /* Content on the LEFT: wide column first, empty stage on the right. */
+    :global(.js) section[data-content='left'] > .container {
+      grid-template-columns: 58fr 42fr;
+    }
+    :global(.js) section[data-content='left'] > .container > * {
+      grid-column: 1;
+    }
+
+    /* Content on the RIGHT: empty stage first, wide column second. */
+    :global(.js) section[data-content='right'] > .container {
+      grid-template-columns: 42fr 58fr;
+    }
+    :global(.js) section[data-content='right'] > .container > * {
+      grid-column: 2;
+    }
+
+    /* Inside the narrower column, multi-column blocks stack or shrink: */
+
+    /* Proof strip: four facts in a row -> a 2 x 2 grid. */
+    :global(.js) section[data-content] .proof-strip {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Selected work + Research pillars: the 12-column grid becomes one
+       column, so the cards stack. (Beats the .col-N spans.) */
+    :global(.js) section[data-content] .grid > * {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* ---- Journey laptop (planning/ARCHITECTURE.md §10) -----------------------------
+     Hidden by default. Shown only with JS on, motion allowed and a wide
+     screen (>= 1100px) — the same gate as the squeeze layout above.
+     It is a fixed layer at z-index 1: above the section backgrounds (which
+     have no z-index) and below the section content (z-index 2), and it never
+     takes clicks. The script sets its transform and CSS variables. */
+  .journey-laptop,
+  .journey-path {
+    display: none;
+  }
+
+  @media (min-width: 1100px) and (prefers-reduced-motion: no-preference) {
+    :global(.js) .journey-laptop {
+      display: block;
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 1;
+      pointer-events: none;
+      --laptop-w: 400px; /* the drawing's width at scale 1 */
+      /* Invisible until the script has placed it, so it never flashes in the
+         wrong spot. Afterwards, --alpha (set by the script) fades it. */
+      opacity: 0;
+      transition: opacity var(--duration-slow) var(--ease-out);
+      will-change: transform;
+    }
+
+    :global(.js) .journey-laptop.is-ready {
+      opacity: var(--alpha, 1);
+    }
+
+    /* The dashed path: a page-sized layer (the script sets its size) that
+       scrolls with the page. Same layer as the laptop: above the section
+       backgrounds, below the content. */
+    :global(.js) .journey-path {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity var(--duration-slow) var(--ease-out);
+    }
+
+    :global(.js) .journey-path.is-ready {
+      opacity: 1;
+    }
+
+    /* The road ahead: faint dashes. */
+    .journey-path-ahead {
+      fill: none;
+      stroke: var(--color-ink);
+      stroke-opacity: 0.25;
+      stroke-width: 1.5;
+      stroke-dasharray: 6 8;
+      stroke-linecap: round;
+    }
+
+    /* The trail behind the laptop: solid accent. The script moves
+       stroke-dashoffset to reveal more of it as you scroll. pathLength="1"
+       in the markup means the numbers run from 0 (none) to 1 (all). */
+    .journey-path-trail {
+      fill: none;
+      stroke: var(--color-accent);
+      stroke-width: 2;
+      stroke-dasharray: 1 2;
+      stroke-dashoffset: 1;
+    }
+
+    /* The headline text sits above the path (the path starts in the hero). */
+    .hero-text {
+      position: relative;
+      z-index: 2;
+    }
+  }
+
+  .journey-path {
+    display: none;
+  }
+
   /* ---- Hero --------------------------------------------------------------
      Asymmetric grid: text takes ~2/3, portrait ~1/3. On mobile the portrait
      drops below the statement at a smaller size.
 
-     The hero field gets a subtle texture (strategy §L/§M): a faint warm
-     gradient plus a whisper of grain, generated in pure CSS — no image file.
-     The grain is an SVG feTurbulence noise pattern inlined as a background,
-     at very low opacity so it reads as texture, not noise. */
+     The hero field gets a subtle texture (strategy §L/§M): a whisper of
+     grain, generated in pure CSS — no image file. The grain is an SVG
+     feTurbulence noise pattern inlined as a background, at very low opacity
+     so it reads as texture, not noise. */
   .hero {
     position: relative;
     padding-block: var(--space-16) var(--space-12);
-    background:
-      /* faint warm gradient, top-left to bottom-right */
-      linear-gradient(160deg, var(--color-bg) 0%, var(--color-bg-tint) 100%);
+    /* The hero fills the first screen: the window height minus the sticky nav
+       (about 62px), so on a laptop only the hero is visible on load. svh =
+       the "small" viewport height, so mobile browser bars don't push it off.
+       The cap stops it getting silly on very tall windows. The content is
+       centred vertically inside it. */
+    min-height: min(calc(100svh - 62px), 60rem);
+    display: flex;
+    align-items: center;
+    /* The resting colour is warm off-white. On every load the hero starts
+       pale indigo and fades to this after about 2 seconds (see .hero::after).
+       The grain layer on top still gives the hero its texture. */
+    background: var(--color-bg-tint);
+  }
+
+  /* The indigo "welcome" wash. It sits on top of the hero background and
+     under the content. Only its opacity changes (1 to 0), which is cheap.
+     Reduced motion: no wash at all, the hero is just warm off-white. */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: var(--color-bg-accent);
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero::after {
+      opacity: 1;
+      /* wait 1.8s, then fade out over 1.4s. `forwards` keeps it at 0. */
+      animation: hero-wash-out 1.4s var(--ease-out) 1.8s forwards;
+    }
+  }
+
+  @keyframes hero-wash-out {
+    to {
+      opacity: 0;
+    }
   }
 
   /* The grain layer: a tiny tiled noise pattern, absolutely positioned behind
-     the hero content. pointer-events:none so it never intercepts clicks. */
+     the hero content. pointer-events:none so it never intercepts clicks.
+     z-index 1 keeps it above the indigo wash. */
   .hero::before {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 1;
     pointer-events: none;
     opacity: 0.04;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* Keep hero content above the grain layer. */
+  /* Keep hero content above the grain layer and the indigo wash. */
   .hero > .container {
     position: relative;
+    z-index: 1;
+    width: 100%; /* the hero is a flex box now, so ask for the full width */
   }
 
   @media (min-width: 768px) {
     .hero {
-      padding-block: var(--space-24) var(--space-16);
+      /* Slightly less padding than before: the hero now centres its content
+         inside a full-screen box, so big padding only adds height. */
+      padding-block: var(--space-16) var(--space-12);
     }
 
     .hero-grid {
@@ -403,14 +1107,135 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     max-width: 18ch;
   }
 
+  /* Each line of the statement is a block so the per-line reveal stagger
+     reads as the statement being set line by line. */
+  .hero-line {
+    display: block;
+  }
+
+  /* ---- H1: hand-drawn underline (modification strategy 03) ----------------
+     The phrase sits on an inline SVG stroke in the accent color. The stroke
+     draws itself once (stroke-dashoffset), starting just as the statement's
+     own reveal finishes (~600ms + a beat). The path is slightly wavy so it
+     reads as a confident hand gesture, not a ruled line. */
+  .hero-underline {
+    position: relative;
+    white-space: nowrap; /* never break the phrase across lines */
+  }
+
+  .hero-underline-stroke {
+    position: absolute;
+    left: -1%;
+    bottom: -0.08em; /* just below the descenders */
+    width: 102%;
+    height: 0.16em; /* scales with the fluid hero type */
+    overflow: visible;
+  }
+
+  .hero-underline-stroke path {
+    fill: none;
+    stroke: var(--color-accent);
+    /* ~2.5px at hero size, with round caps for the hand-drawn feel */
+    stroke-width: 3.4;
+    stroke-linecap: round;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* The stroke starts hidden (dashoffset = full length) and draws in after
+       a 750ms delay — timed to begin just as the statement's own reveal
+       finishes. `backwards` fill means the hidden state applies DURING the
+       delay, so the stroke never flashes visible first.
+       No `.js` gate here on purpose: Astro scopes styles with attribute
+       selectors, and `.js` lives on <html> which has no scope attribute, so
+       a `.js …` selector would never match. The no-JS guarantee still holds:
+       without JS the animation simply plays on load instead of after the
+       (JS-driven) reveal — the stroke is never permanently hidden. */
+    .hero-underline-stroke path {
+      stroke-dasharray: 300; /* slightly more than the path length */
+      stroke-dashoffset: 300;
+      /* First draw: starts at 950ms (just as the third line's reveal
+         finishes), draws over 700ms, stays drawn.
+         Then the loop below takes over: every 12s the stroke wipes and
+         redraws — a periodic reminder of the thesis (moment B). */
+      animation:
+        hero-underline-draw 700ms var(--ease-out) 950ms both,
+        hero-underline-redraw 12s var(--ease-out) 3s infinite;
+    }
+
+    @keyframes hero-underline-draw {
+      to { stroke-dashoffset: 0; }
+    }
+
+    /* The re-draw loop: hold drawn for most of the cycle, wipe, redraw. */
+    @keyframes hero-underline-redraw {
+      0%    { stroke-dashoffset: 0; }   /* drawn */
+      88%   { stroke-dashoffset: 0; }   /* still drawn (most of the 12s) */
+      92%   { stroke-dashoffset: 300; } /* wiped */
+      100%  { stroke-dashoffset: 0; }   /* redrawn */
+    }
+  }
   .hero-byline {
     margin-top: var(--space-6);
     font-size: var(--text-md);
     color: var(--color-ink-muted);
   }
 
-  .hero-scroll {
-    margin-top: var(--space-16);
+  /* The summary is a step brighter than the byline: it is the sentence
+     that says what the work is about. */
+  .hero-summary {
+    margin-top: var(--space-4);
+    font-size: var(--text-md);
+    line-height: 1.5;
+    color: var(--color-ink);
+  }
+
+  /* ---- Hero action row ---------------------------------------------------
+     One primary button (the work index) plus the Email / LinkedIn / GitHub text
+     links. The button is solid accent with a high-contrast label; on
+     :active it dips 1px for a tactile push. */
+  .hero-cta {
+    margin-top: var(--space-8);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4) var(--space-6);
+  }
+
+  .btn-primary {
+    display: inline-block;
+    padding: var(--space-3) var(--space-6);
+    background: var(--color-accent);
+    color: var(--color-on-accent);
+    font-weight: 500;
+    font-size: var(--text-base);
+    line-height: 1.2;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    white-space: nowrap; /* the label never wraps to a second line */
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
+  }
+
+  .btn-primary:hover {
+    background: var(--color-accent-hover);
+    color: var(--color-on-accent);
+    text-decoration: none;
+  }
+
+  .btn-primary:active {
+    transform: translateY(1px); /* a small physical "push" on click */
+  }
+
+  .hero-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-6);
+    font-size: var(--text-md);
+    font-weight: 500;
   }
 
   .hero-portrait {
@@ -523,38 +1348,39 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     white-space: nowrap;
   }
 
-  .timeline-note {
-    color: var(--color-ink-muted);
-    font-size: var(--text-sm);
-    margin-left: var(--space-2);
+  /* "Now" marker: a small accent dot with a soft expanding ring, pulsing
+     gently on the current role. Transform + opacity only, reduced-motion
+     safe (the dot simply stays solid). */
+  .timeline-now {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-left: var(--space-1);
+    border-radius: 50%;
+    background: var(--color-accent);
+    vertical-align: baseline;
+    position: relative;
+    top: -1px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .timeline-now::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      border: 1.5px solid var(--color-accent);
+      animation: timeline-now-pulse 2.4s ease-out infinite;
+    }
+
+    @keyframes timeline-now-pulse {
+      0%   { transform: scale(0.6); opacity: 0.9; }
+      70%  { transform: scale(1.8); opacity: 0; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
   }
 
   /* ---- Person + contact --------------------------------------------------------- */
-  .person-note {
-    max-width: var(--measure);
-    font-size: var(--text-md);
-    line-height: 1.7;
-  }
-
-  .contact-row {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap; /* wrap to a second line on small screens */
-    gap: var(--space-3) var(--space-8);
-    font-size: var(--text-md);
-    font-weight: 500;
-  }
-
-  /* The plain-text email: same size/weight as the contact links, but not a
-     link (no accent, no hover). */
-  .contact-email {
-    color: var(--color-ink);
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    font-weight: 400;
-  }
-
   /* ---- Email reveal -------------------------------------------------------
      The "Email" button looks like the LinkedIn/GitHub links. The tooltip is
      hidden by default and appears on hover (desktop), focus (keyboard), or
@@ -625,7 +1451,6 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     }
   }
 
-  /* ---- Person + contact --------------------------------------------------------- */
   /* Two-column on desktop: text left, photo right. Stacks on mobile. */
   .person-grid {
     display: grid;

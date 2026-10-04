@@ -2,7 +2,7 @@
 title: "Experiments in efficiency & reliability"
 kind: experiment
 weight: 3
-summary: "Four reproducible studies on making LLM systems cheaper and more robust — including nuanced, fragile findings reported honestly."
+summary: "Four reproducible studies on making LLM systems cheaper and more robust, including nuanced, fragile findings reported honestly."
 stack: ["Python", "Qwen3", "MLX", "HotpotQA", "TriviaQA", "SummEval", "GPT-OSS-120B", "BM25"]
 links:
   - label: "budgeted_model_routing"
@@ -18,7 +18,10 @@ featured: true
 ---
 
 import RoutingCurve from '../../components/figures/RoutingCurve.astro';
+import BudgetSlider from '../../components/figures/BudgetSlider.astro';
+import RouterBand from '../../components/RouterBand.astro';
 import CorruptionBars from '../../components/figures/CorruptionBars.astro';
+import CorruptionDial from '../../components/figures/CorruptionDial.astro';
 import FlipRateBars from '../../components/figures/FlipRateBars.astro';
 import ThinkingCost from '../../components/figures/ThinkingCost.astro';
 
@@ -28,13 +31,15 @@ These four self-directed studies form one research program under a single
 theme: **making AI systems efficient and reliable enough to deploy in the
 real world.** Each is a reproducible repo with a README, a report, and an
 honest limitations section. Two of them surface fragile, uncertain findings
-rather than clean wins — and I'm prouder of them, not less, because they
+rather than clean wins, and I'm prouder of them, not less, because they
 report the results exactly as they came out.
 
-## 1. Budgeted model routing — *efficiency*
+## 1. Budgeted model routing (*efficiency*)
+
+<RouterBand />
 
 **Question.** If we can only afford the big, expensive model on some
-questions, can a simple rule pick which ones — and beat random selection?
+questions, can a simple rule pick which ones, and beat random selection?
 
 **Method.** Two models (Qwen3-1.7B and Qwen3-4B). Seventy practice questions
 calibrate which subjects benefit most from the larger model; then 140 held-out
@@ -45,18 +50,24 @@ subjects to the big model.
 **Finding.** Smart routing beat random at **every** budget tested. At a 25%
 budget the router reached 33.6% accuracy against random's 30.7%; at 50% it
 captured most of the big model's benefit (36.4% vs 33.5%). The sweet spot was
-a 50% budget — most of the value, half the cost.
+a 50% budget: most of the value, half the cost.
 
 <RoutingCurve />
+
+**Try it yourself.** Drag the budget to see what the router would do with
+it: the accuracy it would reach, what random allocation would get instead,
+and roughly how long it would take.
+
+<BudgetSlider />
 
 **Limitations.** One model family; only five practice questions per subject,
 so single questions swing estimates by ~20 points; subject-level routing is
 crude.
 
-## 2. RAG corruption — *reliability*
+## 2. RAG corruption (*reliability*)
 
 **Question.** How does a RAG system's answer quality degrade as supporting
-evidence is progressively removed — or replaced with misleading documents?
+evidence is progressively removed, or replaced with misleading documents?
 
 **Method.** Eighty hard HotpotQA questions, each starting with ten paragraphs
 (two supporting, eight distractors). Four conditions: clean, one support
@@ -65,27 +76,32 @@ misleading distractors added). BM25 retrieves the top four paragraphs;
 GPT-OSS-120B generates answers.
 
 **Finding.** Degradation is severe and steady. Answer F1 falls from **0.649**
-(clean) to **0.440** with just one support removed — a ~33% drop — and to
+(clean) to **0.440** with just one support removed, a ~33% drop, and to
 **0.337** with both gone. Contamination is slightly worse than absence
 (0.314). Encouragingly, the model rarely hallucinated: it degraded toward
 caution, not invention.
 
 <CorruptionBars />
 
+**Try it yourself.** Switch between the four evidence conditions to watch
+the pipeline degrade, and see what the model actually said.
+
+<CorruptionDial />
+
 **Limitations.** Eighty questions is trend-level, not definitive; one model,
 one dataset, and simple BM25 retrieval rather than a modern stack.
 
-## 3. Budgeted evaluation — *a real signal, with a twist*
+## 3. Budgeted evaluation (*a real signal, with a twist*)
 
 **Question.** Under a fixed evaluation budget, does targeting tasks where
 cheap evaluators disagree beat random allocation?
 
-**Method.** One hundred SummEval comparison tasks. Two cheap "scout"
+**Method.** One hundred SummEval comparison tasks. Two cheap “scout”
 evaluators (GPT-3.5) and one strong evaluator (Gemini Pro). Three spending
-policies — scouts-only, random targeting, and disagreement-aware targeting —
+policies (scouts-only, random targeting, and disagreement-aware targeting)
 replayed 500 times with 95% confidence intervals.
 
-**Finding.** Disagreement is a real signal — when the two scouts came from
+**Finding.** Disagreement is a real signal: when the two scouts came from
 the same model family, the cases they disagreed on had nearly double the
 error (57.1% vs 30.1%), and targeting them beat random allocation. The twist:
 the expensive evaluator turned out to be **worse** than the cheap scouts
@@ -93,32 +109,32 @@ the expensive evaluator turned out to be **worse** than the cheap scouts
 nothing. And in a follow-up with a different model pair, the disagreement
 signal vanished entirely.
 
-**The lesson.** A signal is only as good as what it routes to — and it's
+**The lesson.** A signal is only as good as what it routes to, and it's
 fragile across model pairs. This is the kind of nuanced, not-very-clean
 finding that doesn't get published enough, and it's why I run these
 experiments in the open.
 
-## 4. Pushback resistance — *reliability, at a price*
+## 4. Pushback resistance (*reliability, at a price*)
 
 **Question.** If a user confidently tells a small model its (correct) answer
-is wrong, does letting the model "think" before replying help it stand its
-ground — and what does that cost in tokens and time?
+is wrong, does letting the model “think” before replying help it stand its
+ground, and what does that cost in tokens and time?
 
 **Method.** This study reuses the behavioral protocol from Aamir & Bin Adil
-(2026, [arXiv:2609.17550](https://arxiv.org/abs/2609.17550)) — ask, push
-back, ask again; four pushback styles; the flip-rate metric; an LLM judge —
-and extends it: same model (Qwen3-1.7B), same question, same frozen first
+(2026, [arXiv:2609.17550](https://arxiv.org/abs/2609.17550)): ask, push
+back, ask again; four pushback styles; the flip-rate metric; an LLM judge.
+It extends the protocol: same model (Qwen3-1.7B), same question, same frozen first
 answer, same seed, flipping only the thinking switch. Sixty TriviaQA
 questions × 4 pushback styles = 240 matched pairs. A follow-up reruns the
 identical protocol on Qwen3-4B to ask whether a bigger model caves less.
 
-**Finding.** Thinking roughly halved caving — the flip rate fell from
-**12.5%** to **5.6%** — but the gain came largely from the thinking model
+**Finding.** Thinking roughly halved caving: the flip rate fell from
+**12.5%** to **5.6%**, but the gain came largely from the thinking model
 refusing to commit under pressure (abandonment rose from 6.9% to 22.2%):
 fewer confident flips, more retreats. The cost was large and certain: ~3×
 the tokens (784 vs 258 per response) and ~3× the latency. And the follow-up
 showed a 2.3× bigger model caves at the *same* rate once you account for it
-being right more often — two ways to spend more compute, and they don't buy
+being right more often: two ways to spend more compute, and they don't buy
 the same thing.
 
 <FlipRateBars />
@@ -128,16 +144,16 @@ the same thing.
 **Limitations.** Sixty questions and one model family: the 95% confidence
 interval for the improvement includes zero (McNemar p = 0.27), so this is a
 suggestive trend, not proof. One judge model, one machine, one wording per
-pushback style — and deliberate simplifications mean the absolute numbers
+pushback style, and deliberate simplifications mean the absolute numbers
 aren't directly comparable to the original paper's.
 
 ## What ties them together
 
 All four ask the same underlying question from different angles: *how do we
 get reliable behavior from AI systems without unlimited budget?* The routing
-study attacks **efficiency** — getting useful behavior for less cost. The
-corruption and pushback studies attack **reliability** — robustness to
+study attacks **efficiency**, getting useful behavior for less cost. The
+corruption and pushback studies attack **reliability**, robustness to
 degraded evidence and to social pressure. The evaluation study probes
 whether we can even *measure* that behavior trustworthily. And the pushback
 study sits at the intersection: the reliability it adds appears real but is
-priced in tokens — exactly the trade-off this program exists to map.
+priced in tokens, exactly the trade-off this program exists to map.

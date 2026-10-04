@@ -14,11 +14,13 @@
  */
 import Base from '../layouts/Base.astro';
 import PillarDiagram from '../components/PillarDiagram.astro';
+import DoneFigure from '../components/figures/DoneFigure.astro';
+import QuestionMap from '../components/figures/QuestionMap.astro';
 ---
 
 <Base
   title="Research"
-  description="Making AI systems efficient and reliable enough to deploy in the real world — questions, experiments, and findings by Jahanzeb Naeem."
+  description="Making AI systems efficient and reliable enough to deploy in the real world: questions, experiments, and findings by Jahanzeb Naeem."
 >
   <!-- Header + theme ------------------------------------------------------ -->
   <section class="section page-head">
@@ -31,7 +33,7 @@ import PillarDiagram from '../components/PillarDiagram.astro';
         </h1>
       </div>
       <p class="page-lede" data-reveal data-reveal-delay="2">
-        That's the theme everything below hangs on — systems that could
+        That's the theme everything below hangs on: systems that could
         eventually be trusted in high-stakes domains like healthcare, where a
         model that is merely impressive in a notebook isn't good enough. I
         approach it through two questions.
@@ -63,7 +65,7 @@ import PillarDiagram from '../components/PillarDiagram.astro';
             </p>
             <p class="pillar-note">
               Doing more with less: SLM capability and efficiency work, and
-              LLM routing — pursued through the budgeted model-routing
+              LLM routing, pursued through the budgeted model-routing
               experiment and the SLM/RAG work at Teradata.
             </p>
           </div>
@@ -71,12 +73,12 @@ import PillarDiagram from '../components/PillarDiagram.astro';
           <div class="pillar-block" data-reveal data-reveal-delay="1">
             <h3 class="pillar-name">Reliability</h3>
             <p class="pillar-question">
-              How do AI systems behave when evidence, models, or tasks degrade
-              — and how would we know?
+              How do AI systems behave when evidence, models, or tasks degrade,
+              and how would we know?
             </p>
             <p class="pillar-note">
-              Agent evaluation and robustness — retrieval, LLM-as-judge,
-              trustworthy AI — pursued through the RAG-corruption,
+              Agent evaluation and robustness (retrieval, LLM-as-judge,
+              trustworthy AI), pursued through the RAG-corruption,
               budgeted-evaluation, and pushback-resistance experiments, and
               the LLM-graded CI evaluation at work.
             </p>
@@ -98,52 +100,61 @@ import PillarDiagram from '../components/PillarDiagram.astro';
       <div class="stack" style="--stack-space: var(--space-12); margin-top: var(--space-8);">
         <!-- SignChatter -->
         <article class="done-item" data-reveal>
-          <h3 class="done-title">Word-level sign-language recognition</h3>
-          <p class="done-meta">Peer-reviewed · ICCIS 2024 · Springer</p>
-          <p>
-            Built a word-level Pakistani Sign Language dataset from scratch and
-            compared recurrent models for translation, then deployed the result
-            as an app that speaks the recognized word aloud.
-          </p>
-          <p class="done-links">
-            <a class="link-draw" href="/work/signchatter/">Case study →</a>
-            <a class="link-draw" href="https://link.springer.com/chapter/10.1007/978-981-95-2212-5_13">Springer ↗</a>
-            <a class="link-draw" href="https://www.kaggle.com/datasets/jahanzebnaeem/wlpsl">Dataset ↗</a>
-          </p>
+          <div class="done-text">
+            <h3 class="done-title">Word-level sign-language recognition</h3>
+            <p class="done-meta">Peer-reviewed · ICCIS 2024 · Springer</p>
+            <p>
+              Built a word-level Pakistani Sign Language dataset from scratch and
+              compared recurrent models for translation, then deployed the result
+              as an app that speaks the recognized word aloud.
+            </p>
+            <p class="done-links">
+              <a class="link-draw" href="/work/signchatter/">Case study →</a>
+              <a class="link-draw" href="https://link.springer.com/chapter/10.1007/978-981-95-2212-5_13">Springer ↗</a>
+              <a class="link-draw" href="https://www.kaggle.com/datasets/jahanzebnaeem/wlpsl">Dataset ↗</a>
+            </p>
+          </div>
+          <DoneFigure kind="hand" />
         </article>
 
         <!-- Experiments -->
         <article class="done-item" data-reveal>
-          <h3 class="done-title">Four experiments in efficiency &amp; reliability</h3>
-          <p class="done-meta">Self-directed · Reproducible · Nuanced findings, reported honestly</p>
-          <p>
-            Budgeted model routing (efficiency), RAG corruption (reliability),
-            budgeted evaluation (measurement), and pushback resistance under
-            test-time reasoning (reliability, priced in tokens) — four open,
-            reproducible studies with stated limitations.
-          </p>
-          <p class="done-links">
-            <a class="link-draw" href="/work/experiments/">Case study →</a>
-          </p>
+          <div class="done-text">
+            <h3 class="done-title">Four experiments in efficiency &amp; reliability</h3>
+            <p class="done-meta">Self-directed · Reproducible · Nuanced findings, reported honestly</p>
+            <p>
+              Budgeted model routing (efficiency), RAG corruption (reliability),
+              budgeted evaluation (measurement), and pushback resistance under
+              test-time reasoning (reliability, priced in tokens): four open,
+              reproducible studies with stated limitations.
+            </p>
+            <p class="done-links">
+              <a class="link-draw" href="/work/experiments/">Case study →</a>
+            </p>
+          </div>
+          <DoneFigure kind="routing" />
         </article>
 
         <!-- RA work -->
         <article class="done-item" data-reveal>
-          <h3 class="done-title">Applied research at the Center of Excellence for AI</h3>
-          <p class="done-meta">Research Assistant · Bahria University · 2022–2023</p>
-          <p>
-            Crowd-threat detection with DenseNet3D (97% test accuracy) and a
-            popularity-prediction system for short-form video built on a
-            15,000-video dataset (73–86% accuracy).
-          </p>
-          <p class="manuscripts-note">
-            Both projects were written up as manuscripts and submitted to
-            conferences; they weren't accepted, and we later set them aside.
-            The work was real even if the publications didn't happen.
-          </p>
-          <p class="done-links">
-            <a class="link-draw" href="/about/">Background →</a>
-          </p>
+          <div class="done-text">
+            <h3 class="done-title">Applied research at the Center of Excellence for AI</h3>
+            <p class="done-meta">Research Assistant · Bahria University · 2022-2023</p>
+            <p>
+              Crowd-threat detection with DenseNet3D (97% test accuracy) and a
+              popularity-prediction system for short-form video built on a
+              15,000-video dataset (73-86% accuracy).
+            </p>
+            <p class="manuscripts-note">
+              Both projects were written up as manuscripts and submitted to
+              conferences; they weren't accepted, and we later set them aside.
+              The work was real even if the publications didn't happen.
+            </p>
+            <p class="done-links">
+              <a class="link-draw" href="/about/">Background →</a>
+            </p>
+          </div>
+          <DoneFigure kind="bars" />
         </article>
       </div>
     </div>
@@ -158,18 +169,23 @@ import PillarDiagram from '../components/PillarDiagram.astro';
         Questions I'm sitting with.
       </h2>
       <p class="exploring-note" data-reveal>
-        These are open questions, not claims. I haven't answered them — they're
+        These are open questions, not claims. I haven't answered them; they're
         what I want to investigate next.
       </p>
 
-      <ul class="question-list">
-        <li data-reveal>When does routing to a smaller model actually save money end-to-end, once you count the cost of being wrong?</li>
-        <li data-reveal data-reveal-delay="1">Can we detect RAG evidence degradation at inference time, before the answer is generated?</li>
-        <li data-reveal data-reveal-delay="2">What makes an LLM-graded evaluation metric trustworthy enough to gate a deployment?</li>
-        <li data-reveal data-reveal-delay="3">How small can a model get before reliability — not just accuracy — collapses?</li>
-        <li data-reveal data-reveal-delay="4">Do disagreement signals between cheap evaluators generalize across model families, or are they always pair-specific?</li>
-        <li data-reveal data-reveal-delay="5">Does the reliability gain from test-time reasoning hold at larger scale — and when is it worth 3× the tokens?</li>
-      </ul>
+      <div class="exploring-grid">
+        <ul class="question-list">
+          <li data-reveal>When does routing to a smaller model actually save money end-to-end, once you count the cost of being wrong?</li>
+          <li data-reveal data-reveal-delay="1">Can we detect RAG evidence degradation at inference time, before the answer is generated?</li>
+          <li data-reveal data-reveal-delay="2">What makes an LLM-graded evaluation metric trustworthy enough to gate a deployment?</li>
+          <li data-reveal data-reveal-delay="3">How small can a model get before reliability, not just accuracy, collapses?</li>
+          <li data-reveal data-reveal-delay="4">Do disagreement signals between cheap evaluators generalize across model families, or are they always pair-specific?</li>
+          <li data-reveal data-reveal-delay="5">Does the reliability gain from test-time reasoning hold at larger scale, and when is it worth 3× the tokens?</li>
+        </ul>
+
+        <!-- Extra, wide screens only: which pillar each question touches. -->
+        <QuestionMap />
+      </div>
     </div>
   </section>
 
@@ -183,8 +199,8 @@ import PillarDiagram from '../components/PillarDiagram.astro';
 
       <blockquote class="citation" data-reveal>
         <p>
-          Naeem, J., Asif, Z., Rahman, A. "Word-Level Pakistani Sign Language
-          Recognition." <em>International Conference on Computational
+          Naeem, J., Asif, Z., Rahman, A. “Word-Level Pakistani Sign Language
+          Recognition.” <em>International Conference on Computational
           Intelligent Systems (ICCIS)</em>, Islamabad, Pakistan, December 2024.
           Published on Springer.
         </p>
@@ -260,6 +276,20 @@ import PillarDiagram from '../components/PillarDiagram.astro';
   .done-item {
     padding-left: var(--space-6);
     border-left: 1px solid var(--color-border);
+    /* Text on one side, a small picture on the other (desktop only). */
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  @media (min-width: 900px) {
+    .done-item {
+      grid-template-columns: minmax(0, var(--measure)) minmax(0, 340px);
+      gap: var(--space-12);
+      align-items: center;
+    }
+  }
+
+  .done-text {
     max-width: var(--measure);
   }
 
@@ -295,10 +325,27 @@ import PillarDiagram from '../components/PillarDiagram.astro';
     margin-top: var(--space-3);
     font-size: var(--text-sm);
     color: var(--color-ink-muted);
-    font-style: italic;
+    display: grid;
+    gap: var(--space-4);
+    max-width: var(--measure);
   }
 
-  /* ---- Exploring questions ------------------------------------------------------- */
+  /* Questions on the left, the little map on the right (desktop only). */
+  .exploring-grid {
+    margin-top: var(--space-8);
+    display: grid;
+    gap: var(--space-8);
+  }
+
+  @media (min-width: 900px) {
+    .exploring-grid {
+      grid-template-columns: minmax(0, var(--measure)) minmax(0, 360px);
+      gap: var(--space-12);
+      align-items: center;
+    }
+  }
+
+  /* ---- Exploring ------------------------------------------------------- */
   .exploring-note {
     margin-top: var(--space-4);
     color: var(--color-ink-muted);
@@ -331,12 +378,44 @@ import PillarDiagram from '../components/PillarDiagram.astro';
     color: var(--color-accent);
   }
 
+  /* Hover underline (modification strategy 03): a thin accent line draws
+     itself left-to-right under the question on hover — makes the questions
+     feel asked, not just listed. Same gesture as the hero underline, smaller. */
+  .question-list li::after {
+    content: '';
+    position: absolute;
+    left: var(--space-6);
+    bottom: -2px;
+    width: calc(100% - var(--space-6));
+    height: 1px;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .question-list li::after {
+      transition: transform var(--duration-base) var(--ease-out);
+    }
+
+    .question-list li:hover::after {
+      transform: scaleX(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .question-list li:hover::after {
+      transform: scaleX(1);
+    }
+  }
+
   /* ---- Citation --------------------------------------------------------------------- */
   .citation {
     margin-top: var(--space-6);
     border-left: 2px solid var(--color-accent);
     padding-left: var(--space-6);
     max-width: var(--measure);
+    position: relative;
   }
 
   .citation p {
@@ -350,5 +429,53 @@ import PillarDiagram from '../components/PillarDiagram.astro';
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2) var(--space-6);
+  }
+
+  /* The citation underline: a hand-drawn stroke that draws itself on scroll,
+     like a highlighter marking the key line (modification strategy 03). */
+  .citation::after {
+    content: '';
+    position: absolute;
+    left: var(--space-6);
+    bottom: -4px;
+    width: 100%;
+    max-width: 280px;
+    height: 3px;
+    background: var(--color-accent);
+    border-radius: 2px;
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .citation.is-revealed::after {
+      transition: transform 800ms var(--ease-out) 400ms;
+      transform: scaleX(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .citation::after {
+      transform: scaleX(1);
+    }
+  }
+
+  /* ---- Done vs. exploring: different entrances (modification strategy 03) --
+     Done items slide in from the left (settled, concrete). Exploring
+     questions fade in from the right (open, tentative). The transforms
+     combine with the existing translateY reveal. */
+  @media (prefers-reduced-motion: no-preference) {
+    .done-item[data-reveal] {
+      transform: translateX(-24px) translateY(16px);
+    }
+
+    .question-list li[data-reveal] {
+      transform: translateX(24px) translateY(16px);
+    }
+
+    .done-item[data-reveal].is-revealed,
+    .question-list li[data-reveal].is-revealed {
+      transform: none;
+    }
   }
 </style>

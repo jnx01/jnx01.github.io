@@ -15,11 +15,12 @@
  * work" block. No autobiography.
  */
 import Base from '../layouts/Base.astro';
+import ScopeArc from '../components/figures/ScopeArc.astro';
 import { RESUME_URL } from '../site.config';
 ---
 <Base
   title="About"
-  description="Experience, education, and the person behind the work — Jahanzeb Naeem, AI engineer in Islamabad."
+  description="Experience, education, and the person behind the work. Jahanzeb Naeem, AI engineer in Islamabad."
 >
   <!-- Page header -------------------------------------------------------- -->
   <section class="section page-head">
@@ -48,15 +49,19 @@ import { RESUME_URL } from '../site.config';
         Where I've worked, and how the scope grew.
       </h2>
 
+      <!-- The two promotions as widening scope (real block counts per role).
+           Sits above the timeline so the growth is seen before the detail. -->
+      <ScopeArc />
+
       <ol class="xp-timeline">
         <!-- Teradata — current level -->
         <li class="xp-item" data-reveal>
           <div class="xp-when">
-            <span class="xp-dates">2023 — present</span>
+            <span class="xp-dates">2023 - present</span>
             <span class="xp-place">Teradata · Islamabad</span>
           </div>
           <div class="xp-body">
-            <h3 class="xp-role">Data Science Engineer II — GenAI &amp; Agentic AI</h3>
+            <h3 class="xp-role">Data Science Engineer II, GenAI &amp; Agentic AI</h3>
             <p class="xp-progression">
               Progression: Data Science Trainee Consultant → Data Science &amp;
               ETL Consultant I → Data Science Engineer II
@@ -64,7 +69,7 @@ import { RESUME_URL } from '../site.config';
             <p>
               I've worked across several production AI systems rather than a
               single product. The deepest of these: I own the API layer of
-              Teradata's enterprise Text-to-SQL agent — about forty REST
+              Teradata's enterprise Text-to-SQL agent: about forty REST
               endpoints across two FastAPI services covering prompt handling,
               metadata ingestion, script execution, job orchestration, and
               initialization. I took it from before launch through customer
@@ -77,7 +82,7 @@ import { RESUME_URL } from '../site.config';
               runs through everything: I improved the schema-mapping engine by
               comparing LLM councils, retrieval strategies, embedding models,
               and prompt designs, and worked with the VectorStore team on the
-              RAG pipeline — in-database embeddings, HNSW vector search, custom
+              RAG pipeline: in-database embeddings, HNSW vector search, custom
               tokenizers, and SLMs.
             </p>
             <p>
@@ -94,7 +99,7 @@ import { RESUME_URL } from '../site.config';
         <!-- Bahria RA -->
         <li class="xp-item" data-reveal>
           <div class="xp-when">
-            <span class="xp-dates">2022 — 2023</span>
+            <span class="xp-dates">2022 - 2023</span>
             <span class="xp-place">Center of Excellence for AI, Bahria University</span>
           </div>
           <div class="xp-body">
@@ -103,10 +108,10 @@ import { RESUME_URL } from '../site.config';
               Managed a team of four on a crowd-threat detection system
               (DenseNet3D, 97% test accuracy), scaling the dataset to more
               threat categories and training ConvLSTM and ResNet3D variants
-              (89–97%). Separately, built a popularity-prediction system for
+              (89-97%). Separately, built a popularity-prediction system for
               short-form video from a 15,000-video dataset I scraped and
               labeled, with ResNet/EfficientNet/MobileNet models reaching
-              73–86% accuracy.
+              73-86% accuracy.
             </p>
           </div>
         </li>
@@ -114,7 +119,7 @@ import { RESUME_URL } from '../site.config';
         <!-- SignChatter -->
         <li class="xp-item" data-reveal>
           <div class="xp-when">
-            <span class="xp-dates">2022 — 2024</span>
+            <span class="xp-dates">2022 - 2024</span>
             <span class="xp-place">SignChatter · Final Year Project</span>
           </div>
           <div class="xp-body">
@@ -164,13 +169,13 @@ import { RESUME_URL } from '../site.config';
             <div>
               <h3 class="sub-head">Bahria University, Islamabad</h3>
               <p class="sub-body">
-                BS Computer Science, 2019–2023 · CGPA 3.83/4 · Valedictorian
+                BS Computer Science, 2019-2023 · CGPA 3.83/4 · Valedictorian
                 (batch topper)
               </p>
             </div>
             <div>
               <h3 class="sub-head">Cambridge Assessment International Education</h3>
-              <p class="sub-body">O &amp; A Levels — Biology &amp; Computer Science, 2019</p>
+              <p class="sub-body">O &amp; A Levels (Biology &amp; Computer Science), 2019</p>
             </div>
           </div>
         </div>
@@ -201,8 +206,8 @@ import { RESUME_URL } from '../site.config';
         What I work with.
       </h2>
       <p class="toolbox-note" data-reveal>
-        The evidence for each of these is in the <a href="/work/">case studies</a>
-        — this is the map, not the proof.
+        The evidence for each of these is in the <a href="/work/">case studies</a>;
+        this is the map, not the proof.
       </p>
 
       <div class="toolbox-grid">
@@ -244,7 +249,7 @@ import { RESUME_URL } from '../site.config';
       <p class="certs-line" data-reveal>
         <span class="certs-label">Certifications</span>
         Teradata PE AgenticAI · Enterprise Vector Store · HuggingFace AI
-        Agents · Google–Kaggle GenAI Intensive
+        Agents · Google-Kaggle GenAI Intensive
       </p>
     </div>
   </section>
@@ -259,7 +264,7 @@ import { RESUME_URL } from '../site.config';
           <div class="prose" style="margin-top: var(--space-6);">
             <p>
               I've written professionally for international clients for over six
-              years — technical content, documentation, and long-form pieces.
+              years: technical content, documentation, and long-form pieces.
               It's why I care how this site reads, not just how it runs.
             </p>
             <p>
@@ -423,7 +428,7 @@ import { RESUME_URL } from '../site.config';
 
   /* A small accent tick instead of a default bullet. */
   .award-list li::before {
-    content: '—';
+    content: '-';
     position: absolute;
     left: 0;
     color: var(--color-accent);
