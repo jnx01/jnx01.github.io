@@ -17,8 +17,8 @@ const year = new Date().getFullYear();
       <!-- Email is plain text (obfuscated), not a mailto: link — the user
            prefers not to expose a clickable address to scrapers. -->
       <li><span class="footer-email">{EMAIL_DISPLAY}</span></li>
-      <li><a href={LINKEDIN_URL} rel="me">LinkedIn</a></li>
-      <li><a href={GITHUB_URL} rel="me">GitHub</a></li>
+      <li><a href={LINKEDIN_URL} rel="me noopener noreferrer" target="_blank">LinkedIn</a></li>
+      <li><a href={GITHUB_URL} rel="me noopener noreferrer" target="_blank">GitHub</a></li>
     </ul>
   </div>
 </footer>
