@@ -1285,3 +1285,30 @@ line's transform reaches scaleY(1) (matrix(1,0,0,1,0,0)).
 **Validation**
 - Build succeeds (12 pages). 3 stages, 7 blocks, all fill on scroll.
   Verified in light and dark mode.
+
+## 2026-10-05 — External links open in a new tab
+
+**Decision**
+- All links that leave the site now use target="_blank" with
+  rel="noopener noreferrer" (merged with the existing rel="me" on
+  LinkedIn/GitHub links).
+- Hand-edited links in .astro files: research.astro (Springer x2, Kaggle,
+  Bahria thesis), about.astro (resume), contact.astro (LinkedIn, GitHub,
+  resume), index.astro (LinkedIn, GitHub, resume), Footer.astro (LinkedIn,
+  GitHub), CaseStudy.astro (frontmatter links).
+- Links inside Markdown/MDX bodies (notes, case studies) are handled
+  automatically by a small Satteri hast plugin in astro.config.mjs
+  (externalLinksNewTab): any <a> whose href starts with "http" gets
+  target/rel added at build time.
+
+**Issue / fix**
+- First tried rehype-external-links via markdown.rehypePlugins, but Astro 7
+  defaults to the Satteri markdown processor and the legacy rehypePlugins
+  key fails the build. Switched to Satteri's own plugin API
+  (defineHastPlugin from the satteri package) and removed
+  rehype-external-links. Added @astrojs/markdown-satteri and satteri as
+  direct dependencies.
+
+**Validation**
+- Build succeeds (12 pages). Grep of dist/: 47 external links, all with
+  target="_blank"; zero external links without it.
