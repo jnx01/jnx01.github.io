@@ -43,7 +43,7 @@ const kindLabel = {
       {links.length > 0 && (
         <ul class="cs-links" data-reveal data-reveal-delay="4">
           {links.map((link) => (
-            <li><a class="link-draw" href={link.url}>{link.label} ↗</a></li>
+            <li><a class="link-draw" href={link.url} target="_blank" rel="noopener noreferrer">{link.label} ↗</a></li>
           ))}
         </ul>
       )}
