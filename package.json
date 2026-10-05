@@ -11,13 +11,15 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/markdown-satteri": "^0.4.2",
     "@astrojs/mdx": "^8.0.2",
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@fontsource-variable/newsreader": "^5.3.0",
     "@fontsource/caveat": "^5.3.0",
-    "astro": "^7.3.5"
+    "astro": "^7.3.5",
+    "satteri": "^0.10.5"
   },
   "devDependencies": {
     "typescript": "^7.0.2"
