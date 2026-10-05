@@ -36,13 +36,13 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
           </div>
         </li>
         <li data-reveal data-reveal-delay="3">
-          <a class="contact-link" href={LINKEDIN_URL} rel="me">
+          <a class="contact-link" href={LINKEDIN_URL} rel="me noopener noreferrer" target="_blank">
             <span class="contact-method">LinkedIn</span>
             <span class="contact-value">linkedin.com/in/jna1</span>
           </a>
         </li>
         <li data-reveal data-reveal-delay="4">
-          <a class="contact-link" href={GITHUB_URL} rel="me">
+          <a class="contact-link" href={GITHUB_URL} rel="me noopener noreferrer" target="_blank">
             <span class="contact-method">GitHub</span>
             <span class="contact-value">github.com/jnx01</span>
           </a>
@@ -50,7 +50,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
         <!-- Quiet resume link (Google Drive, read-only) for recruiters who
              need a PDF. -->
         <li data-reveal data-reveal-delay="5">
-          <a class="contact-link" href={RESUME_URL}>
+          <a class="contact-link" href={RESUME_URL} target="_blank" rel="noopener noreferrer">
             <span class="contact-method">Resume</span>
             <span class="contact-value">PDF · Google Drive</span>
           </a>
