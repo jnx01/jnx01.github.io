@@ -101,11 +101,11 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
                 {EMAIL_DISPLAY}
               </span>
             </li>
-            <li><a class="link-draw" href={LINKEDIN_URL} rel="me">LinkedIn</a></li>
-            <li><a class="link-draw" href={GITHUB_URL} rel="me">GitHub</a></li>
+            <li><a class="link-draw" href={LINKEDIN_URL} rel="me noopener noreferrer" target="_blank">LinkedIn</a></li>
+            <li><a class="link-draw" href={GITHUB_URL} rel="me noopener noreferrer" target="_blank">GitHub</a></li>
             <!-- Quiet resume link (Google Drive, read-only) for recruiters
                  who need a PDF. -->
-            <li><a class="link-draw" href={RESUME_URL}>Resume</a></li>
+            <li><a class="link-draw" href={RESUME_URL} target="_blank" rel="noopener noreferrer">Resume</a></li>
           </ul>
         </div>
       </div>
@@ -1063,8 +1063,8 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
 
          Two timings:
          - First visit (.first-visit): the frame drops (~1.55s) with the
-           avatar already in it, the avatar greets for 2s, so the wash holds
-           until 3.55s and fades as the headshot pops up.
+           avatar already in it, the avatar greets for 1.7s, so the wash holds
+           until 3.25s and fades as the headshot pops up.
          - Revisit: no frame drop, no avatar — fade at 2.5s. */
       animation: hero-wash-out 1.4s var(--ease-out) 2.5s forwards;
       animation-play-state: paused;
@@ -1176,8 +1176,8 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
          wipe-and-redraw loop every 12s — a periodic reminder of the thesis.
          Two timings, matching the wash:
          - Revisit: wash fades at 2.5s, so the underline draws at 3.5s.
-         - First visit (.first-visit): headshot pops at 3.55s, so the
-           underline draws at 4.55s.
+         - First visit (.first-visit): headshot pops at 3.25s, so the
+           underline draws at 4.25s.
          Both start PAUSED and only play once the tab is visible
          (.is-visible on <html>), so a background tab doesn't spend the
          first draw unseen. */
