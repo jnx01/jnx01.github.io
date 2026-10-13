@@ -46,12 +46,23 @@ const SIZES = [
 
 await mkdir(OUT, { recursive: true });
 
+// Extend, materialize, THEN extract. Sharp quirk: in one chain the extract
+// is applied BEFORE the extend, so the crop window lands on the un-extended
+// canvas (the framed buffer came out 941x1492 with the hair at 24% instead
+// of 941x1176 with the hair at 32%). Materializing between the two forces
+// the correct order.
+const extended = await sharp(SRC)
+  .extend({ top: HEADROOM, bottom: 0, left: 0, right: 0, background: '#ffffff' })
+  .png()
+  .toBuffer();
+
+const framed = await sharp(extended)
+  .extract(CROP)
+  .png()
+  .toBuffer();
+
 for (const { name, width, height } of SIZES) {
-  const base = sharp(SRC)
-    // Add white headroom above the figure so its hair sits where the waving
-    // avatar's hair does in the frame (see the note above).
-    .extend({ top: HEADROOM, bottom: 0, left: 0, right: 0, background: '#ffffff' })
-    .extract(CROP)      // the 4:5 window on the extended canvas
+  const base = sharp(framed)
     .resize(width, height)
     .grayscale();       // monochrome, to match the headshot
 
