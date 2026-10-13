@@ -48,8 +48,9 @@
 
   /* The slotted Headshot normally brings its own matte + border; inside the
      intro the wrapper provides them, so strip the inner copy to avoid a
-     double frame. */
-  .avatar-intro .avatar-intro-photo > :global(.headshot) {
+     double frame. (Descendant selector: PortraitFlip sits between
+     .avatar-intro-photo and .headshot.) */
+  .avatar-intro .avatar-intro-photo :global(.headshot) {
     background: none;
     border: none;
     padding: 0;

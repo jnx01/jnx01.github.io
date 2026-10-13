@@ -1164,31 +1164,6 @@ line's transform reaches scaleY(1) (matrix(1,0,0,1,0,0)).
 
 ---
 
-## 2026-09-26 — Experiment figures (motion moment #4)
-
-**Decisions**
-- Added the two approved experiment figures (strategy §G moment #4, §M
-  "redraw as styled SVG/web-native charts"). Both use REAL repo data:
-  - RoutingCurve: accuracy vs budget, router vs random (10/25/50/75%).
-    Accent router line draws itself on scroll (stroke-dashoffset); random is
-    a muted dashed baseline. SVG with gridlines, axis labels, legend.
-  - CorruptionBars: answer F1 by evidence condition (Clean 0.649 / Remove 1
-    0.440 / Remove All 0.337 / Contaminated 0.314). Horizontal bars grow on
-    scroll (scaleX), staggered.
-- Installed @astrojs/mdx so the experiments case study (now .mdx) can embed
-  the figure components inline in the Markdown body. Work collection now
-  loads .md + .mdx.
-- Both figures are accessible: SVG has role=img + title/desc; bars have an
-  aria-label with the numbers; the same figures are in the prose. Reduced
-  motion: line fully drawn, bars full width, no animation.
-
-**Validation**
-- Build succeeds (11 pages). Both charts render; router line draws
-  (dashoffset 600→0). No mobile overflow. Reduced motion: bars transform
-  none, line dashoffset 0 immediately.
-
----
-
 ## 2026-10-04 — Taste-skill / Vercel guidelines pass (hero CTA, dark mode, dash purge)
 
 **Decisions**
@@ -1312,3 +1287,86 @@ line's transform reaches scaleY(1) (matrix(1,0,0,1,0,0)).
 **Validation**
 - Build succeeds (12 pages). Grep of dist/: 47 external links, all with
   target="_blank"; zero external links without it.
+
+---
+
+## 2026-10-12 — Headshot breathing strength increased
+
+- User request: make the hero portrait's breathing effect more noticeable.
+- `hero-breathe` keyframes in index.astro: peak scale 1.018 -> 1.025,
+  intermediate stops 1.012 -> 1.017 (kept proportional so the sine-like
+  curve stays smooth). Timing (9s loop) and reduced-motion gate unchanged.
+
+## 2026-10-12 — Underline redraw interval shortened
+
+- User request: the hero underline's wipe-and-redraw loop was every 12s;
+  make it shorter. Settled on every 5s (tried 6s first, then tightened).
+- `hero-underline-redraw` in index.astro: duration 12s -> 5s. Keyframe
+  proportions unchanged (hold drawn ~88% of the cycle, wipe, redraw), so
+  the wipe/redraw itself is now ~0.6s within each 5s cycle. First-draw
+  timing (3.5s revisit / 4.25s first visit) unchanged. ARCHITECTURE.md
+  motion tables updated to match.
+
+## 2026-10-13 — Hero portrait: click-to-flip to a cartoon avatar
+
+**User request:** once the intro choreography has finished (when the
+breathing loop starts), make the portrait frame clickable. Clicking flips
+the frame in 3D to reveal a cartoon avatar version of the same headshot;
+clicking again flips back.
+
+**Asset pipeline**
+- New script: scripts/prepare-avatar.mjs. Crops the source art
+  (assets-source/avatar.png, 941x1672) to the same 4:5 framing as the
+  headshot (hair top ~8%, chin ~48%, bottom just below the crossed elbows),
+  converts to monochrome, and exports AVIF/WebP/JPEG at 600w + 1200w.
+  White background kept as-is (the headshot's background is also baked-in
+  white — it stays white in dark mode, so the avatar matches).
+- The crop window is hand-picked (sharp's 'attention' crop is unreliable on
+  flat-color illustration). If the source art changes, adjust CROP.
+  First attempt (left 55, top 102, 830x1037) was too wide — the head was
+  cut and the frame ran to knee level. Second attempt (left 135, top 85,
+  670x838) overshot — too zoomed in, cropped at the waist. Third (left 60,
+  top 60, 820x1025) had the right zoom but ran past the elbows to the hips.
+  Fourth (left 110, top 60, 720x900) cut at the elbows but the head was
+  bigger than the waving avatar's. Fifth (left 0, top 0, 941x1176) matched
+  the waving avatar's head size and elbow cut, but forgot that the waving
+  avatar is letterboxed (object-fit:contain + bottom-anchored), which
+  pushes its hair down to ~32% of the frame height — the "Hi There!" text
+  sits in that headroom. Final: extend the canvas upward with 316px of
+  white (sharp .extend), then crop left 0, top 0, 941x1176. The flip
+  avatar's hair now lands at ~32% of the frame height, exactly where the
+  waving avatar's hair sits. Both avatars share one framing.
+
+**Implementation**
+- New component: src/components/PortraitFlip.astro. A <button> wraps two
+  faces (front = the slotted Headshot, back = the avatar <picture>); the
+  inner span rotates 180deg in 3D (perspective on the button). The button
+  starts DISABLED and is armed only when the 'hero-breathe' animationstart
+  event fires on .hero-portrait — the breathing loop is the last thing to
+  start in the intro, so it doubles as the "intro is over" signal and the
+  timing can never drift from the CSS. A 9s setTimeout is the safety net.
+- Reduced motion: the button is armed immediately (no intro to wait for)
+  and the faces swap instantly (transition: none) — no 3D turn.
+- No JS: the button stays disabled and the headshot shows as normal.
+- Hover teaser (motion-allowed, armed, unflipped only): a small 14deg tilt
+  hints the frame can flip. Not applied when flipped (would compound).
+- aria-label toggles ("Show the cartoon avatar portrait" / "Show the real
+  portrait photo"); aria-hidden toggles on the two faces.
+- View-transition cleanup: the animationstart listener and the fallback
+  timer are removed on astro:before-swap; setup re-runs on astro:page-load.
+- index.astro: PortraitFlip wraps Headshot inside AvatarIntro.
+- AvatarIntro.astro: the matte-strip selector changed from a child
+  combinator to a descendant selector (.avatar-intro-photo :global(.headshot))
+  because PortraitFlip now sits between them.
+
+**Validation**
+- Build green (12 pages).
+- First visit: button disabled at load, arms when breathing starts (~5s).
+- Revisit (sessionStorage flag set): disabled at 1s, armed by 5.5s.
+- Click flips to the avatar (image loads, aria-label toggles); click again
+  flips back to the photo.
+- Reduced motion: armed immediately, instant swap (transition ~0s).
+
+---
+
+## 2026-10-12 — Headshot breathing strength increased
