@@ -1,0 +1,203 @@
+---
+/**
+ * PortraitFlip — the hero portrait frame flips over on click to reveal a
+ * cartoon avatar version of the same photo, and flips back on the next click.
+ *
+ * How it works:
+ *   - A <button> wraps two faces (front = the real headshot, slotted in;
+ *     back = the avatar picture). The inner span rotates 180deg in 3D.
+ *   - The button starts DISABLED. It is armed (made clickable) only once the
+ *     hero's intro choreography has finished — i.e. when the portrait's
+ *     breathing loop starts. The script listens for the 'hero-breathe'
+ *     animationstart event on .hero-portrait, so the timing can never drift
+ *     from the CSS. (Reduced-motion visitors have no intro to wait for, so
+ *     the button is armed immediately; their flip is an instant swap with no
+ *     3D animation.)
+ *   - Without JS the button simply stays disabled and the headshot shows
+ *     as normal — the avatar is an enhancement, not content.
+ *
+ * The avatar images (avatar-600/1200) are produced by
+ * scripts/prepare-avatar.mjs: same 4:5 crop, monochrome, white background —
+ * a like-for-like stand-in for the headshot.
+ */
+---
+
+<div class="portrait-flip" data-portrait-flip>
+  <!-- perspective lives on the button (the rotating element's parent) so the
+       flip gets real 3D depth. -->
+  <button
+    class="portrait-flip-button"
+    type="button"
+    data-flip-button
+    aria-label="Show the cartoon avatar portrait"
+    disabled
+  >
+    <span class="portrait-flip-inner">
+      <span class="portrait-face portrait-face--front" data-flip-front aria-hidden="false">
+        <slot />
+      </span>
+      <span class="portrait-face portrait-face--back" data-flip-back aria-hidden="true">
+        <picture>
+          <source
+            type="image/avif"
+            srcset="/images/avatar-600.avif 600w, /images/avatar-1200.avif 1200w"
+            sizes="(min-width: 768px) 32vw, 70vw"
+          />
+          <source
+            type="image/webp"
+            srcset="/images/avatar-600.webp 600w, /images/avatar-1200.webp 1200w"
+            sizes="(min-width: 768px) 32vw, 70vw"
+          />
+          <img
+            src="/images/avatar-600.jpg"
+            srcset="/images/avatar-600.jpg 600w, /images/avatar-1200.jpg 1200w"
+            sizes="(min-width: 768px) 32vw, 70vw"
+            width="600"
+            height="750"
+            alt="Cartoon avatar portrait of Jahanzeb Naeem"
+            loading="lazy"
+            decoding="async"
+          />
+        </picture>
+      </span>
+    </span>
+  </button>
+</div>
+
+<style>
+  .portrait-flip-button {
+    /* Button reset: make it look exactly like the plain picture it wraps. */
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: block;
+    width: 100%;
+    font: inherit;
+    color: inherit;
+    cursor: default; /* until armed, it is not a control */
+    /* The 3D depth for the flip. */
+    perspective: 1400px;
+  }
+
+  .portrait-flip-button.is-armed {
+    cursor: pointer;
+  }
+
+  .portrait-flip-inner {
+    display: block;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.7s var(--ease-out);
+  }
+
+  .portrait-face {
+    display: block;
+    /* Hide whichever face is pointing away, so the mirrored back of the
+       front photo never shows through. */
+    backface-visibility: hidden;
+  }
+
+  .portrait-face--back {
+    /* Stacked exactly over the front face (which defines the frame size),
+       pre-rotated so it reads correctly once the inner span turns. */
+    position: absolute;
+    inset: 0;
+    transform: rotateY(180deg);
+  }
+
+  .portrait-face--back picture,
+  .portrait-face--back img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* safety only — the crop is already exactly 4:5 */
+    border-radius: var(--radius-sm); /* match the headshot's inner radius */
+  }
+
+  .portrait-flip.is-flipped .portrait-flip-inner {
+    transform: rotateY(180deg);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    /* A small teaser tilt on hover, so the frame hints it can flip.
+       (Only once armed, only when NOT flipped, and never for
+       reduced-motion visitors.) */
+    .portrait-flip:not(.is-flipped) .portrait-flip-button.is-armed:hover .portrait-flip-inner {
+      transform: rotateY(14deg);
+    }
+
+    .portrait-flip.is-flipped .portrait-flip-button.is-armed:hover .portrait-flip-inner {
+      transform: rotateY(180deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* Reduced motion: the faces swap instantly, no 3D turn. */
+    .portrait-flip-inner {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const LABEL_TO_AVATAR = 'Show the cartoon avatar portrait';
+  const LABEL_TO_PHOTO = 'Show the real portrait photo';
+
+  function setupPortraitFlip() {
+    const root = document.querySelector<HTMLElement>('[data-portrait-flip]');
+    if (!root) return; // not on the homepage
+
+    const btn = root.querySelector<HTMLButtonElement>('[data-flip-button]');
+    const front = root.querySelector<HTMLElement>('[data-flip-front]');
+    const back = root.querySelector<HTMLElement>('[data-flip-back]');
+    if (!btn || !front || !back) return;
+
+    let armed = false;
+    const arm = () => {
+      if (armed) return;
+      armed = true;
+      btn.disabled = false;
+      btn.classList.add('is-armed');
+    };
+
+    let fallback = 0;
+    const portrait = root.closest('.hero-portrait');
+    const onAnimStart = (e: AnimationEvent) => {
+      // The breathing loop is the LAST thing to start in the hero's intro
+      // choreography, so it doubles as the "intro is over" signal. A paused
+      // animation only fires animationstart when it truly begins playing,
+      // so a hidden tab can't arm the button early.
+      if (e.animationName === 'hero-breathe') arm();
+    };
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      arm(); // no intro sequence to wait for
+    } else {
+      portrait?.addEventListener('animationstart', onAnimStart);
+      // Safety net: never leave the button dead if the event is missed.
+      fallback = window.setTimeout(arm, 9000);
+    }
+
+    const onClick = () => {
+      const flipped = root.classList.toggle('is-flipped');
+      btn.setAttribute('aria-label', flipped ? LABEL_TO_PHOTO : LABEL_TO_AVATAR);
+      front.setAttribute('aria-hidden', String(flipped));
+      back.setAttribute('aria-hidden', String(!flipped));
+    };
+    btn.addEventListener('click', onClick);
+
+    // View-transition cleanup: drop the timer and the animation listener so
+    // nothing keeps watching a page that is gone. (The click listener dies
+    // with the button itself.)
+    document.addEventListener('astro:before-swap', () => {
+      window.clearTimeout(fallback);
+      portrait?.removeEventListener('animationstart', onAnimStart);
+    }, { once: true });
+  }
+
+  // astro:page-load fires on first load AND after every view-transition
+  // navigation, so returning to the homepage re-arms the flip.
+  document.addEventListener('astro:page-load', setupPortraitFlip);
+</script>
