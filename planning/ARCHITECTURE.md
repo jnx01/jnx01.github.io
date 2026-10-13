@@ -79,6 +79,7 @@ components.
 │   │   ├── Tag.astro         # small mono chip for technologies
 │   │   ├── Headshot.astro    # the single professional portrait
 │   │   ├── AvatarIntro.astro # one-time cartoon-avatar greeting (first visit)
+│   │   ├── PortraitFlip.astro # hero portrait flips on click: photo <-> avatar
 │   │   ├── PillarDiagram.astro  # research theme → two pillars (SVG)
 │   │   ├── RouterBand.astro  # "The Router" ambient visualization
 │   │   ├── Laptop.astro      # flat line-art laptop (CSS 3D)
@@ -360,16 +361,17 @@ loops (see below).
 | 3 | Research pillar diagram draws itself | `/research` | SVG strokes draw on scroll (stroke-dashoffset) |
 | 4 | Experiment figures animate | `/work/experiments` | Routing curve draws, corruption bars grow, flip-rate bars grow, thinking-cost bars grow |
 | 5 | Page transitions | all | Fast cross-fade + slight rise (180ms out, 220ms in) via Astro ClientRouter |
-| 6 | Hero statement underline | `/` | Hand-drawn accent stroke under "outside the notebook", draws once then redraws every 12s |
+| 6 | Hero statement underline | `/` | Hand-drawn accent stroke under "outside the notebook", draws once then redraws every 5s |
 | 7 | Budget-routing slider | `/work/experiments` | Interactive: drag to move a marker along the real measured curve |
 | 8 | RAG corruption dial | `/work/experiments` | Interactive: 4-state segmented control animates a mini pipeline |
 | 9 | SignChatter skeleton loop | `/work/signchatter` | Real MediaPipe keypoints animate a hand signing "smart" |
+| 10 | Portrait flip | `/` | Interactive: click the hero portrait to flip between the photo and a cartoon avatar |
 
 ### The 7 ambient loops
 
 | Loop | Page | Duration | Gate |
 |------|------|----------|------|
-| Hero underline redraw | `/` | 12s | always (CSS only) |
+| Hero underline redraw | `/` | 5s | always (CSS only) |
 | Scroll cue shimmer | `/` | 3.8s | always (CSS only) |
 | Timeline "now" pulse | `/` | 2.4s | always (CSS only) |
 | Endpoint grid pulse | `/work/teradata` | 2s | only when scrolled past |
