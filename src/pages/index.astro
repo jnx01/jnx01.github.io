@@ -14,6 +14,7 @@
 import Base from '../layouts/Base.astro';
 import Headshot from '../components/Headshot.astro';
 import AvatarIntro from '../components/AvatarIntro.astro';
+import PortraitFlip from '../components/PortraitFlip.astro';
 import Card from '../components/Card.astro';
 import Laptop from '../components/Laptop.astro';
 import LaptopScreens from '../components/LaptopScreens.astro';
@@ -110,14 +111,17 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
         </div>
       </div>
       <div class="hero-portrait" data-reveal="fade" data-reveal-delay="2" data-parallax>
-        <!-- Plain headshot with a thin-line border (the soft matte lives in
-             Headshot.astro). The two-sided flip card was removed on
-             2026-10-02 — see WORKING-NOTES.
-             AvatarIntro wraps it: on the FIRST visit of a session a 3D
-             avatar waves hello, then sinks away and this photo pops up.
-             Everyone else (and reduced-motion users) just see the photo. -->
+        <!-- The portrait frame. AvatarIntro wraps it: on the FIRST visit of
+             a session a 3D avatar waves hello, then sinks away and the photo
+             pops up. PortraitFlip makes the frame clickable once the intro
+             choreography has finished (when the breathing loop starts):
+             click to flip to a cartoon avatar version of the photo, click
+             again to flip back. Reduced-motion / no-JS visitors just see
+             the photo. -->
         <AvatarIntro>
-          <Headshot />
+          <PortraitFlip>
+            <Headshot />
+          </PortraitFlip>
         </AvatarIntro>
       </div>
     </div>
@@ -1173,7 +1177,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
       stroke-dasharray: 300; /* slightly more than the path length */
       stroke-dashoffset: 300;
       /* First draw: one second after the hero wash fades, then a slow
-         wipe-and-redraw loop every 12s — a periodic reminder of the thesis.
+         wipe-and-redraw loop every 5s — a periodic reminder of the thesis.
          Two timings, matching the wash:
          - Revisit: wash fades at 2.5s, so the underline draws at 3.5s.
          - First visit (.first-visit): headshot pops at 3.25s, so the
@@ -1183,7 +1187,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
          first draw unseen. */
       animation:
         hero-underline-draw 700ms var(--ease-out) 3.5s both,
-        hero-underline-redraw 12s var(--ease-out) 4.2s infinite;
+        hero-underline-redraw 5s var(--ease-out) 4.2s infinite;
       animation-play-state: paused, paused;
     }
 
@@ -1203,7 +1207,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     /* The re-draw loop: hold drawn for most of the cycle, wipe, redraw. */
     @keyframes hero-underline-redraw {
       0%    { stroke-dashoffset: 0; }   /* drawn */
-      88%   { stroke-dashoffset: 0; }   /* still drawn (most of the 12s) */
+      88%   { stroke-dashoffset: 0; }   /* still drawn (most of the 5s) */
       92%   { stroke-dashoffset: 300; } /* wiped */
       100%  { stroke-dashoffset: 0; }   /* redrawn */
     }
@@ -1340,9 +1344,9 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
        perceptible speed change at the turning points. */
     @keyframes hero-breathe {
       0%, 100% { transform: scale(1); }
-      25%      { transform: scale(1.012); }
-      50%      { transform: scale(1.018); }
-      75%      { transform: scale(1.012); }
+      25%      { transform: scale(1.017); }
+      50%      { transform: scale(1.025); }
+      75%      { transform: scale(1.017); }
     }
   }
 
