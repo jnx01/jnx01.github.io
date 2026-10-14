@@ -384,14 +384,17 @@ const personSchema = {
             const body = JSON.stringify(payload);
             if (navigator.sendBeacon) {
               try {
-                const blob = new Blob([body], { type: 'application/json' });
+                // Use text/plain Blob so navigator.sendBeacon is a CORS-simple
+                // request (no preflight OPTIONS needed and no credentials blockage).
+                const blob = new Blob([body], { type: 'text/plain;charset=UTF-8' });
                 if (navigator.sendBeacon(endpoint, blob)) return;
               } catch {}
             }
             fetch(endpoint, {
               method: 'POST',
               body,
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+              credentials: 'omit',
               keepalive: true,
             }).catch(() => {});
           }
