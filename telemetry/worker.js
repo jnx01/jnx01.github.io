@@ -87,9 +87,11 @@ function getCorsHeaders(request, env) {
 
   return {
     'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Max-Age': '86400',
+    'Access-Control-Max-Age': '0',
+    'Vary': 'Origin',
   };
 }
 
@@ -119,7 +121,7 @@ async function handleCollect(request, env, data) {
   const ua = request.headers.get('User-Agent') || '';
 
   // Skip obvious bots/crawlers so your feed stays focused on real humans
-  if (/bot|crawler|spider|headless|lighthouse|pingdom|uptime/i.test(ua)) {
+  if (/bot|crawler|spider|lighthouse|pingdom|uptime/i.test(ua)) {
     return;
   }
 
