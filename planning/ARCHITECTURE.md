@@ -1,7 +1,7 @@
 # Architecture & Design Rules
 
 The single reference for how this site is built and why. Everything here was
-verified against the actual code on 2026-10-03. If the code and this document
+verified against the actual code on 2026-10-14. If the code and this document
 ever disagree, the code is right — fix this file.
 
 For step-by-step recipes (add a note, change the headshot, deploy), see
@@ -41,9 +41,9 @@ Master's-seeking, guru/influencer framing.
 | Framework | **Astro 7** | Content-driven static sites; ships near-zero JS; first-class content collections and GitHub Pages support |
 | Content | **Markdown / MDX** | Case studies and notes are plain files; MDX lets them embed interactive figures inline |
 | Styling | **Vanilla CSS** (custom properties) | The design is bespoke and small — no framework needed; tokens keep it consistent |
-| Fonts | **Fontsource variable fonts** | Self-hosted Newsreader / Inter / JetBrains Mono — no external requests, one file per family |
+| Fonts | **Fontsource variable fonts** | Self-hosted Newsreader / Inter / JetBrains Mono (+ Caveat) — no external requests, one file per family |
 | Language | **TypeScript** (strict) | Catches bugs early; validates content-collection schemas at build time |
-| Analytics | **GoatCounter** (optional) | Privacy-friendly, cookie-free; no consent banner needed |
+| Analytics | **Cloudflare Worker + D1** (optional) | First-party, cookie-free visitor analytics and dashboard |
 | Deployment | **GitHub Actions → GitHub Pages** | Official Astro workflow; push to `main` triggers build + deploy |
 
 **No React, no Tailwind, no animation library.** The zero-JS baseline is a
@@ -103,7 +103,9 @@ components.
 │       └── sign-keypoints.json  # real MediaPipe keypoints (one sign, ~tens of KB)
 ├── scripts/
 │   ├── prepare-headshot.mjs  # one-off: crop/grade/export headshot variants
+│   ├── prepare-avatar.mjs    # one-off: crop/grade/export cartoon avatar variants
 │   └── extract-sign-keypoints.py  # one-off: extract hand keypoints from a video
+├── telemetry/                # Cloudflare Worker + D1 visitor analytics service
 ├── assets-source/            # originals (resumes, photos, videos) — NOT published
 ├── planning/                 # strategy docs and working notes — NOT published
 └── dist/                     # the built site (generated; never edit by hand)
@@ -147,6 +149,7 @@ and a single hero detail. Nothing else.
 | Token | Font | Used for |
 |---|---|---|
 | `--font-display` | Newsreader Variable | headlines, hero statement |
+| *(accent script)* | Caveat | one-time "Hi There!" avatar greeting in the hero |
 | `--font-body` | Inter Variable | body text, UI |
 | `--font-mono` | JetBrains Mono Variable | data, endpoints, code-ish details, metadata labels |
 
@@ -346,13 +349,10 @@ Resume (PDF). No form — GitHub Pages is static hosting.
 
 ## 8. Motion system
 
-**Principle: motion explains or reveals; it never decorates.** (Bent once —
-see §10.)
-
-**Budget:** ~9 significant motion moments site-wide, plus 7 gentle ambient
+**Principle: 10 significant motion moments site-wide, plus 6 gentle ambient
 loops (see below).
 
-### The 9 moments
+### The 10 moments
 
 | # | Moment | Page | What it does |
 |---|--------|------|-------------|
@@ -364,10 +364,10 @@ loops (see below).
 | 6 | Hero statement underline | `/` | Hand-drawn accent stroke under "outside the notebook", draws once then redraws every 5s |
 | 7 | Budget-routing slider | `/work/experiments` | Interactive: drag to move a marker along the real measured curve |
 | 8 | RAG corruption dial | `/work/experiments` | Interactive: 4-state segmented control animates a mini pipeline |
-| 9 | SignChatter skeleton loop | `/work/signchatter` | Real MediaPipe keypoints animate a hand signing "smart" |
-| 10 | Portrait flip | `/` | Interactive: click the hero portrait to flip between the photo and a cartoon avatar |
+| 9 | SignChatter keypoint animation | `/work/signchatter` | Real MediaPipe keypoints tracking a person signing |
+| 10 | Portrait intro & flip | `/` | One-time avatar greeting on first visit; click the hero portrait to flip between photo and avatar |
 
-### The 7 ambient loops
+### The 6 ambient loops
 
 | Loop | Page | Duration | Gate |
 |------|------|----------|------|
@@ -375,6 +375,8 @@ loops (see below).
 | Scroll cue shimmer | `/` | 3.8s | always (CSS only) |
 | Timeline "now" pulse | `/` | 2.4s | always (CSS only) |
 | Endpoint grid pulse | `/work/teradata` | 2s | only when scrolled past |
+| Pillar diagram pulse | `/research` | 4s | always (CSS only) |
+| Router band dot stream | `/work/experiments` | ~7scrolled past |
 | Pillar diagram pulse | `/research` | 4s | always (CSS only) |
 | Router band dot stream | `/work/experiments` | ~7s | only when on screen + tab visible |
 | Sign skeleton animation | `/work/signchatter` | real-time | only when on screen + tab visible |
@@ -614,7 +616,9 @@ watches a detached element after navigation and does nothing.
   width/height prevent layout shift. The hero headshot uses
   `fetchpriority="high"` + `loading="eager"` (it is the LCP element);
   below-the-fold images use `loading="lazy"`.
-- **Page weight:** the homepage is ~11.6KB gzip (including the 7 laptop
+- **Page weight:third-party scripts:** fonts and assets are self-hosted;
+  visitor analytics use a lightweight first-party beacon to a Cloudflare
+  Worker endpoint (configured in `src/site.config.ts`
   screens). The journey script is ~4.5KB raw / ~2KB gzip.
 - **No external requests** except GoatCounter analytics (async, non-blocking).
 

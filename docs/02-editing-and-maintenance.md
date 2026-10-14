@@ -55,8 +55,9 @@ versions are generated from it.
 
 3. Rebuild: `npm run build`.
 
-That's it — the homepage hero updates automatically. (The About page uses the
-talk photo instead — see the next section.)
+That's it — the homepage hero updates automatically. (If you also update the
+cartoon avatar portrait, run `node scripts/prepare-avatar.mjs` as well. The
+About page uses the talk photo instead — see the next section.)
 
 ---
 
@@ -192,8 +193,10 @@ Other contact spots:
 - Footer (on every page): `src/components/Footer.astro`.
 - Top navigation items: `src/components/Nav.astro` (the `items` list).
 
-**Analytics** also live in `src/site.config.ts`: to turn visitor tracking off,
-set `ANALYTICS.ENABLED` to `false` and rebuild — no tracking script loads.
+**Analytics** also live in `src/site.config.ts`: the site uses a lightweight
+Cloudflare Worker endpoint (`ANALYTICS.TELEMETRY_ENDPOINT`). To turn visitor
+tracking off, set `TELEMETRY_ENDPOINT` to `''` and rebuild — no tracking script
+loads.
 
 ---
 

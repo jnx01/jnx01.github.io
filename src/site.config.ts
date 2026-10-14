@@ -17,13 +17,15 @@ export const EMAIL_DISPLAY = 'naeemjahanzeb[at]gmail[dot]com';
 export const LINKEDIN_URL = 'https://www.linkedin.com/in/jna1';
 export const GITHUB_URL = 'https://github.com/jnx01';
 
-// ---- Analytics (GoatCounter) -------------------------------------------------
-// Privacy-friendly, cookie-free visitor analytics. No personal data collected.
-// To enable: sign up free at goatcounter.com, pick your site code (the
-// subdomain, e.g. 'jnx01'), set it below, and flip ENABLED to true.
-// To disable: flip ENABLED to false and rebuild — no tracking script loads.
+// ---- Analytics --------------------------------------------------------------
+// 1. First-party Cloudflare Worker + D1 analytics (see telemetry/README.md):
+//    Set TELEMETRY_ENDPOINT to your deployed Worker's `/collect` URL.
+//    Leave empty ('') to disable.
+//
+// 2. GoatCounter (legacy aggregate counter):
+//    Disabled by default.
 export const ANALYTICS = {
-  ENABLED: true,
-  // Your GoatCounter site code (the part before .goatcounter.com).
+  TELEMETRY_ENDPOINT: 'https://site-telemetry.jnx01-github-io.workers.dev/collect',
+  GOATCOUNTER_ENABLED: false,
   GOATCOUNTER_CODE: 'jnx01',
 };

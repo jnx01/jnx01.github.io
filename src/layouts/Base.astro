@@ -288,11 +288,303 @@ const personSchema = {
       })();
     </script>
 
-    <!-- GoatCounter analytics: privacy-friendly, cookie-free visitor stats.
-         Only loads when ANALYTICS.ENABLED is true in site.config.ts. The
-         script is async so it never blocks the page. No personal data, no
-         cookies, no consent banner needed. -->
-    {ANALYTICS.ENABLED && (
+    <!-- First-party visitor analytics (Cloudflare Worker + D1).
+         Only loads when ANALYTICS.TELEMETRY_ENDPOINT is set in site.config.ts. -->
+    {ANALYTICS.TELEMETRY_ENDPOINT && (
+      <script is:inline define:vars={{ endpoint: ANALYTICS.TELEMETRY_ENDPOINT }}>
+        (() => {
+          if (!endpoint || window.__telemetryInit) return;
+          window.__telemetryInit = true;
+
+          // Generate a compact random ID
+          const uid = () =>
+            (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
+
+          // Persistent Visitor ID (localStorage) + per-tab Session ID (sessionStorage)
+          let visitorId = null;
+          let isNewVisitor = false;
+          let sessionId = null;
+          let isNewSession = false;
+
+          try {
+            visitorId = localStorage.getItem('_vid');
+            if (!visitorId) {
+              visitorId = uid();
+              localStorage.setItem('_vid', visitorId);
+              isNewVisitor = true;
+            }
+            sessionId = sessionStorage.getItem('_sid');
+            if (!sessionId) {
+              sessionId = uid();
+              sessionStorage.setItem('_sid', sessionId);
+              isNewSession = true;
+            }
+          } catch {
+            visitorId = uid();
+            sessionId = uid();
+          }
+
+          // Extract WebGL unmasked GPU renderer (e.g. "Apple M3 Max", "NVIDIA RTX 4090")
+          function getGpuRenderer() {
+            try {
+              const canvas = document.createElement('canvas');
+              const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+              if (!gl) return null;
+              const ext = gl.getExtension('WEBGL_debug_renderer_info');
+              return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+            } catch {
+              return null;
+            }
+          }
+
+          // Simple FNV-1a 32-bit hash for non-cookie hardware fingerprint matching
+          function fnv1a(str) {
+            let h = 0x811c9dc5;
+            for (let i = 0; i < str.length; i++) {
+              h ^= str.charCodeAt(i);
+              h = Math.imul(h, 0x01000193);
+            }
+            return (h >>> 0).toString(16).padStart(8, '0');
+          }
+
+          const gpu = getGpuRenderer();
+          const cores = navigator.hardwareConcurrency || null;
+          const ram = navigator.deviceMemory || null;
+          const screenInfo = `${screen.width}x${screen.height} @${window.devicePixelRatio || 1}x`;
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+          const lang = navigator.language || '';
+          const connObj = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+          const conn = connObj
+            ? `${connObj.effectiveType || ''}${connObj.downlink ? ' (' + connObj.downlink + 'Mbps)' : ''}`.trim()
+            : null;
+
+          // Stable hardware signature so returning visitors can be linked even if storage is cleared
+          const hwHash = fnv1a([gpu, cores, ram, screenInfo, tz, lang, navigator.platform].join('|'));
+
+          // Per-page state (reset on every Astro View Transition)
+          let viewId = null;
+          let currentPath = '';
+          let prevPath = '';
+          let activeMs = 0;
+          let lastTick = Date.now();
+          let lastActivity = Date.now();
+          let maxScrollPct = 0;
+          let sectionsSeen = new Set();
+          let pendingEvents = [];
+          let sectionObserver = null;
+
+          function computeScrollPct() {
+            const doc = document.documentElement;
+            const scrollable = doc.scrollHeight - window.innerHeight;
+            if (scrollable <= 0) return 100;
+            return Math.min(100, Math.max(0, Math.round((window.scrollY / scrollable) * 100)));
+          }
+
+          function sendBeaconPayload(payload) {
+            const body = JSON.stringify(payload);
+            if (navigator.sendBeacon) {
+              try {
+                const blob = new Blob([body], { type: 'application/json' });
+                if (navigator.sendBeacon(endpoint, blob)) return;
+              } catch {}
+            }
+            fetch(endpoint, {
+              method: 'POST',
+              body,
+              headers: { 'Content-Type': 'application/json' },
+              keepalive: true,
+            }).catch(() => {});
+          }
+
+          function flushHeartbeat() {
+            if (!viewId) return;
+            const now = Date.now();
+            if (document.visibilityState === 'visible' && now - lastActivity < 60000) {
+              activeMs += now - lastTick;
+            }
+            lastTick = now;
+            maxScrollPct = Math.max(maxScrollPct, computeScrollPct());
+
+            const eventsToSend = pendingEvents.splice(0, pendingEvents.length);
+            sendBeaconPayload({
+              type: 'heartbeat',
+              visitorId,
+              sessionId,
+              viewId,
+              path: currentPath,
+              activeSec: Math.round(activeMs / 1000),
+              scrollPct: maxScrollPct,
+              sections: Array.from(sectionsSeen),
+              theme: document.documentElement.dataset.theme || 'light',
+              events: eventsToSend,
+            });
+          }
+
+          function recordEvent(type, target, meta) {
+            pendingEvents.push({
+              ts: new Date().toISOString(),
+              path: currentPath,
+              type,
+              target,
+              meta,
+            });
+            // Flush high-value events (like Resume or outbound clicks) right away
+            if (type === 'resume' || type === 'outbound' || pendingEvents.length >= 5) {
+              flushHeartbeat();
+            }
+          }
+
+          function observePageSections() {
+            if (sectionObserver) sectionObserver.disconnect();
+            if (!('IntersectionObserver' in window)) return;
+            const targets = document.querySelectorAll('main section[id], main section[aria-labelledby], main article');
+            sectionObserver = new IntersectionObserver(
+              (entries) => {
+                for (const entry of entries) {
+                  if (entry.isIntersecting) {
+                    const label =
+                      entry.target.id ||
+                      entry.target.getAttribute('aria-labelledby') ||
+                      entry.target.querySelector('h1, h2')?.textContent?.trim()?.slice(0, 40);
+                    if (label) sectionsSeen.add(label);
+                  }
+                }
+              },
+              { threshold: 0.35 }
+            );
+            targets.forEach((el) => sectionObserver.observe(el));
+          }
+
+          function startPageView() {
+            // Flush the previous page before starting the new one on client-side navigation
+            if (viewId) flushHeartbeat();
+
+            viewId = uid();
+            prevPath = currentPath;
+            currentPath = location.pathname;
+            activeMs = 0;
+            lastTick = Date.now();
+            lastActivity = Date.now();
+            maxScrollPct = computeScrollPct();
+            sectionsSeen = new Set();
+
+            const params = new URLSearchParams(location.search);
+            sendBeaconPayload({
+              type: 'pageview',
+              visitorId,
+              isNewVisitor,
+              sessionId,
+              isNewSession,
+              viewId,
+              hwHash,
+              path: currentPath,
+              title: document.title,
+              referrer: prevPath || document.referrer || '',
+              utmSource: params.get('utm_source') || params.get('ref') || params.get('source') || '',
+              utmMedium: params.get('utm_medium') || '',
+              utmCampaign: params.get('utm_campaign') || '',
+              query: location.search,
+              scrollPct: maxScrollPct,
+              viewport: `${window.innerWidth}x${window.innerHeight}`,
+              gpu,
+              cores,
+              ram,
+              screen: screenInfo,
+              lang,
+              tz,
+              conn,
+              theme: document.documentElement.dataset.theme || 'light',
+            });
+
+            // Only the very first pageview of the session/visitor carries the "new" flags
+            isNewVisitor = false;
+            isNewSession = false;
+
+            observePageSections();
+          }
+
+          // Track active reading time (ticks every 1s while tab is visible & user was active in last 60s)
+          setInterval(() => {
+            const now = Date.now();
+            if (document.visibilityState === 'visible' && now - lastActivity < 60000) {
+              activeMs += now - lastTick;
+            }
+            lastTick = now;
+          }, 1000);
+
+          // Periodic background sync every 15s while reading so data isn't lost if browser crashes
+          setInterval(() => {
+            if (document.visibilityState === 'visible' && Date.now() - lastActivity < 30000) {
+              flushHeartbeat();
+            }
+          }, 15000);
+
+          const markActive = () => {
+            lastActivity = Date.now();
+          };
+          window.addEventListener('scroll', () => {
+            markActive();
+            maxScrollPct = Math.max(maxScrollPct, computeScrollPct());
+          }, { passive: true });
+          window.addEventListener('pointerdown', markActive, { passive: true });
+          window.addEventListener('keydown', markActive, { passive: true });
+
+          // Capture link clicks, resume opens, email button, and interactive widget controls
+          document.addEventListener('click', (e) => {
+            markActive();
+            const link = e.target.closest('a[href]');
+            if (link) {
+              const href = link.getAttribute('href') || '';
+              const text = (link.textContent || link.getAttribute('aria-label') || '').trim().slice(0, 60);
+              if (href.includes('drive.google.com') || /resume/i.test(text)) {
+                recordEvent('resume', text || 'Resume PDF', { href });
+              } else if (/^https?:\/\//i.test(href) && !href.includes(location.hostname)) {
+                recordEvent('outbound', text || href, { href });
+              }
+              return;
+            }
+            const btn = e.target.closest('button, [role="button"], input[type="radio"]');
+            if (btn) {
+              const label = (
+                btn.getAttribute('aria-label') ||
+                btn.textContent ||
+                btn.name ||
+                btn.id ||
+                'button'
+              ).trim().slice(0, 60);
+              recordEvent('widget', label);
+            }
+          }, { capture: true });
+
+          // Capture range slider interactions (e.g., BudgetSlider on /work/experiments)
+          document.addEventListener('change', (e) => {
+            if (e.target && e.target.matches('input[type="range"], input[type="radio"]')) {
+              const label = e.target.name || e.target.id || e.target.getAttribute('aria-label') || 'control';
+              recordEvent('widget', `${label}: ${e.target.value}`);
+            }
+          });
+
+          // Capture text copy events (e.g., someone copying your email or citation)
+          document.addEventListener('copy', () => {
+            const sel = (window.getSelection()?.toString() || '').trim().slice(0, 80);
+            if (sel) recordEvent('copy', sel);
+          });
+
+          // Flush when switching tabs or closing the page
+          document.addEventListener('visibilitychange', () => {
+            lastTick = Date.now();
+            if (document.visibilityState === 'hidden') flushHeartbeat();
+          });
+          window.addEventListener('pagehide', flushHeartbeat);
+
+          // Fire on initial load and after every Astro View Transition navigation
+          document.addEventListener('astro:page-load', startPageView);
+        })();
+      </script>
+    )}
+
+    <!-- GoatCounter analytics (legacy, disabled by default in site.config.ts). -->
+    {ANALYTICS.GOATCOUNTER_ENABLED && (
       <script
         is:inline
         async

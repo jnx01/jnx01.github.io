@@ -47,9 +47,10 @@ GitHub Pages hosts the result. That's the whole loop.
 │   ├── assets/       ← imported data (the sign-language keypoints JSON)
 │   └── site.config.ts ← one place for values that change: resume link, email, social URLs, analytics
 ├── public/           ← files served as-is (images, favicon, robots.txt)
+├── telemetry/        ← lightweight Cloudflare Worker + D1 analytics service
 ├── assets-source/    ← originals (resumes, headshot) — NOT published
 ├── planning/         ← architecture doc + working notes — NOT published
-├── scripts/          ← one-off helpers (e.g. preparing the headshot)
+├── scripts/          ← one-off helpers (e.g. preparing the headshot/avatar)
 └── dist/             ← the built site (generated; never edit by hand)
 ```
 
@@ -128,12 +129,16 @@ The site is deliberately light on JavaScript. The dynamic behaviors:
 - **Small ambient loops** — a few gentle repeating touches (the hero
   underline redraws, the "now" dot pulses). All pause off-screen and respect
   reduced motion.
-- **Avatar greeting** — on the first visit of a session, a cartoon avatar
-  waves hello in the hero's portrait frame, then the real photo pops in.
-  Everyone else (and reduced-motion users) just see the photo.
+- **Avatar greeting & portrait flip** — on the first visit of a session, a
+  cartoon avatar waves hello in the hero's portrait frame, then the real photo
+  pops in. Clicking the portrait flips it in 3D between the photo and the
+  avatar. Everyone else (and reduced-motion users) just see the photo.
 - **Light/dark theme** — a light-bulb toggle in the top-right of the nav
   switches between the default light theme and a warm dark theme. The choice
   is remembered and applied before the page paints, so there's no flash.
+- **Visitor analytics** — a small inline script sends basic pageview and
+  interaction beacons to a Cloudflare Worker endpoint configured in
+  `src/site.config.ts`.
 
 All of these are progressive enhancements: with JavaScript off or reduced
 motion on, every page still shows its full content.

@@ -8,17 +8,31 @@ For step-by-step recipes, see `docs/02-editing-and-maintenance.md`.
 
 ---
 
-## Current state (2026-10-03)
+## 2026-10-14 — Custom Cloudflare Worker + D1 Visitor Telemetry & Visual Dashboard
+
+- **What was requested:** Replace GoatCounter with a free, self-hosted visitor analytics & dashboard setup on Cloudflare Workers + D1, and bring all documentation (`README.md`, `planning/ARCHITECTURE.md`, `planning/WORKING-NOTES.md`, `docs/01-how-it-works.md`, `docs/02-editing-and-maintenance.md`) in line with the current architecture.
+- **Decisions & implementation:**
+  - Built a standalone **Cloudflare Worker + D1 SQLite** telemetry service (`telemetry/worker.js`, `telemetry/schema.sql`, `telemetry/wrangler.toml`, `telemetry/README.md`) deployed to `site-telemetry.jnx01-github-io.workers.dev`.
+  - Disabled GoatCounter by default (`GOATCOUNTER_ENABLED: false` in `src/site.config.ts`).
+  - Added a lightweight first-party beacon script in `src/layouts/Base.astro` gated behind `ANALYTICS.TELEMETRY_ENDPOINT`, supporting Astro View Transitions, active reading time, scroll depth, section visibility, and interaction events.
+  - Built a password-protected visual dashboard at the Worker root (`/`) guarded by the `DASHBOARD_KEY` secret.
+  - Synced all five documentation files with current repo state (`prepare-avatar.mjs`, Caveat font, `AvatarIntro` + `PortraitFlip`, `telemetry/` folder, and high-level analytics configuration).
+
+---
+
+## Current state (2026-10-14)
 
 The site is complete and deployed. 12 pages, all green. The homepage has the
-scroll journey (laptop + dashed path + section tint). All figures use real
-data. All ambient loops pause off-screen and respect reduced motion.
+scroll journey (laptop + dashed path + section tint) plus the one-time avatar
+greeting and interactive portrait flip. All figures use real data. All ambient
+loops pause off-screen and respect reduced motion. Visitor analytics run via a
+first-party Cloudflare Worker + D1 endpoint.
 
 **Key facts:**
 - Stack: Astro 7 + TypeScript (strict) + vanilla CSS (custom properties) +
-  Fontsource variable fonts. No React, no Tailwind, no animation library.
+  Fontsource fonts. No React, no Tailwind, no animation library.
 - Content: 3 case studies (MDX), 2 notes (Markdown), all data-driven.
-- Motion: ~9 significant moments + 7 ambient loops. Transform/opacity only.
+- Motion: ~10 significant moments + 6 ambient loops. Transform/opacity only.
   Everything gated behind `prefers-reduced-motion`. All content available
   without JS.
 - Homepage journey: laptop travels through 5 sections (proof → work →

@@ -40,13 +40,13 @@ npm run preview # preview the production build locally
 | Fonts | **Fontsource variable fonts** | Self-hosted Newsreader / Inter / JetBrains Mono (+ Caveat for the avatar greeting) — no external requests, one file per family |
 | Language | **TypeScript** (strict) | Type-safe content schemas and component props |
 | Images | **sharp** (bundled with Astro) | Crops/grades/exports the headshot and screenshots to AVIF/WebP/JPEG |
-| Analytics | **GoatCounter** | Privacy-friendly, cookie-free visitor stats; one toggle in `src/site.config.ts` |
+| Analytics | **Cloudflare Worker + D1** | Lightweight first-party visitor telemetry; configurable in `src/site.config.ts` |
 | Hosting | **GitHub Pages + Actions** | Free static hosting; the workflow builds and deploys on every push to `main` |
 
 ## Dependencies
 
 See `requirements.txt` for the annotated list. The short version: `astro` +
-official `sitemap` and `mdx` integrations + three Fontsource font packages +
+official `sitemap` and `mdx` integrations + four Fontsource font packages +
 `typescript` (dev). `sharp` comes bundled with Astro and powers the image
 pipeline.
 
@@ -60,7 +60,8 @@ src/content/     case studies + notes (Markdown/MDX)
 src/styles/      design tokens + base/typography/layout/motion
 src/site.config.ts  single source of truth for the resume link, email, social URLs, analytics
 public/          static assets served as-is
-scripts/         one-off helpers (headshot pipeline, keypoints extraction)
+scripts/         one-off helpers (headshot/avatar pipeline, keypoints extraction)
+telemetry/       lightweight Cloudflare Worker + D1 visitor analytics service
 docs/            how-it-works + editing/maintenance guides
 planning/        architecture doc + working notes
 

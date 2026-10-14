@@ -1,0 +1,24 @@
+# Cloudflare Worker configuration for the site's custom telemetry & dashboard.
+#
+# Quick setup (see telemetry/README.md for full step-by-step commands):
+#   1. npx wrangler login
+#   2. npx wrangler d1 create site-telemetry-db
+#   3. Paste the returned database_id below.
+#   4. npx wrangler d1 execute site-telemetry-db --remote --file=./schema.sql
+#   5. npx wrangler secret put DASHBOARD_KEY
+#   6. npx wrangler deploy
+
+name = "site-telemetry"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# Allowed origins that can send telemetry beacons to this Worker.
+# Comma-separated list. Localhost is included so you can test locally.
+[vars]
+ALLOWED_ORIGINS = "https://jnx01.github.io,http://localhost:4321,http://localhost:3000"
+
+# Bind the free Cloudflare D1 SQLite database.
+[[d1_databases]]
+binding = "DB"
+database_name = "site-telemetry-db"
+database_id = "f7de07f2-5bb4-40c1-acea-e0e9531f12d6"
