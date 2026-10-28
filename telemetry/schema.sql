@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS visitors (
   language          TEXT,
   browser_tz        TEXT,
   connection        TEXT,                    -- e.g. "4g (10 Mbps)"
-  theme             TEXT                     -- "light" or "dark"
+  theme             TEXT,                    -- "light" or "dark"
+  is_bot            INTEGER NOT NULL DEFAULT 0  -- 1 = crawler/agent (UA keyword, datacenter ISP, or navigator.webdriver)
 );
 
 CREATE TABLE IF NOT EXISTS pageviews (
@@ -96,3 +97,6 @@ CREATE INDEX IF NOT EXISTS idx_pageviews_created  ON pageviews(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_pageviews_visitor  ON pageviews(visitor_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_events_visitor     ON events(visitor_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_events_view        ON events(view_id);
+
+-- Migration for an existing database (run once, safe to re-run):
+--   ALTER TABLE visitors ADD COLUMN is_bot INTEGER NOT NULL DEFAULT 0;

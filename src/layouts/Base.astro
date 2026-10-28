@@ -497,6 +497,8 @@ const personSchema = {
               tz,
               conn,
               theme: document.documentElement.dataset.theme || 'light',
+              // Automation signal: true in headless/Selenium/Puppeteer/Playwright
+              webdriver: navigator.webdriver === true,
             });
 
             // Only the very first pageview of the session/visitor carries the "new" flags
@@ -543,6 +545,10 @@ const personSchema = {
                 recordEvent('resume', text || 'Resume PDF', { href });
               } else if (/^https?:\/\//i.test(href) && !href.includes(location.hostname)) {
                 recordEvent('outbound', text || href, { href });
+              } else if (href.startsWith('/')) {
+                // Internal navigation: record which link/button was clicked and
+                // where it leads, so the dashboard can count CTA vs nav usage.
+                recordEvent('nav', text || href, { href });
               }
               return;
             }

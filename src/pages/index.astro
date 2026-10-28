@@ -88,7 +88,10 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
              focus (keyboard), and click/tap (mobile). The address stays out
              of any href, so scrapers get nothing actionable. -->
         <div class="hero-cta" data-reveal data-reveal-delay="3">
-          <a class="btn-primary" href="/work/">See My Work</a>
+          <div class="hero-cta-buttons">
+            <a class="btn-primary" href="/work/teradata/">See What I've Shipped</a>
+            <a class="btn-secondary" href="/work/experiments/">Try The Live Experiments</a>
+          </div>
           <ul class="hero-links">
             <li class="email-reveal">
               <button
@@ -1232,81 +1235,94 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
      text links. The primary is a hairline outline button: a thin ink border,
      no fill, so it reads as the main action without the "app UI" weight of a
      solid rectangle. On hover the border and label turn accent. */
+  /* ---- Hero action area --------------------------------------------------
+     Row 1: two pill CTAs side by side (primary = filled, secondary =
+     outline). Row 2: the four quiet contact links, spread evenly across the
+     same total width as the CTA row above them. */
   .hero-cta {
     margin-top: var(--space-8);
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-4) var(--space-6);
+    flex-direction: column;
+    align-items: flex-start; /* both rows left-aligned, natural width */
+    gap: var(--space-6); /* clear vertical separation between the CTA row and the links row */
   }
 
-  .btn-primary {
-    position: relative; /* anchor for the fill overlay */
+  /* Row 1: the two pill CTAs. This row's natural width is the reference for
+     the links row below it. */
+  .hero-cta-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  /* Shared pill geometry for both CTAs. */
+  .btn-primary,
+  .btn-secondary {
     display: inline-block;
     padding: var(--space-3) var(--space-6);
-    background: transparent;
-    color: var(--color-ink);
     font-weight: 500;
     font-size: var(--text-base);
     line-height: 1.2;
-    border: 1px solid var(--color-ink);
+    border: 1px solid var(--color-accent);
     border-radius: 999px; /* pill / capsule */
     text-decoration: none;
     white-space: nowrap; /* the label never wraps to a second line */
-    overflow: hidden; /* clip the fill sweep to the pill shape */
-    /* Slow color + border change so the label flips only once the fill
-       has mostly arrived (the "powering up" read). */
     transition:
-      color 450ms var(--ease-out) 120ms,
-      border-color 450ms var(--ease-out),
+      color 300ms var(--ease-out),
+      background-color 300ms var(--ease-out),
+      border-color 300ms var(--ease-out),
       transform var(--duration-fast) var(--ease-out);
   }
 
-  /* The fill: an accent layer that starts as a thin sliver off the left edge
-     and sweeps across on hover. transform-only, so it stays smooth. */
-  .btn-primary::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1; /* behind the label */
+  /* Primary: permanently filled with the accent color. */
+  .btn-primary {
     background: var(--color-accent);
-    border-radius: inherit;
-    transform: scaleX(0);
-    transform-origin: left; /* sweep left to right */
-    transition: transform 550ms var(--ease-out);
+    color: var(--color-on-accent);
   }
 
-  /* On hover the fill sweeps across (powering up) and the label flips to the
-     on-accent color (white on light, dark on the lighter dark-mode indigo). */
   .btn-primary:hover {
-    border-color: var(--color-accent);
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
     color: var(--color-on-accent);
     text-decoration: none;
   }
 
-  .btn-primary:hover::before {
-    transform: scaleX(1);
+  /* Secondary: outline only, fills with a soft accent tint on hover. */
+  .btn-secondary {
+    background: transparent;
+    color: var(--color-accent);
   }
 
-  .btn-primary:active {
+  .btn-secondary:hover {
+    background: var(--color-bg-accent);
+    border-color: var(--color-accent-hover);
+    color: var(--color-accent-hover);
+    text-decoration: none;
+  }
+
+  .btn-primary:active,
+  .btn-secondary:active {
     transform: translateY(1px); /* a small physical "push" on click */
   }
 
-  /* Reduced motion: no sweep, the fill and label change instantly. */
+  /* Reduced motion: no transition, the colors change instantly. */
   @media (prefers-reduced-motion: reduce) {
     .btn-primary,
-    .btn-primary::before {
+    .btn-secondary {
       transition: none;
     }
   }
 
+  /* Row 2: the four quiet contact links. Left-aligned under the CTAs with a
+     comfortable, even gap — a quiet group, not a stretched ruler. */
   .hero-links {
     list-style: none;
     padding: 0;
+    margin: 0;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--space-3) var(--space-6);
+    gap: var(--space-3) var(--space-6); /* 12px vertical / 24px horizontal */
     font-size: var(--text-md);
     font-weight: 500;
   }
