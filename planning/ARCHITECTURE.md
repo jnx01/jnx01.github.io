@@ -250,10 +250,12 @@ Six movements, in order:
 
 1. **Hero** — editorial statement ("I build and evaluate AI systems that have
    to work outside the notebook."), name, one-line role, headshot, and an
-   action row: a primary "See My Work" button (to `/work/`) plus Email,
-   LinkedIn, GitHub, and Resume text links. (On the first visit of a session
-   a cartoon avatar waves hello in the portrait frame, then the real photo
-   pops in.)
+   action area: two pill CTAs side by side — a filled primary "See What I've
+   Shipped" (to `/work/teradata/`, the flagship) and an outline secondary
+   "Try The Live Experiments" (to `/work/experiments/`) — with Email,
+   LinkedIn, GitHub, and Resume as quiet text links on a row below. (On the
+   first visit of a session a cartoon avatar waves hello in the portrait
+   frame, then the real photo pops in.)
 2. **Proof strip** — 4 quantified facts (3+ enterprise AI systems, 2 AI agent
    APIs, 4× performance awards, 1 peer-reviewed paper). Numbers count up on
    scroll. Below: a wordmark row of 5 orgs (Teradata, Bahria University,
@@ -616,11 +618,12 @@ watches a detached element after navigation and does nothing.
   width/height prevent layout shift. The hero headshot uses
   `fetchpriority="high"` + `loading="eager"` (it is the LCP element);
   below-the-fold images use `loading="lazy"`.
-- **Page weight:third-party scripts:** fonts and assets are self-hosted;
-  visitor analytics use a lightweight first-party beacon to a Cloudflare
-  Worker endpoint (configured in `src/site.config.ts`
-  screens). The journey script is ~4.5KB raw / ~2KB gzip.
-- **No external requests** except GoatCounter analytics (async, non-blocking).
+- **Page weight:** fonts and assets are self-hosted. The homepage ships ~11.6KB
+  gzip of HTML (including the seven laptop screens); the journey script is
+  ~4.5KB raw / ~2KB gzip.
+- **No third-party requests.** Visitor analytics use a lightweight first-party
+  beacon to a self-hosted Cloudflare Worker endpoint (configured in
+  `src/site.config.ts`); nothing is sent to an outside service.
 
 ---
 

@@ -62,9 +62,13 @@ const kindLabel = {
       <slot />
     </div>
 
-    <!-- Back link -->
+    <!-- Back link (+ a cross-link to the research thread for the two
+         research-flavored case studies, which feed into it). -->
     <p class="cs-back">
       <a class="link-draw" href="/work/">← All work</a>
+      {(kind === 'research' || kind === 'experiment') && (
+        <a class="link-draw cs-research-link" href="/research/">The research thread →</a>
+      )}
     </p>
   </article>
 </Base>
@@ -117,5 +121,9 @@ const kindLabel = {
   .cs-back {
     margin-top: var(--space-16);
     font-size: var(--text-sm);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
   }
 </style>

@@ -8,6 +8,82 @@ For step-by-step recipes, see `docs/02-editing-and-maintenance.md`.
 
 ---
 
+## 2026-10-28 — Telemetry: bot flagging, click tracking, real world map; hero CTA split
+
+**What was requested:** (1) mark crawlers/bots/agents in telemetry, (2) count
+which buttons/links are clicked, (3) fix the dashboard "map" (was dots on a
+black box — no world outline, no city names on hover), (4) rework the hero
+CTA so it leads with the strongest work instead of dumping visitors on the
+/work index.
+
+**Bot analysis (the trigger):** the "no scroll, ~27s, exit" sessions the user
+spotted were confirmed bots — all from Microsoft (Azure) datacenter ISPs, no
+referrer, 0% scroll, identical 1920x1080@1x viewports. The ~27s dwell is an
+artifact of the beacon's own 30s heartbeat cutoff, not real attention. Real
+human sessions (residential ISPs, Apple/Mali GPUs) ALL proceeded from /work
+to at least one case study — so the "/work is a dead end" fear was bot noise.
+
+**Implementation:**
+- `telemetry/schema.sql` + live DB: new `visitors.is_bot` column (migrated
+  with ALTER TABLE; backfilled 11 existing datacenter/bot rows).
+- `telemetry/worker.js`: `detectBot()` flags bots by UA keyword (incl.
+  HeadlessChrome, GPTBot, ClaudeBot, etc.), datacenter ISP (Microsoft,
+  Google, Amazon, Cloudflare, Hetzner, OVH, DigitalOcean…), or
+  `navigator.webdriver`. Bots are now STORED and badged, not silently
+  dropped. All aggregate queries (KPIs, daily, pages, ISPs, locations,
+  events, referrers) join visitors and filter `is_bot = 0`, so headline
+  stats are human-only; the visitor feed still shows bots with a red
+  "Bot/Agent" badge + a "(N bots)" count.
+- World map: replaced the empty graticule with a real dotted-grid world
+  (144x72 landmask, 2.5° resolution, rasterized from the public
+  world.geo.json country polygons via point-in-polygon — fully
+  self-contained, no external tiles). Pins now show a floating tooltip with
+  city/country/counts on hover.
+- Click tracking: the beacon in `Base.astro` now records internal link
+  clicks as `nav` events (link text + destination), so the dashboard counts
+  CTA vs nav vs card usage. Also sends `webdriver: navigator.webdriver`.
+- Hero CTA (`index.astro`): two pill buttons side by side — primary
+  "See What I've Shipped" (permanently filled accent) → /work/teradata/,
+  secondary "Try The Live Experiments" (outline only) → /work/experiments/.
+  The four contact links (Email/LinkedIn/GitHub/Resume) sit on a second row
+  below: left-aligned under the CTAs, a clear 24px vertical gap, and a fixed
+  24px horizontal gap between them (a quiet group, not a stretched ruler).
+  Removed the old fill-sweep hover; primary is now solid by default.
+- Case-study cross-links (`CaseStudy.astro`): research/experiment case
+  studies (SignChatter, Experiments) now end with "The research thread →"
+  to /research, beside "← All work". Teradata (industry/confidential) stays
+  clean.
+
+**Issues found + fixed (2):**
+1. The Python regex that spliced the landmask into worker.js first placed the
+   `drawLand` IIFE at the Worker's top level (outside the dashboard HTML
+   string), so it ran on the Worker and threw "document is not defined"
+   (deploy error 10021). Fix: moved the whole LANDMASK + drawLand block inside
+   the dashboard `<script>` template literal. Verified placement before
+   redeploying.
+2. SERIOUS: an `insert_edit_into_file` edit to `index.astro` silently
+   TRUNCATED the stylesheet — it cut everything after `.hero-links`, deleting
+   ~418 lines of CSS (proof strip, wordmark, journey laptop, timeline,
+   recognition, person section, email tooltip). Symptom: stats rendered as
+   plain text, timeline/recognition unstyled, email button broken, talk photo
+   oversized. A screenshot looked fine, so it was missed until the user
+   reported it. Fix: restored `index.astro` from the last good commit
+   (`git checkout e3ee4f0 -- src/pages/index.astro`), then re-applied ONLY the
+   CTA change with Python string replacement (exact anchors, line counts
+   verified before/after). Lesson: after any large edit to a big file, check
+   the line count / `git diff --stat` — a screenshot of the top of the page
+   does not prove the rest of the stylesheet survived.
+
+**Validation:** site build green (12 pages); Worker deployed; live dashboard
+serves the landmask/renderer/tooltip/badge code; world map visually verified
+(continents recognizable); both CTAs render with correct hrefs and labels
+("See What I've Shipped" filled, "Try The Live Experiments" outline); contact
+links row verified pixel-aligned (24px vertical gap, 24px horizontal gaps,
+left-aligned under the CTAs); research link on SignChatter + Experiments only;
+button-click events confirmed flowing into the DB (nav + widget events).
+
+---
+
 ## 2026-10-14 — Custom Cloudflare Worker + D1 Visitor Telemetry & Visual Dashboard
 
 - **What was requested:** Replace GoatCounter with a free, self-hosted visitor analytics & dashboard setup on Cloudflare Workers + D1, and bring all documentation (`README.md`, `planning/ARCHITECTURE.md`, `planning/WORKING-NOTES.md`, `docs/01-how-it-works.md`, `docs/02-editing-and-maintenance.md`) in line with the current architecture.

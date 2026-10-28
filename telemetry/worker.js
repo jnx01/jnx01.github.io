@@ -104,6 +104,28 @@ function isAuthorized(request, url, env) {
 }
 
 // -----------------------------------------------------------------------------
+// Bot / crawler / agent detection
+// -----------------------------------------------------------------------------
+
+// Datacenter ISPs (ASN organizations) that essentially never browse as humans.
+// Real people come from residential/mobile ISPs (Comcast, PTCL, etc.).
+const DATACENTER_ISP_RE =
+  /microsoft|google|amazon|aws|cloudflare|hetzner|ovh|digitalocean|linode|akamai|vultr|oracle|alibaba|tencent|contabo|scaleway|choopa/i;
+
+// User-agent keywords that indicate an automated client. Note: plain
+// "HeadlessChrome" and AI-agent UAs (ChatGPT-User, ClaudeBot, etc.) do NOT
+// contain "bot", so they need their own patterns.
+const BOT_UA_RE =
+  /bot|crawler|spider|lighthouse|pingdom|uptime|headless|phantom|selenium|puppeteer|playwright|curl|wget|python-requests|scrapy|gptbot|chatgpt-user|claudebot|anthropic|perplexity|bytespider|ccbot|facebookexternalhit|slurp|duckduckbot|bingpreview/i;
+
+function detectBot(ua, isp, data) {
+  if (BOT_UA_RE.test(ua)) return 'ua';
+  if (DATACENTER_ISP_RE.test(isp || '')) return 'datacenter';
+  if (data && data.webdriver === true) return 'webdriver';
+  return null;
+}
+
+// -----------------------------------------------------------------------------
 // Ingestion logic: extract Cloudflare edge metadata + save to D1
 // -----------------------------------------------------------------------------
 
@@ -120,24 +142,13 @@ async function handleCollect(request, env, data) {
     'unknown';
   const ua = request.headers.get('User-Agent') || '';
 
-  // Skip obvious bots/crawlers so your feed stays focused on real humans
-  if (/bot|crawler|spider|lighthouse|pingdom|uptime/i.test(ua)) {
-    return;
-  }
-
-  const isp = cf.asOrganization || 'Unknown ISP';
-  const asn = cf.asn || null;
-  const city = cf.city || 'Unknown';
-  const region = cf.region || '';
-  const country = cf.country || 'XX';
-  const postalCode = cf.postalCode || '';
-  const latitude = cf.latitude ? parseFloat(cf.latitude) : null;
-  const longitude = cf.longitude ? parseFloat(cf.longitude) : null;
-  const cfTimezone = cf.timezone || '';
-  const colo = cf.colo || '';
-
   const parsedUA = parseUserAgent(ua);
   const hwHash = cleanStr(data.hwHash, 64);
+
+  // Mark crawlers/agents instead of silently dropping them, so the dashboard
+  // can show them (badged) while keeping headline stats human-only.
+  const botReason = detectBot(ua, cf.asOrganization || '', data);
+  const isBot = botReason ? 1 : 0;
 
   // If the visitor cleared localStorage (new random visitorId), check if we
   // already know the exact same hardware fingerprint on the same IP or ISP.
@@ -164,15 +175,18 @@ async function handleCollect(request, env, data) {
       `INSERT INTO visitors (
         visitor_id, hw_hash, first_seen, last_seen, visit_count, total_active_sec,
         ip, isp, asn, city, region, country, postal_code, latitude, longitude, cf_timezone, colo,
-        user_agent, os, browser, device_type, gpu, cpu_cores, ram_gb, screen, language, browser_tz, connection, theme
+        user_agent, os, browser, device_type, gpu, cpu_cores, ram_gb, screen, language, browser_tz, connection, theme,
+        is_bot
       ) VALUES (
         ?1, ?2, ?3, ?3, 1, 0,
         ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
-        ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26
+        ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26,
+        ?28
       )
       ON CONFLICT(visitor_id) DO UPDATE SET
         last_seen   = excluded.last_seen,
         visit_count = visitors.visit_count + CASE WHEN ?27 = 1 THEN 1 ELSE 0 END,
+        is_bot      = MAX(visitors.is_bot, excluded.is_bot),
         ip          = excluded.ip,
         isp         = excluded.isp,
         asn         = excluded.asn,
@@ -220,7 +234,8 @@ async function handleCollect(request, env, data) {
         cleanStr(data.tz, 64),
         cleanStr(data.conn, 48),
         cleanStr(data.theme, 16),
-        data.isNewSession ? 1 : 0
+        data.isNewSession ? 1 : 0,
+        isBot
       )
       .run();
 
@@ -344,118 +359,125 @@ async function queryDashboardStats(db, days) {
     topReferrersRows,
     recentVisitorsRows,
   ] = await Promise.all([
-    // 1. Headline summary numbers
+    // 1. Headline summary numbers (human visitors only)
     db
       .prepare(
         `SELECT
-          COUNT(DISTINCT visitor_id) AS unique_visitors,
+          COUNT(DISTINCT p.visitor_id) AS unique_visitors,
           COUNT(*) AS total_pageviews,
-          ROUND(AVG(active_sec), 1) AS avg_active_sec,
-          ROUND(AVG(max_scroll_pct), 0) AS avg_scroll_pct
-        FROM pageviews
-        WHERE created_at >= ?1`
+          ROUND(AVG(p.active_sec), 1) AS avg_active_sec,
+          ROUND(AVG(p.max_scroll_pct), 0) AS avg_scroll_pct
+        FROM pageviews p
+        JOIN visitors v ON v.visitor_id = p.visitor_id
+        WHERE p.created_at >= ?1 AND v.is_bot = 0`
       )
       .bind(sinceDate)
       .first(),
 
-    // 2. Daily pageviews & unique visitors
+    // 2. Daily pageviews & unique visitors (human only)
     db
       .prepare(
         `SELECT
-          substr(created_at, 1, 10) AS day,
+          substr(p.created_at, 1, 10) AS day,
           COUNT(*) AS views,
-          COUNT(DISTINCT visitor_id) AS visitors
-        FROM pageviews
-        WHERE created_at >= ?1
+          COUNT(DISTINCT p.visitor_id) AS visitors
+        FROM pageviews p
+        JOIN visitors v ON v.visitor_id = p.visitor_id
+        WHERE p.created_at >= ?1 AND v.is_bot = 0
         GROUP BY day
         ORDER BY day ASC`
       )
       .bind(sinceDate)
       .all(),
 
-    // 3. Top pages with average active read time & scroll %
+    // 3. Top pages with average active read time & scroll % (human only)
     db
       .prepare(
         `SELECT
-          path,
+          p.path,
           COUNT(*) AS views,
-          COUNT(DISTINCT visitor_id) AS visitors,
-          ROUND(AVG(active_sec), 1) AS avg_sec,
-          ROUND(AVG(max_scroll_pct), 0) AS avg_scroll
-        FROM pageviews
-        WHERE created_at >= ?1
-        GROUP BY path
+          COUNT(DISTINCT p.visitor_id) AS visitors,
+          ROUND(AVG(p.active_sec), 1) AS avg_sec,
+          ROUND(AVG(p.max_scroll_pct), 0) AS avg_scroll
+        FROM pageviews p
+        JOIN visitors v ON v.visitor_id = p.visitor_id
+        WHERE p.created_at >= ?1 AND v.is_bot = 0
+        GROUP BY p.path
         ORDER BY views DESC
         LIMIT 15`
       )
       .bind(sinceDate)
       .all(),
 
-    // 4. Top ISPs / Organizations (identifies companies, universities, telecoms)
+    // 4. Top ISPs / Organizations (identifies companies, universities, telecoms) — human only
     db
       .prepare(
         `SELECT
-          isp,
-          country,
-          COUNT(DISTINCT visitor_id) AS visitors,
+          p.isp,
+          p.country,
+          COUNT(DISTINCT p.visitor_id) AS visitors,
           COUNT(*) AS views,
-          SUM(active_sec) AS total_sec
-        FROM pageviews
-        WHERE created_at >= ?1
-        GROUP BY isp, country
+          SUM(p.active_sec) AS total_sec
+        FROM pageviews p
+        JOIN visitors v ON v.visitor_id = p.visitor_id
+        WHERE p.created_at >= ?1 AND v.is_bot = 0
+        GROUP BY p.isp, p.country
         ORDER BY visitors DESC, views DESC
         LIMIT 20`
       )
       .bind(sinceDate)
       .all(),
 
-    // 5. Top Cities & Countries + coordinates for map pins
+    // 5. Top Cities & Countries + coordinates for map pins (human only)
     db
       .prepare(
         `SELECT
-          city,
-          region,
-          country,
-          AVG(latitude) AS lat,
-          AVG(longitude) AS lon,
-          COUNT(DISTINCT visitor_id) AS visitors,
+          p.city,
+          p.region,
+          p.country,
+          AVG(p.latitude) AS lat,
+          AVG(p.longitude) AS lon,
+          COUNT(DISTINCT p.visitor_id) AS visitors,
           COUNT(*) AS views
-        FROM pageviews
-        WHERE created_at >= ?1
-        GROUP BY city, region, country
+        FROM pageviews p
+        JOIN visitors v ON v.visitor_id = p.visitor_id
+        WHERE p.created_at >= ?1 AND v.is_bot = 0
+        GROUP BY p.city, p.region, p.country
         ORDER BY visitors DESC, views DESC
         LIMIT 30`
       )
       .bind(sinceDate)
       .all(),
 
-    // 6. Key interaction events (Resume opens, outbound clicks, widgets)
+    // 6. Key interaction events (Resume opens, outbound clicks, widgets) — human only
     db
       .prepare(
         `SELECT
-          event_type,
-          event_target,
+          e.event_type,
+          e.event_target,
           COUNT(*) AS count,
-          COUNT(DISTINCT visitor_id) AS visitors
-        FROM events
-        WHERE created_at >= ?1
-        GROUP BY event_type, event_target
+          COUNT(DISTINCT e.visitor_id) AS visitors
+        FROM events e
+        JOIN visitors v ON v.visitor_id = e.visitor_id
+        WHERE e.created_at >= ?1 AND v.is_bot = 0
+        GROUP BY e.event_type, e.event_target
         ORDER BY count DESC
         LIMIT 25`
       )
       .bind(sinceDate)
       .all(),
 
-    // 7. Top external referrers & UTM sources
+    // 7. Top external referrers & UTM sources (human only)
     db
       .prepare(
         `SELECT
-          COALESCE(NULLIF(utm_source, ''), NULLIF(referrer, ''), 'Direct / Bookmark') AS source,
+          COALESCE(NULLIF(p.utm_source, ''), NULLIF(p.referrer, ''), 'Direct / Bookmark') AS source,
           COUNT(*) AS views,
-          COUNT(DISTINCT visitor_id) AS visitors
-        FROM pageviews
-        WHERE created_at >= ?1
-          AND (referrer NOT LIKE 'https://jnx01.github.io%' AND referrer NOT LIKE 'http://localhost%')
+          COUNT(DISTINCT p.visitor_id) AS visitors
+        FROM pageviews p
+        JOIN visitors v ON v.visitor_id = p.visitor_id
+        WHERE p.created_at >= ?1 AND v.is_bot = 0
+          AND (p.referrer NOT LIKE 'https://jnx01.github.io%' AND p.referrer NOT LIKE 'http://localhost%')
         GROUP BY source
         ORDER BY visitors DESC, views DESC
         LIMIT 15`
@@ -483,7 +505,6 @@ async function queryDashboardStats(db, days) {
 
   if (visitorIds.length > 0) {
     const placeholders = visitorIds.map((_, i) => `?${i + 1}`).join(',');
-
     const [pvRes, evRes] = await Promise.all([
       db
         .prepare(
@@ -712,6 +733,27 @@ function renderDashboardHtml() {
       transition: r 0.15s ease;
     }
     .pin:hover { fill: var(--green); }
+    /* Floating tooltip that follows the hovered map pin */
+    .map-tip {
+      position: absolute;
+      pointer-events: none;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--ink);
+      white-space: nowrap;
+      transform: translate(-50%, -130%);
+      display: none;
+      z-index: 5;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .badge-bot {
+      background: rgba(251, 113, 133, 0.14);
+      color: #fb7185;
+    }
 
     .chart-bars {
       display: flex;
@@ -890,8 +932,11 @@ function renderDashboardHtml() {
               <line x1="360" y1="0" x2="360" y2="360" stroke="#2f2f29" />
               <line x1="540" y1="0" x2="540" y2="360" />
             </g>
+            <!-- Dotted-grid continent outline (drawn by JS from a compact landmask) -->
+            <g id="mapLand"></g>
             <g id="mapPins"></g>
           </svg>
+          <div class="map-tip" id="mapTip"></div>
         </div>
       </div>
 
@@ -970,6 +1015,108 @@ function renderDashboardHtml() {
 
     let cachedVisitors = [];
 
+// ------------------------------------------------------------------
+    // World map: dotted-grid continents drawn from a compact landmask.
+    // 144 columns x 72 rows; each cell is 2.5deg lon x 2.5deg lat, row 0 = 90N.
+    // '#' = land. Rasterized from real country polygons (point-in-polygon),
+    // fully self-contained (no external map tiles or requests).
+    // ------------------------------------------------------------------
+    const LANDMASK = [
+      '                                                                                                                                                ',
+      '                                                                                                                                                ',
+      '                                                                                                                                                ',
+      '                                    #########  ####################                                                                             ',
+      '                           #  ##  ########  ####################             ###                                ##                              ',
+      '                       #  # #  ##  #        ####################                                ###            ######                           ',
+      '                      ####        ## #            ##############                             ##          ############           #               ',
+      '#        #             # #####   ## #######        ############                              ##    ### ##################### ########           ',
+      '     ##################### # #    ### ##  ###      ##########                  ########      # #### # ##########################################',
+      '####  ################################    #####    #######       #           ######### #  ######################################################',
+      '        ############################ # #   ###     #####        #           #### ############################################################## ',
+      '      ############################       ##         ###                   #####  ###################################################### #####   ',
+      '       ####      ##################      #### #                           #####  ################################################       #       ',
+      '        #          ##################    ######                       #    # #  ###############################################       ###       ',
+      '                    ################### #########                   ## #   #####################################################      ##        ',
+      '                     #############################                    ##########################################################                ',
+      '                      ###################### #  ###                   ##########################################################                ',
+      '                      ########################                         ############# # ##### ##################################                 ',
+      '                      ######################                           #### # #####     ### ##################################   #              ',
+      '                      #####################                         #####    ## #### ## ####  ##############################    #               ',
+      '                       ###################                          ####      # #  #########  #########################   #     #               ',
+      '                       ###################                              ####         ###################################   #  ##                ',
+      '                         ################                            #######          ##################################     #                  ',
+      '                         # ############                             ########### ### # ###################################                       ',
+      '                          ########     #                            ####################### #############################                       ',
+      '                            #####      #                          #################### #####  ##########################                        ',
+      '                             ####                                 #################### ########    #################### #                       ',
+      '                              ###   #                            ###################### ########    #######  ######                             ',
+      '                              #### ##      ##                     ##################### #######      #####    #### #                            ',
+      '                                 ####                            ####################### ####        ####      ####     #                       ',
+      '                                    ###                          ##########################           ##       #####    ##                      ',
+      '                                          # #                     #######################  #          ##       # ##                             ',
+      '                                       # #######                   #########################                   #          #                     ',
+      '                                         ########                   ##### ##################            #       #                               ',
+      '                                         ###########                        ###############                    ##    ##                         ',
+      '                                        ############                        ##############                      ##  ###                         ',
+      '                                        ##############                      #############                       ##  ### #   ##                  ',
+      '                                        #################                   ############                         #      #     ####              ',
+      '                                        ##################                   ###########                          #            ####             ',
+      '                                        ##################                   ###########                               ## #     #               ',
+      '                                         ################                    ###########                                                        ',
+      '                                         ###############                     ###########   #                                ##                  ',
+      '                                           #############                     ###########  ##                             ######  #              ',
+      '                                            ############                     #########    ##                             ##########             ',
+      '                                            ############                     #########   ##                           ##############            ',
+      '                                            ##########                        ########   ##                          ###############            ',
+      '                                            #########                         #######                                ################           ',
+      '                                           #########                           ######                                 ###############           ',
+      '                                           #########                           #####                                  ###############           ',
+      '                                           ########                            ###                                    ####    #######           ',
+      '                                           ######                                                                               ####            ',
+      '                                           #####                                                                                  #           # ',
+      '                                          ####                                                                                    #          #  ',
+      '                                           ###                                                                                              #   ',
+      '                                          ###                                                                                              #    ',
+      '                                          ###                                                                                                   ',
+      '                                          ##    #                                                                                               ',
+      '                                           ##                                                                                                   ',
+      '                                                                                                                                                ',
+      '                                                                                                                                                ',
+      '                                                                                                                                                ',
+      '                                                #                                                                                               ',
+      '                                              #                                              ##                  #   #                          ',
+      '                                             #                                       #   ###########   ##############################           ',
+      '                                          #####                      # ############################  #######################################    ',
+      '                       #       ########## ######                 ##########################################################################     ',
+      '              ##############################                  ###########################################################################       ',
+      '       #  ###############################           ###   #################################################################################     ',
+      '          ###################################            ###############################################################################        ',
+      '           #################################################################################################################################    ',
+      '                                                                                                                                                ',
+      '                                                                                                                                                ',
+    ];
+
+    // Draw the dotted land grid once at startup.
+    (function drawLand() {
+      const g = document.getElementById('mapLand');
+      if (!g) return;
+      const rows = LANDMASK.length;
+      const cols = LANDMASK[0].length;
+      const cw = 720 / cols;
+      const ch = 360 / rows;
+      let out = '';
+      for (let r = 0; r < rows; r++) {
+        const row = LANDMASK[r];
+        for (let c = 0; c < cols; c++) {
+          if (row[c] === '#') {
+            out += '<circle cx="' + (c * cw + cw / 2).toFixed(1) + '" cy="' + (r * ch + ch / 2).toFixed(1) + '" r="1.1" fill="#2c2c26" />';
+          }
+        }
+      }
+      g.innerHTML = out;
+    })();
+
+
     // Restore key from URL ?key= or localStorage
     const urlParams = new URLSearchParams(location.search);
     const initialKey = urlParams.get('key') || localStorage.getItem('telemetry_key') || '';
@@ -1040,16 +1187,36 @@ function renderDashboardHtml() {
 
       // World map pins (equirectangular projection: lon -180..180 -> 0..720, lat 90..-90 -> 0..360)
       const pinsGroup = document.getElementById('mapPins');
+      const mapWrap = pinsGroup.closest('.map-wrap');
+      const mapTip = document.getElementById('mapTip');
       const validLocs = (data.topLocations || []).filter((l) => l.lat != null && l.lon != null);
       document.getElementById('pinCount').textContent = validLocs.length + ' cities plotted';
-      pinsGroup.innerHTML = validLocs.map((loc) => {
+      pinsGroup.innerHTML = validLocs.map((loc, i) => {
         const x = (( Number(loc.lon) + 180) / 360) * 720;
         const y = ((90 - Number(loc.lat)) / 180) * 360;
         const r = Math.min(4 + Math.sqrt(loc.visitors) * 2.2, 14);
-        return '<circle class="pin" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r.toFixed(1) + '">' +
+        return '<circle class="pin" data-i="' + i + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r.toFixed(1) + '">' +
           '<title>' + esc(loc.city + ', ' + loc.country + ' — ' + loc.visitors + ' visitor(s), ' + loc.views + ' views') + '</title>' +
           '</circle>';
       }).join('');
+
+      // Floating tooltip: hovering a pin shows the city name + counts.
+      pinsGroup.querySelectorAll('.pin').forEach((pin) => {
+        pin.addEventListener('mouseenter', () => {
+          const loc = validLocs[Number(pin.dataset.i)];
+          if (!loc) return;
+          mapTip.textContent = loc.city + ', ' + loc.country + ' — ' + loc.visitors + ' visitor(s), ' + loc.views + ' views';
+          // Position the tooltip above the pin, converting SVG coords to pixels.
+          const wrapBox = mapWrap.getBoundingClientRect();
+          const svgBox = pinsGroup.ownerSVGElement.getBoundingClientRect();
+          const scaleX = svgBox.width / 720;
+          const scaleY = svgBox.height / 360;
+          mapTip.style.left = (svgBox.left - wrapBox.left + parseFloat(pin.getAttribute('cx')) * scaleX) + 'px';
+          mapTip.style.top = (svgBox.top - wrapBox.top + parseFloat(pin.getAttribute('cy')) * scaleY) + 'px';
+          mapTip.style.display = 'block';
+        });
+        pin.addEventListener('mouseleave', () => { mapTip.style.display = 'none'; });
+      });
 
       // Daily bar chart
       const chartEl = document.getElementById('dailyChart');
@@ -1122,7 +1289,8 @@ function renderDashboardHtml() {
         : list;
 
       document.getElementById('visitorShowing').textContent =
-        filtered.length + ' of ' + list.length + ' visitors';
+        filtered.length + ' of ' + list.length + ' visitors (' +
+        list.filter((v) => v.is_bot).length + ' bots)';
 
       const container = document.getElementById('visitorList');
       if (!filtered.length) {
@@ -1141,6 +1309,7 @@ function renderDashboardHtml() {
             '<div>' +
               '<div class="v-primary">' +
                 '<span>' + esc(loc || 'Unknown Location') + '</span>' +
+                (v.is_bot ? '<span class="badge badge-bot">Bot/Agent</span>' : '') +
                 (v.visit_count > 1 ? '<span class="badge badge-amber">Visit #' + v.visit_count + '</span>' : '<span class="badge">New</span>') +
                 (hasResume ? '<span class="badge badge-green">Opened Resume</span>' : '') +
               '</div>' +
