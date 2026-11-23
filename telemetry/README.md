@@ -41,6 +41,14 @@ npx wrangler secret put DASHBOARD_KEY
 *(Type any strong password when prompted. You will use this to view the visual dashboard.)*
 
 ### Step 5: Deploy the Worker
+Run the tests first (from the repo root). They send real beacons into a local
+SQLite copy of the schema and fail if pageviews stop being saved:
+```bash
+npm run test:telemetry
+```
+GitHub Actions also runs them on every push that touches `telemetry/`
+(`.github/workflows/telemetry-test.yml`), but that does not block a manual
+deploy, so run them yourself before:
 ```bash
 npx wrangler deploy
 ```
@@ -58,3 +66,26 @@ export const ANALYTICS = {
 ```
 
 Open `https://site-telemetry.<your-subdomain>.workers.dev` in your browser, enter your `DASHBOARD_KEY`, and watch live visits roll in!
+
+---
+
+## Debugging: the dashboard stopped counting
+
+`/collect` always answers `204` immediately and writes to D1 in the background
+(`ctx.waitUntil`), so a broken Worker looks healthy from the browser. Write
+errors are logged. To see them live:
+
+```bash
+npx wrangler tail
+```
+
+Then load the website in another tab. Any `collect failed:` line is the cause.
+Quick health check: `SELECT MAX(created_at) FROM pageviews` should be recent.
+
+## Reconstructed rows (`reconstructed = 1`)
+
+From 2026-10-28 to 2026-11-24 a bug dropped every pageview (click events still
+saved). Visitors and pageviews were rebuilt from those click events and marked
+`reconstructed = 1`. They have no location, device, read-time or scroll data,
+appear in the visitor list with a "Reconstructed" badge, and are excluded from
+all headline numbers and tables.

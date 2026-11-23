@@ -32,7 +32,13 @@ export default {
       try {
         const payload = await request.json();
         // Run the DB write in ctx.waitUntil so the browser gets an instant 204
-        ctx.waitUntil(handleCollect(request, env, payload));
+        // The browser already got its 204, so log failures for `wrangler tail`
+        // instead of letting them vanish silently.
+        ctx.waitUntil(
+          handleCollect(request, env, payload).catch((err) =>
+            console.error('collect failed:', err && err.stack ? err.stack : err)
+          )
+        );
         return new Response(null, { status: 204, headers: cors });
       } catch (err) {
         return new Response(JSON.stringify({ error: 'Invalid payload' }), {
@@ -142,12 +148,23 @@ async function handleCollect(request, env, data) {
     'unknown';
   const ua = request.headers.get('User-Agent') || '';
 
+  const isp = cf.asOrganization || 'Unknown ISP';
+  const asn = cf.asn || null;
+  const city = cf.city || 'Unknown';
+  const region = cf.region || '';
+  const country = cf.country || 'XX';
+  const postalCode = cf.postalCode || '';
+  const latitude = cf.latitude ? parseFloat(cf.latitude) : null;
+  const longitude = cf.longitude ? parseFloat(cf.longitude) : null;
+  const cfTimezone = cf.timezone || '';
+  const colo = cf.colo || '';
+
   const parsedUA = parseUserAgent(ua);
   const hwHash = cleanStr(data.hwHash, 64);
 
   // Mark crawlers/agents instead of silently dropping them, so the dashboard
   // can show them (badged) while keeping headline stats human-only.
-  const botReason = detectBot(ua, cf.asOrganization || '', data);
+  const botReason = detectBot(ua, isp, data);
   const isBot = botReason ? 1 : 0;
 
   // If the visitor cleared localStorage (new random visitorId), check if we
@@ -187,6 +204,7 @@ async function handleCollect(request, env, data) {
         last_seen   = excluded.last_seen,
         visit_count = visitors.visit_count + CASE WHEN ?27 = 1 THEN 1 ELSE 0 END,
         is_bot      = MAX(visitors.is_bot, excluded.is_bot),
+        reconstructed = 0,
         ip          = excluded.ip,
         isp         = excluded.isp,
         asn         = excluded.asn,
@@ -369,7 +387,7 @@ async function queryDashboardStats(db, days) {
           ROUND(AVG(p.max_scroll_pct), 0) AS avg_scroll_pct
         FROM pageviews p
         JOIN visitors v ON v.visitor_id = p.visitor_id
-        WHERE p.created_at >= ?1 AND v.is_bot = 0`
+        WHERE p.created_at >= ?1 AND v.is_bot = 0 AND p.reconstructed = 0`
       )
       .bind(sinceDate)
       .first(),
@@ -383,7 +401,7 @@ async function queryDashboardStats(db, days) {
           COUNT(DISTINCT p.visitor_id) AS visitors
         FROM pageviews p
         JOIN visitors v ON v.visitor_id = p.visitor_id
-        WHERE p.created_at >= ?1 AND v.is_bot = 0
+        WHERE p.created_at >= ?1 AND v.is_bot = 0 AND p.reconstructed = 0
         GROUP BY day
         ORDER BY day ASC`
       )
@@ -401,7 +419,7 @@ async function queryDashboardStats(db, days) {
           ROUND(AVG(p.max_scroll_pct), 0) AS avg_scroll
         FROM pageviews p
         JOIN visitors v ON v.visitor_id = p.visitor_id
-        WHERE p.created_at >= ?1 AND v.is_bot = 0
+        WHERE p.created_at >= ?1 AND v.is_bot = 0 AND p.reconstructed = 0
         GROUP BY p.path
         ORDER BY views DESC
         LIMIT 15`
@@ -420,7 +438,7 @@ async function queryDashboardStats(db, days) {
           SUM(p.active_sec) AS total_sec
         FROM pageviews p
         JOIN visitors v ON v.visitor_id = p.visitor_id
-        WHERE p.created_at >= ?1 AND v.is_bot = 0
+        WHERE p.created_at >= ?1 AND v.is_bot = 0 AND p.reconstructed = 0
         GROUP BY p.isp, p.country
         ORDER BY visitors DESC, views DESC
         LIMIT 20`
@@ -441,7 +459,7 @@ async function queryDashboardStats(db, days) {
           COUNT(*) AS views
         FROM pageviews p
         JOIN visitors v ON v.visitor_id = p.visitor_id
-        WHERE p.created_at >= ?1 AND v.is_bot = 0
+        WHERE p.created_at >= ?1 AND v.is_bot = 0 AND p.reconstructed = 0
         GROUP BY p.city, p.region, p.country
         ORDER BY visitors DESC, views DESC
         LIMIT 30`
@@ -459,7 +477,7 @@ async function queryDashboardStats(db, days) {
           COUNT(DISTINCT e.visitor_id) AS visitors
         FROM events e
         JOIN visitors v ON v.visitor_id = e.visitor_id
-        WHERE e.created_at >= ?1 AND v.is_bot = 0
+        WHERE e.created_at >= ?1 AND v.is_bot = 0 AND v.reconstructed = 0
         GROUP BY e.event_type, e.event_target
         ORDER BY count DESC
         LIMIT 25`
@@ -476,7 +494,7 @@ async function queryDashboardStats(db, days) {
           COUNT(DISTINCT p.visitor_id) AS visitors
         FROM pageviews p
         JOIN visitors v ON v.visitor_id = p.visitor_id
-        WHERE p.created_at >= ?1 AND v.is_bot = 0
+        WHERE p.created_at >= ?1 AND v.is_bot = 0 AND p.reconstructed = 0
           AND (p.referrer NOT LIKE 'https://jnx01.github.io%' AND p.referrer NOT LIKE 'http://localhost%')
         GROUP BY source
         ORDER BY visitors DESC, views DESC
@@ -508,7 +526,7 @@ async function queryDashboardStats(db, days) {
     const [pvRes, evRes] = await Promise.all([
       db
         .prepare(
-          `SELECT view_id, visitor_id, created_at, path, referrer, utm_source, active_sec, max_scroll_pct, sections_seen, viewport
+          `SELECT view_id, visitor_id, created_at, path, referrer, utm_source, active_sec, max_scroll_pct, sections_seen, viewport, reconstructed
            FROM pageviews
            WHERE visitor_id IN (${placeholders})
            ORDER BY created_at DESC
@@ -645,6 +663,9 @@ function renderDashboardHtml() {
     }
     h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
     h1 span { color: var(--accent); font-family: var(--mono); font-size: 13px; margin-left: 8px; }
+    .site-for { margin-top: 4px; font-size: 13px; color: var(--muted); }
+    .site-for a { color: var(--accent); font-family: var(--mono); text-decoration: none; }
+    .site-for a:hover, .site-for a:focus-visible { text-decoration: underline; }
     .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     input, select, button {
       background: var(--surface);
@@ -753,6 +774,10 @@ function renderDashboardHtml() {
     .badge-bot {
       background: rgba(251, 113, 133, 0.14);
       color: #fb7185;
+    }
+    .badge-recon {
+      background: rgba(148, 163, 184, 0.16);
+      color: var(--muted);
     }
 
     .chart-bars {
@@ -874,6 +899,7 @@ function renderDashboardHtml() {
   <header>
     <div>
       <h1>Visitor Intelligence & Telemetry <span>Cloudflare Edge + D1</span></h1>
+      <p class="site-for">Analytics for Jahanzeb Naeem's personal website: <a href="https://jnx01.github.io" target="_blank" rel="noopener noreferrer">jnx01.github.io ↗</a></p>
     </div>
     <div class="controls">
       <input type="password" id="apiKey" placeholder="Dashboard secret key..." />
@@ -1310,6 +1336,7 @@ function renderDashboardHtml() {
               '<div class="v-primary">' +
                 '<span>' + esc(loc || 'Unknown Location') + '</span>' +
                 (v.is_bot ? '<span class="badge badge-bot">Bot/Agent</span>' : '') +
+                (v.reconstructed ? '<span class="badge badge-recon" title="Rebuilt from click events after the Oct 28 - Nov 24 outage: no location, device, read time or scroll data">Reconstructed</span>' : '') +
                 (v.visit_count > 1 ? '<span class="badge badge-amber">Visit #' + v.visit_count + '</span>' : '<span class="badge">New</span>') +
                 (hasResume ? '<span class="badge badge-green">Opened Resume</span>' : '') +
               '</div>' +
@@ -1376,12 +1403,13 @@ function renderDashboardHtml() {
               '<strong class="mono">' + esc(p.path) + '</strong>' +
               '<span class="mono" style="color:var(--muted)">' + esc(fmtTime(p.created_at)) + '</span>' +
             '</div>' +
+            (p.reconstructed ? '<div class="mono" style="font-size:11.5px;color:var(--muted);margin-top:3px;">Reconstructed from clicks (time = first click; no read time or scroll)</div>' :
             '<div class="mono" style="font-size:11.5px;color:var(--muted);margin-top:3px;">' +
               'Active: <strong style="color:var(--ink)">' + fmtDuration(p.active_sec) + '</strong> · ' +
               'Max Scroll: <strong style="color:var(--ink)">' + (p.max_scroll_pct || 0) + '%</strong>' +
               (p.referrer ? ' · Ref: ' + esc(p.referrer) : '') +
               (p.utm_source ? ' · Source: ' + esc(p.utm_source) : '') +
-            '</div>' +
+            '</div>') +
             (sections.length ? '<div class="mono" style="font-size:11px;color:var(--accent);margin-top:3px;">Sections read: ' + esc(sections.join(' → ')) + '</div>' : '') +
           '</div>';
         } else {

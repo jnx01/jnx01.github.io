@@ -129,10 +129,12 @@ The site is deliberately light on JavaScript. The dynamic behaviors:
 - **Small ambient loops** — a few gentle repeating touches (the hero
   underline redraws, the "now" dot pulses). All pause off-screen and respect
   reduced motion.
-- **Avatar greeting & portrait flip** — on the first visit of a session, a
-  cartoon avatar waves hello in the hero's portrait frame, then the real photo
-  pops in. Clicking the portrait flips it in 3D between the photo and the
-  avatar. Everyone else (and reduced-motion users) just see the photo.
+- **Avatar greeting & portrait flip** — on the first visit of a session, the
+  hero's portrait frame draws itself around a waving cartoon avatar while
+  "Hi There!" writes itself on, then the real photo pops in. Hovering the
+  portrait with a mouse flips it in 3D to the avatar, and moving away flips
+  it back (tap or Enter toggles it on touch screens and keyboards). Everyone
+  else (and reduced-motion users) just see the photo.
 - **Light/dark theme** — a light-bulb toggle in the top-right of the nav
   switches between the default light theme and a warm dark theme. The choice
   is remembered and applied before the page paints, so there's no flash.

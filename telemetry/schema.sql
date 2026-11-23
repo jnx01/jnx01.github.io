@@ -44,7 +44,8 @@ CREATE TABLE IF NOT EXISTS visitors (
   browser_tz        TEXT,
   connection        TEXT,                    -- e.g. "4g (10 Mbps)"
   theme             TEXT,                    -- "light" or "dark"
-  is_bot            INTEGER NOT NULL DEFAULT 0  -- 1 = crawler/agent (UA keyword, datacenter ISP, or navigator.webdriver)
+  is_bot            INTEGER NOT NULL DEFAULT 0, -- 1 = crawler/agent (UA keyword, datacenter ISP, or navigator.webdriver)
+  reconstructed     INTEGER NOT NULL DEFAULT 0  -- 1 = rebuilt from click events after the Oct 28 - Nov 24 2026 outage (no geo/device data)
 );
 
 CREATE TABLE IF NOT EXISTS pageviews (
@@ -76,7 +77,8 @@ CREATE TABLE IF NOT EXISTS pageviews (
   country           TEXT,
   latitude          REAL,
   longitude         REAL,
-  viewport          TEXT                     -- e.g. "1440x812"
+  viewport          TEXT,                    -- e.g. "1440x812"
+  reconstructed     INTEGER NOT NULL DEFAULT 0  -- 1 = rebuilt from click events (created_at = first click; no read time/scroll)
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -100,3 +102,5 @@ CREATE INDEX IF NOT EXISTS idx_events_view        ON events(view_id);
 
 -- Migration for an existing database (run once, safe to re-run):
 --   ALTER TABLE visitors ADD COLUMN is_bot INTEGER NOT NULL DEFAULT 0;
+--   ALTER TABLE visitors ADD COLUMN reconstructed INTEGER NOT NULL DEFAULT 0;
+--   ALTER TABLE pageviews ADD COLUMN reconstructed INTEGER NOT NULL DEFAULT 0;

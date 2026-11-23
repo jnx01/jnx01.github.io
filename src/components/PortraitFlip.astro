@@ -1,20 +1,28 @@
 ---
 /**
- * PortraitFlip — the hero portrait frame flips over on click to reveal a
- * cartoon avatar version of the same photo, and flips back on the next click.
+ * PortraitFlip — the hero portrait frame flips over to reveal a cartoon
+ * avatar version of the same photo.
+ *
+ * How it's triggered:
+ *   - Mouse: hover flips to the avatar (after a short 150ms "intent" delay,
+ *     so a pointer just passing over on its way to the buttons doesn't set
+ *     off a 3D turn); leaving flips back. Mouse clicks do nothing extra.
+ *   - Touch: tap toggles (there is no hover on touch screens).
+ *   - Keyboard: Enter/Space toggles, Escape or moving focus away flips back.
  *
  * How it works:
  *   - A <button> wraps two faces (front = the real headshot, slotted in;
  *     back = the avatar picture). The inner span rotates 180deg in 3D.
- *   - The button starts DISABLED. It is armed (made clickable) only once the
- *     hero's intro choreography has finished — i.e. when the portrait's
- *     breathing loop starts. The script listens for the 'hero-breathe'
- *     animationstart event on .hero-portrait, so the timing can never drift
- *     from the CSS. (Reduced-motion visitors have no intro to wait for, so
- *     the button is armed immediately; their flip is an instant swap with no
- *     3D animation.)
+ *   - The button starts DISABLED. It is armed only once the hero's intro
+ *     choreography has finished — i.e. when the portrait's breathing loop
+ *     starts. The script listens for the 'hero-breathe' animationstart event
+ *     on .hero-portrait, so the timing can never drift from the CSS.
+ *     (Reduced-motion visitors have no intro to wait for, so the button is
+ *     armed immediately; their flip is an instant swap with no 3D animation.)
  *   - Without JS the button simply stays disabled and the headshot shows
  *     as normal — the avatar is an enhancement, not content.
+ *   - Telemetry: the site's beacon only sees clicks, so the first hover flip
+ *     per page view is reported with a 'telemetry:widget' event.
  *
  * The avatar images (avatar-600/1200) are produced by
  * scripts/prepare-avatar.mjs: same 4:5 crop, monochrome, white background —
@@ -29,6 +37,7 @@
     class="portrait-flip-button"
     type="button"
     data-flip-button
+    data-hover-driven
     aria-label="Show the cartoon avatar portrait"
     disabled
   >
@@ -76,20 +85,19 @@
     width: 100%;
     font: inherit;
     color: inherit;
-    cursor: default; /* until armed, it is not a control */
+    /* Hover drives the flip for mouse users, so the frame never pretends to
+       be a click target. */
+    cursor: default;
     /* The 3D depth for the flip. */
     perspective: 1400px;
-  }
-
-  .portrait-flip-button.is-armed {
-    cursor: pointer;
   }
 
   .portrait-flip-inner {
     display: block;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.7s var(--ease-out);
+    /* Quicker than a one-off click flip: hover can fire it often. */
+    transition: transform 0.5s var(--ease-out);
   }
 
   .portrait-face {
@@ -120,19 +128,6 @@
     transform: rotateY(180deg);
   }
 
-  @media (prefers-reduced-motion: no-preference) {
-    /* A small teaser tilt on hover, so the frame hints it can flip.
-       (Only once armed, only when NOT flipped, and never for
-       reduced-motion visitors.) */
-    .portrait-flip:not(.is-flipped) .portrait-flip-button.is-armed:hover .portrait-flip-inner {
-      transform: rotateY(14deg);
-    }
-
-    .portrait-flip.is-flipped .portrait-flip-button.is-armed:hover .portrait-flip-inner {
-      transform: rotateY(180deg);
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     /* Reduced motion: the faces swap instantly, no 3D turn. */
     .portrait-flip-inner {
@@ -144,6 +139,9 @@
 <script>
   const LABEL_TO_AVATAR = 'Show the cartoon avatar portrait';
   const LABEL_TO_PHOTO = 'Show the real portrait photo';
+  // Hover-intent delay: the pointer must rest on the frame this long before
+  // it flips, so a pointer just passing over doesn't trigger a 3D turn.
+  const HOVER_INTENT_MS = 150;
 
   function setupPortraitFlip() {
     const root = document.querySelector<HTMLElement>('[data-portrait-flip]');
@@ -180,19 +178,57 @@
       fallback = window.setTimeout(arm, 9000);
     }
 
-    const onClick = () => {
-      const flipped = root.classList.toggle('is-flipped');
+    let reportedHover = false;
+    const setFlipped = (flipped: boolean) => {
+      if (root.classList.contains('is-flipped') === flipped) return;
+      root.classList.toggle('is-flipped', flipped);
       btn.setAttribute('aria-label', flipped ? LABEL_TO_PHOTO : LABEL_TO_AVATAR);
       front.setAttribute('aria-hidden', String(flipped));
       back.setAttribute('aria-hidden', String(!flipped));
     };
-    btn.addEventListener('click', onClick);
 
-    // View-transition cleanup: drop the timer and the animation listener so
-    // nothing keeps watching a page that is gone. (The click listener dies
-    // with the button itself.)
+    // Mouse: hover (with intent delay) flips to the avatar; leaving flips back.
+    let intent = 0;
+    btn.addEventListener('pointerenter', (e) => {
+      if (!armed || e.pointerType !== 'mouse') return;
+      window.clearTimeout(intent);
+      intent = window.setTimeout(() => {
+        setFlipped(true);
+        if (!reportedHover) {
+          reportedHover = true;
+          document.dispatchEvent(new CustomEvent('telemetry:widget', { detail: `${LABEL_TO_AVATAR} (hover)` }));
+        }
+      }, HOVER_INTENT_MS);
+    });
+    btn.addEventListener('pointerleave', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      window.clearTimeout(intent);
+      setFlipped(false);
+    });
+
+    // Touch taps and keyboard (Enter/Space) toggle. A mouse click is ignored:
+    // hover already drives the flip, and toggling under the pointer would
+    // fight it.
+    let lastPointer = '';
+    btn.addEventListener('pointerdown', (e) => { lastPointer = e.pointerType; });
+    btn.addEventListener('click', (e) => {
+      const fromKeyboard = e.detail === 0;
+      if (!fromKeyboard && lastPointer === 'mouse') return;
+      setFlipped(!root.classList.contains('is-flipped'));
+    });
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setFlipped(false);
+    });
+    btn.addEventListener('blur', () => {
+      if (!btn.matches(':hover')) setFlipped(false);
+    });
+
+    // View-transition cleanup: drop the timers and the animation listener so
+    // nothing keeps watching a page that is gone. (The button's own listeners
+    // die with the button itself.)
     document.addEventListener('astro:before-swap', () => {
       window.clearTimeout(fallback);
+      window.clearTimeout(intent);
       portrait?.removeEventListener('animationstart', onAnimStart);
     }, { once: true });
   }

@@ -8,6 +8,145 @@ For step-by-step recipes, see `docs/02-editing-and-maintenance.md`.
 
 ---
 
+## 2026-11-24 — Teradata work updated: two new production skills + skill discovery
+
+**What was requested:** reflect recent Teradata work on the site.
+- Two new skills, built and shipped to production for all Tera users:
+  build-training-dataset (unified training set from distributed sources,
+  platforms, environments) and new-data-access (ingest new data, grant
+  role-restricted access). train-eval is in production too (user confirmed:
+  all three skills are live for every Tera user). Tested by hand in Tera's chat UI and in a GitHub
+  CI eval pipeline on DeepEval (grades intermediate logs + final responses).
+- Skill discovery: internal R&D (SkillWeaver / SkillDreamer line of work)
+  with strong early results, now moving to production.
+
+**Disclosure decisions (user):** "Tera" may be named. Skill discovery: say
+"research with strong early results, now moving to production"; do NOT
+mention the VP or name the papers/approach. Technical description kept
+generic (on-demand retrieval instead of listing all skills in context,
+reasoning about what a request needs, multi-skill requests).
+
+**Changes:** `teradata.mdx` skills section rewritten (3 skills as a list,
+testing, production status) + new "Skill discovery: from research to
+production" section; DeepEval added to the stack line. `about.astro`
+Teradata entry: skills paragraph rewritten, evaluation sentence split into
+its own paragraph. Homepage card ("agentic skills") and Research page left
+as is (still accurate; Research is for independent work).
+
+**Validation:** build green (12 pages); new copy present in dist; no em/en
+dashes in added lines.
+
+---
+
+## 2026-11-24 — Hero intro: frame drop replaced by a self-drawing frame; portrait flips on hover
+
+**What was requested:** replace the first-visit frame drop with something
+more captivating. The user's idea (blank screen splits and pulls apart to
+reveal the site) was reviewed against NN/g (animation purpose, response-time
+limits, 10s attention window), Apple HIG motion, Vercel Web Interface
+Guidelines, Emil Kowalski, WCAG 2.2.2/2.3.3 and web.dev LCP. Verdict: a
+blank-screen cover delays content for no meaning, pushes the intro past 5s,
+and is close to the banned "boot sequence". User chose option A (frame draws
+itself + handwritten "Hi There!"), plus: portrait flips on hover instead of
+click.
+
+**Intro (AvatarIntro.astro + index.astro):**
+- The 1.4s frame drop (`hero-frame-drop`) is gone. New JS timeline:
+  avatar fades in (0-0.3s), the hairline border traces around the frame
+  (0.1-0.85s, SVG rect stroke-dashoffset, perimeter from getTotalLength),
+  the matte fades in (0.45-0.9s), "Hi There!" writes on letter by letter
+  (SVG text, one tspan per letter: outline draws, then fill; 0.7-1.7s),
+  wave wiggle, photo pops at 2.6s (was 3.25s).
+- The frame SVG sits OUTSIDE .avatar-intro (new .avatar-intro-shell),
+  because that box clips (overflow: hidden) and would halve the stroke.
+  During the intro the real border/matte are transparent; at cleanup they
+  return in the same place, so the swap is invisible.
+- index.astro first-visit timings: wash 3.25s -> 2.6s, underline
+  4.25s -> 3.6s (redraw 4.3s), breathing 5.0s -> 4.4s. First visit is now
+  ~0.65s shorter and nearly the same as a revisit.
+
+**Portrait flip (PortraitFlip.astro):**
+- Mouse: hover flips after a 150ms intent delay (a pointer passing over on
+  its way to the CTAs doesn't trigger it); leaving flips back. Mouse clicks
+  are ignored (would fight the hover). Touch: tap toggles. Keyboard:
+  Enter/Space toggles, Escape or blur flips back.
+- Flip transition 0.7s -> 0.5s (hover fires more often). Teaser tilt and
+  pointer cursor removed.
+- Telemetry (Base.astro): the first hover flip per page view is sent via a
+  `telemetry:widget` custom event ("Show the cartoon avatar portrait
+  (hover)"); mouse clicks on `[data-hover-driven]` buttons are no longer
+  logged (they do nothing).
+
+**Validation:** build green (12 pages). Dev-server check at 1440px: frame
+stroke draws, letters write on in order (sampled "Hi T" mid-write), greeting
+fades at 2.6s, overlay removed and the real border is back at the end. Hover:
+60ms pass doesn't flip; resting flips; mouse click ignored; leave flips back;
+telemetry reported once; Enter/Space/Escape/blur correct; touch tap toggles.
+Reduced motion: no intro, armed immediately, instant swap. index.astro
+diff checked for truncation (-22 lines = the removed drop block).
+
+---
+
+## 2026-11-24 — Telemetry outage fixed (pageviews silently dropped since Oct 28) + backfill
+
+**What was reported:** own visits weren't raising total pageviews or showing
+in "Individual Visitor Profiles (Latest 60)"; no counts had moved in weeks.
+
+**Root cause:** commit `d5a6d56` (2026-10-28, bot flagging) deleted the old
+"skip bots" block in `handleCollect` and, with it, the ten `request.cf`
+variable declarations (`isp`, `asn`, `city`, `region`, `country`,
+`postalCode`, `latitude`, `longitude`, `cfTimezone`, `colo`). Every pageview
+beacon then threw `ReferenceError: isp is not defined`. The error happened
+inside `ctx.waitUntil`, after the browser already had its 204, so nothing
+looked broken. Heartbeats/events don't touch those variables, so click
+events kept saving (which is why "button-click events confirmed flowing"
+passed validation on Oct 28). Last stored pageview: 2026-10-28T09:30Z.
+
+**Fix:**
+- `telemetry/worker.js`: restored the declarations; `handleCollect` failures
+  are now `console.error`-logged (visible in `wrangler tail`).
+- Reproduced old vs new with a mock DB; end-to-end test against real SQLite
+  from `schema.sql` (ingest + `/api/stats` + dashboard script parse).
+- Deployed 2026-11-23T21:35Z. Live beacon test stored visitor + pageview with
+  geo/ISP; test rows deleted.
+
+**Backfill (user-approved):**
+- Backup first: D1 export saved outside the repo (session files).
+- New columns `visitors.reconstructed` + `pageviews.reconstructed` (ALTER
+  TABLE on live DB; `schema.sql` updated).
+- From the 120+ orphan events (Oct 28 09:30Z to deploy): 23 visitors and
+  103 pageviews rebuilt (pageview time = first click on that page; no
+  geo/device/read-time/scroll). Page loads with no click are lost for good.
+- Bot heuristic for rebuilt visitors, derived from pre-outage bot rows
+  (Microsoft datacenter): only "Switch to dark mode" / "Email" / "Show the
+  cartoon avatar portrait" widget events, all within 2s => `is_bot = 1`.
+  Result: 11 human, 12 bot.
+- Reconstructed rows are excluded from every aggregate (headline, daily,
+  pages, ISPs, locations, referrers, events) and shown in the visitor list
+  with a grey "Reconstructed" badge. A returning reconstructed visitor's
+  profile flips to `reconstructed = 0` on their next real pageview.
+
+**Lesson:** a background write that fails after the response is invisible.
+Validate ingestion by checking the newest `pageviews` row, not just events.
+
+**Safeguards added (user chose: test + CI):**
+- `telemetry/worker.test.mjs` (`npm run test:telemetry`): Node built-ins only
+  (`node:test` + `node:sqlite`). Sends pageview / heartbeat / click beacons
+  through the real Worker into SQLite built from `schema.sql`; checks rows,
+  geo, read time, returning-visitor counts, bot + reconstructed exclusion,
+  dashboard auth, and that the dashboard script parses. Verified: all 6 pass
+  on the fixed Worker; 4 of 6 FAIL on the Oct 28 Worker (would have caught it).
+- `.github/workflows/telemetry-test.yml`: runs the test on push/PR touching
+  `telemetry/` (Node 24). It does NOT gate `wrangler deploy` (manual), so run
+  the test before deploying.
+- Not chosen (offered): gated deploy script, post-deploy live smoke test,
+  dashboard health banner (last-pageview age + save-error count).
+- Test-writing finding: two beacons sharing a `hwHash` from the same IP/ISP
+  with `isNewVisitor: true` merge into one visitor (by design: cleared
+  storage). Tests give each visitor its own fingerprint.
+
+---
+
 ## 2026-10-28 — Telemetry: bot flagging, click tracking, real world map; hero CTA split
 
 **What was requested:** (1) mark crawlers/bots/agents in telemetry, (2) count

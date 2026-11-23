@@ -1,0 +1,41 @@
+# Test the telemetry Worker whenever it changes.
+#
+# Sends real pageview / heartbeat / click beacons through telemetry/worker.js
+# into an in-memory SQLite database built from telemetry/schema.sql, and checks
+# the rows and dashboard stats. Catches the kind of bug that silently dropped
+# every pageview from 2026-10-28 to 2026-11-24.
+#
+# Note: this does not deploy the Worker. Deploying is still manual
+# (`npx wrangler deploy` in telemetry/), so run `npm run test:telemetry` first.
+name: Telemetry tests
+
+on:
+  push:
+    paths:
+      - 'telemetry/**'
+      - '.github/workflows/telemetry-test.yml'
+  pull_request:
+    paths:
+      - 'telemetry/**'
+      - '.github/workflows/telemetry-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # No npm install needed: the test uses only Node built-ins
+      # (node:test + node:sqlite, which needs Node >= 22.13).
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Run telemetry tests
+        run: node --test telemetry/worker.test.mjs

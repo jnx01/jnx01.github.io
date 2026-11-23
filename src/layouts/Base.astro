@@ -554,6 +554,9 @@ const personSchema = {
             }
             const btn = e.target.closest('button, [role="button"], input[type="radio"]');
             if (btn) {
+              // Hover-driven controls (the hero portrait flip) ignore mouse
+              // clicks, so don't log a click that did nothing.
+              if (btn.hasAttribute('data-hover-driven') && e.pointerType === 'mouse') return;
               const label = (
                 btn.getAttribute('aria-label') ||
                 btn.textContent ||
@@ -564,6 +567,12 @@ const personSchema = {
               recordEvent('widget', label);
             }
           }, { capture: true });
+
+          // Widgets driven by something other than clicks (e.g. the hero
+          // portrait's hover flip) report themselves with this event.
+          document.addEventListener('telemetry:widget', (e) => {
+            if (typeof e.detail === 'string') recordEvent('widget', e.detail.slice(0, 60));
+          });
 
           // Capture range slider interactions (e.g., BudgetSlider on /work/experiments)
           document.addEventListener('change', (e) => {

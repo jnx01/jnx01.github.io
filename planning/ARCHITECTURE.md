@@ -60,7 +60,8 @@ components.
 ├── tsconfig.json             # Astro strict preset
 ├── requirements.txt          # human-readable dependency explanations
 ├── .github/workflows/
-│   └── deploy.yml            # official Astro GitHub Pages workflow
+│   ├── deploy.yml            # official Astro GitHub Pages workflow
+│   └── telemetry-test.yml    # runs telemetry/worker.test.mjs on telemetry changes
 ├── public/                   # files served as-is (images, favicon, robots.txt)
 │   └── images/               # headshot, talk photo, og image, signchatter/
 ├── src/
@@ -79,7 +80,7 @@ components.
 │   │   ├── Tag.astro         # small mono chip for technologies
 │   │   ├── Headshot.astro    # the single professional portrait
 │   │   ├── AvatarIntro.astro # one-time cartoon-avatar greeting (first visit)
-│   │   ├── PortraitFlip.astro # hero portrait flips on click: photo <-> avatar
+│   │   ├── PortraitFlip.astro # hero portrait flips on hover (tap/Enter on touch/keyboard): photo <-> avatar
 │   │   ├── PillarDiagram.astro  # research theme → two pillars (SVG)
 │   │   ├── RouterBand.astro  # "The Router" ambient visualization
 │   │   ├── Laptop.astro      # flat line-art laptop (CSS 3D)
@@ -254,8 +255,8 @@ Six movements, in order:
    Shipped" (to `/work/teradata/`, the flagship) and an outline secondary
    "Try The Live Experiments" (to `/work/experiments/`) — with Email,
    LinkedIn, GitHub, and Resume as quiet text links on a row below. (On the
-   first visit of a session a cartoon avatar waves hello in the portrait
-   frame, then the real photo pops in.)
+   first visit of a session the portrait frame draws itself around a waving
+   cartoon avatar, "Hi There!" writes on, then the real photo pops in.)
 2. **Proof strip** — 4 quantified facts (3+ enterprise AI systems, 2 AI agent
    APIs, 4× performance awards, 1 peer-reviewed paper). Numbers count up on
    scroll. Below: a wordmark row of 5 orgs (Teradata, Bahria University,
@@ -280,8 +281,10 @@ owned → Evaluation & outcomes → Links. The three flagships:
 
 1. **Teradata** (`industry`, weight 1, confidential) — production AI across
    several enterprise systems. API layer of a Text-to-SQL agent (~40 REST
-   endpoints, two FastAPI services), agentic skills with LLM-graded CI,
-   schema-mapping evaluation, VectorStore/RAG pipeline, 60-test CI, 35+
+   endpoints, two FastAPI services), agentic skills for Tera (train-eval,
+   build-training-dataset, new-data-access; all three in production; tested
+   by hand and in a DeepEval CI pipeline), skill-discovery R&D moving to
+   production, schema-mapping evaluation, VectorStore/RAG pipeline, 60-test CI, 35+
    critical bugs, AWS + on-prem deployments, pre-GA customer onboarding,
    mentoring. Client reference: "one of the world's largest banks"
    (abstracted). No external links (confidential).
@@ -367,7 +370,7 @@ loops (see below).
 | 7 | Budget-routing slider | `/work/experiments` | Interactive: drag to move a marker along the real measured curve |
 | 8 | RAG corruption dial | `/work/experiments` | Interactive: 4-state segmented control animates a mini pipeline |
 | 9 | SignChatter keypoint animation | `/work/signchatter` | Real MediaPipe keypoints tracking a person signing |
-| 10 | Portrait intro & flip | `/` | One-time avatar greeting on first visit; click the hero portrait to flip between photo and avatar |
+| 10 | Portrait intro & flip | `/` | First visit: the frame draws itself around a waving avatar and "Hi There!" writes on, then the photo pops up. Hover the portrait (mouse, 150ms intent delay) to flip to the avatar; leave to flip back. Tap / Enter toggles on touch / keyboard |
 
 ### The 6 ambient loops
 
@@ -633,6 +636,13 @@ watches a detached element after navigation and does nothing.
 - **Workflow:** `.github/workflows/deploy.yml` — the official Astro GitHub
   Pages workflow. On push to `main`: checkout → install → build → deploy.
 - **One-time setup:** Settings → Pages → Source → GitHub Actions.
+- **Telemetry Worker (separate, manual):** `npx wrangler deploy` in
+  `telemetry/`. Run `npm run test:telemetry` first: it sends real beacons
+  through the Worker into SQLite built from `telemetry/schema.sql` and fails
+  if pageviews stop being saved. `.github/workflows/telemetry-test.yml` runs
+  the same test on every push touching `telemetry/`, but does not gate the
+  manual deploy. `/collect` replies 204 before writing, so write failures are
+  only visible in `npx wrangler tail` (see `telemetry/README.md`).
 - **Custom domain later:** buy domain → add CNAME record at DNS → set domain
   in repo Settings → Pages → enforce HTTPS. Update `site:` in
   `astro.config.mjs`.
@@ -647,7 +657,11 @@ watches a detached element after navigation and does nothing.
   number).
 - Real data only in figures. Interpolated values labeled as interpolated.
 - Confidential work (Teradata) at safe abstraction: no client names, no
-  internal architecture, nothing that isn't already public.
+  internal architecture, nothing that isn't already public. The product
+  name "Tera" (Teradata's AI platform) may be named. Skill discovery is
+  described only as "research with strong early results, now moving to
+  production": no internal people/approvals, no paper names, no detail that
+  reveals the actual approach.
 - Honest about failures: the budgeted-eval negative result is presented
   proudly; the RA manuscripts note says they weren't accepted.
 

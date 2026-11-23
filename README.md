@@ -86,3 +86,9 @@ Push to `main` → the GitHub Actions workflow
 (`.github/workflows/deploy.yml`) builds the site and deploys it to GitHub
 Pages. One-time setup: in the repo, **Settings → Pages → Source → GitHub
 Actions**.
+
+The analytics Worker in `telemetry/` deploys separately and by hand
+(`npx wrangler deploy` inside `telemetry/`). Run `npm run test:telemetry`
+first; the same test also runs in GitHub Actions on any push that touches
+`telemetry/` (`.github/workflows/telemetry-test.yml`). See
+`telemetry/README.md`.

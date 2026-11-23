@@ -76,14 +76,24 @@ import { RESUME_URL } from '../site.config';
               onboarding.
             </p>
             <p>
-              On a separate track, I author agentic skills for the AI platform
-              (train-eval for in-database ML via MCP tool calls), validated in
-              CI with LLM-graded correctness and tool-use metrics. Evaluation
-              runs through everything: I improved the schema-mapping engine by
-              comparing LLM councils, retrieval strategies, embedding models,
-              and prompt designs, and worked with the VectorStore team on the
-              RAG pipeline: in-database embeddings, HNSW vector search, custom
-              tokenizers, and SLMs.
+              On a separate track, I build agentic skills for Tera, Teradata's
+              AI platform, all three in production for every Tera user:
+              train-eval (in-database ML via MCP tool calls),
+              build-training-dataset (one unified training set from
+              distributed sources), and new-data-access (ingest new data, then
+              grant role-restricted access). Each is tested by hand in Tera and
+              in a DeepEval CI
+              pipeline that grades the intermediate tool-call logs and the
+              final response. I'm also taking skill-discovery research (finding
+              the right skills as the library outgrows the agent's context)
+              from early results to production.
+            </p>
+            <p>
+              Evaluation runs through everything: I improved the schema-mapping
+              engine by comparing LLM councils, retrieval strategies, embedding
+              models, and prompt designs, and worked with the VectorStore team
+              on the RAG pipeline: in-database embeddings, HNSW vector search,
+              custom tokenizers, and SLMs.
             </p>
             <p>
               I built the CI pipeline (60 automated tests, 75% coverage),

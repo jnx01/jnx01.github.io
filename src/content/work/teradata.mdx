@@ -3,7 +3,7 @@ title: "Production AI at Teradata"
 kind: industry
 weight: 1
 summary: "Production AI across several enterprise systems: owning the API layer of a Text-to-SQL agent, authoring agentic skills, and hardening evaluation and retrieval."
-stack: ["FastAPI", "MCP", "LangGraph", "HNSW", "Docker", "Kubernetes", "AWS", "PyTorch"]
+stack: ["FastAPI", "MCP", "LangGraph", "DeepEval", "HNSW", "Docker", "Kubernetes", "AWS", "PyTorch"]
 links: []
 confidential: true
 featured: true
@@ -42,12 +42,34 @@ the onboarding of its first enterprise customers.
 
 ## The agentic skills platform
 
-On a separate track, I **authored agentic skills for Teradata's AI
-platform**, most notably a train-eval skill for in-database ML training,
-evaluation, and interpretation, invoked through MCP tool calls. These skills
-are validated in CI with LLM-graded correctness and tool-use metrics, so a
-regression in how the agent reasons shows up as a failing test, not a
-surprised customer.
+On a separate track, I **design, build, and ship agentic skills for Tera**,
+Teradata's AI platform. A skill packages a capability the agent can call on:
+instructions, tool calls, and guardrails for one kind of job.
+
+- **train-eval**: in-database ML training, evaluation, and interpretation,
+  driven through MCP tool calls.
+- **build-training-dataset**: pulls data from distributed sources, platforms,
+  and environments into one unified dataset that's ready for model training.
+- **new-data-access**: ingests new data, then grants appropriately restricted
+  access to it for specific users and roles.
+
+All three are in production and available to every Tera user. Every skill
+is tested twice: by
+hand in Tera's chat interface, and in a GitHub CI evaluation pipeline built
+on DeepEval that grades both the intermediate tool-call logs and the final
+response for correctness and tool use. So a regression in how the agent
+reasons shows up as a failing test, not a surprised customer.
+
+## Skill discovery: from research to production
+
+Skills only help if the agent picks the right one. Listing every skill in
+the agent's context stops working as the library grows: it eats the context
+budget, and the agent gets worse at choosing. I've been researching and
+testing **skill discovery**: retrieving skills on demand instead of listing
+them all, reasoning about what a request will actually require before
+committing to a skill, and handling requests that need several skills
+working together. The early results were strong enough that this work is
+now moving to production.
 
 ## Evaluation as a through-line
 

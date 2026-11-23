@@ -3,9 +3,12 @@
  * AvatarIntro — a one-time cartoon-avatar greeting on the homepage hero.
  *
  * What the visitor sees (first visit per browser session only):
- *   1. A cartoon avatar (waving pose) rises into the portrait frame and waves.
- *   2. At 2.5s it slides back down out of the frame.
- *   3. The real headshot photo pops up from the bottom edge and stays.
+ *   1. The cartoon avatar (waving pose) fades in, and the frame's hairline
+ *      border draws itself around it (same self-drawing stroke as the hero
+ *      underline), then the frame's warm matte fades in behind.
+ *   2. "Hi There!" writes itself on, letter by letter (each letter's outline
+ *      draws, then fills in), while the avatar waves.
+ *   3. At 2.6s the avatar sinks out and the real headshot pops up and stays.
  *
  * The avatar is a single PNG cutout with a transparent background:
  *   /images/avatar/avatar-2.png  — waving pose
@@ -17,21 +20,42 @@
  *
  * Performance: the PNG is only fetched when the intro will play.
  */
+const GREETING = 'Hi There!';
 ---
 
-<div class="avatar-intro" data-avatar-intro>
-  <!-- The waving avatar. Hidden until the script plays. -->
-  <div class="avatar-intro-stage" data-avatar-stage aria-hidden="true">
-    <img class="avatar-pose avatar-pose--waving" src="/images/avatar/avatar-2.png" alt="" />
-    <span class="avatar-greeting" data-avatar-greeting>Hi There!</span>
+<div class="avatar-intro-shell">
+  <div class="avatar-intro" data-avatar-intro>
+    <!-- The frame's warm matte, faded in by the script during the intro
+         (the wrapper's own background is switched off meanwhile). -->
+    <div class="avatar-intro-matte" data-avatar-matte aria-hidden="true"></div>
+    <!-- The waving avatar. Hidden until the script plays. -->
+    <div class="avatar-intro-stage" data-avatar-stage aria-hidden="true">
+      <img class="avatar-pose avatar-pose--waving" src="/images/avatar/avatar-2.png" alt="" />
+      <!-- One <tspan> per letter so each can be written on in turn. -->
+      <svg class="avatar-greeting" data-avatar-greeting>
+        <text x="50%" y="1.05em" text-anchor="middle">
+          {[...GREETING].map((ch) => <tspan>{ch === ' ' ? '\u00a0' : ch}</tspan>)}
+        </text>
+      </svg>
+    </div>
+    <!-- The real photo (the Headshot component is slotted in here). -->
+    <div class="avatar-intro-photo" data-avatar-photo>
+      <slot />
+    </div>
   </div>
-  <!-- The real photo (the Headshot component is slotted in here). -->
-  <div class="avatar-intro-photo" data-avatar-photo>
-    <slot />
-  </div>
+  <!-- The self-drawing frame border. It sits OUTSIDE .avatar-intro because
+       that box clips (overflow: hidden) and would cut the stroke in half.
+       Inset by half a pixel so the 1px stroke lands exactly on the border. -->
+  <svg class="avatar-intro-frame" data-avatar-frame aria-hidden="true">
+    <rect width="100%" height="100%" rx="7.5" ry="7.5" />
+  </svg>
 </div>
 
 <style>
+  .avatar-intro-shell {
+    position: relative;
+  }
+
   .avatar-intro {
     position: relative;
     /* Clips the avatar when it slides down and the photo when it rises,
@@ -56,12 +80,60 @@
     padding: 0;
   }
 
+  /* ---- The self-drawing frame (first visit only) ------------------------ */
+
+  /* While the intro plays, the wrapper's own border and matte are switched
+     off: the SVG stroke and the matte layer stand in for them, drawn and
+     faded by the script. When the intro ends the classes come off and the
+     real border/matte return in the exact same place, so the swap is
+     invisible. */
+  .avatar-intro.is-playing {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .avatar-intro-matte {
+    position: absolute;
+    inset: 0;
+    background: var(--color-bg-tint);
+    opacity: 0;
+    display: none;
+  }
+
+  .avatar-intro.is-playing .avatar-intro-matte {
+    display: block;
+  }
+
+  .avatar-intro-frame {
+    position: absolute;
+    inset: 0.5px;
+    width: calc(100% - 1px);
+    height: calc(100% - 1px);
+    overflow: visible;
+    pointer-events: none;
+    display: none;
+    /* Shown by the script once the dash is set up, so the full border never
+       flashes before it starts drawing. */
+    visibility: hidden;
+  }
+
+  .avatar-intro.is-playing + .avatar-intro-frame {
+    display: block;
+  }
+
+  .avatar-intro-frame rect {
+    fill: none;
+    stroke: var(--color-border);
+    stroke-width: 1px;
+  }
+
   /* ---- The avatar stage ------------------------------------------------ */
 
   .avatar-intro-stage {
     position: absolute;
     inset: var(--space-3); /* match the wrapper's padding */
     display: none;         /* the script turns it on only when playing */
+    opacity: 0;            /* the script fades it in */
   }
 
   .avatar-intro.is-playing .avatar-intro-stage {
@@ -80,24 +152,34 @@
     filter: grayscale(1);
   }
 
-  /* "Hi There!" — handwriting greeting above the avatar's head.
-     Appears (script-driven) when the waving pose shows. */
+  /* "Hi There!" — handwriting greeting above the avatar's head, written on
+     by the script: each letter's outline draws (stroke-dashoffset), then
+     its fill fades in. */
   .avatar-greeting {
     position: absolute;
     /* The avatar image has ~9% transparent headroom, and object-fit:contain
        adds more — 9% lands the text just above the visible hair. */
     top: 9%;
     left: 50%;
+    width: 5em;
+    height: 1.4em;
+    overflow: visible;
     transform: translateX(-50%) rotate(-4deg);
     font-family: 'Caveat', cursive;
     font-style: italic;
     font-weight: 600;
     font-size: clamp(2.2rem, 6vw, 3.2rem);
-    /* Darker shade of pale indigo: between --color-bg-accent and --color-accent. */
-    color: #7c74d8;
     opacity: 0;
-    white-space: nowrap;
     pointer-events: none;
+  }
+
+  .avatar-greeting text {
+    /* Darker shade of pale indigo: between --color-bg-accent and --color-accent. */
+    fill: #7c74d8;
+    stroke: #7c74d8;
+    stroke-width: 1px;
+    stroke-linejoin: round;
+    white-space: pre;
   }
 
   /* ---- The photo hand-off ---------------------------------------------- */
@@ -116,20 +198,28 @@
 </style>
 
 <script>
-  // One timeline, in seconds. The avatar is already inside the frame when the
-  // frame drops in from above (settles at ~1.55s, see hero-frame-drop in
-  // index.astro). Once the frame lands, the wave wiggle and the "Hi There!"
-  // greeting play for 1.7s, then the avatar sinks as the real headshot pops up
-  // and the hero's pale-indigo wash fades to off-white (both at 3.25s).
-  const FRAME_LANDS = 1.55; // the frame's drop finishes; the greeting starts
-  const WIGGLE_END = 3.1;  // the wave wiggle stops (just before the sink)
-  const PHOTO_POP = 3.25;  // headshot pops up (1.7s after the frame settles)
-  const GONE = 3.65;       // avatar fully below the frame edge
-  const CLEANUP = 4.1;     // remove the avatar stage from the page
+  // One timeline, in seconds, measured from the moment the intro starts
+  // (images ready + tab visible). The CSS timings in index.astro (hero wash,
+  // underline, breathing) are keyed to PHOTO_POP — keep them in sync.
+  const AVATAR_IN = [0, 0.3];   // avatar fades in
+  const FRAME_DRAW = [0.1, 0.85]; // hairline border traces around the frame
+  const MATTE_IN = [0.45, 0.9]; // warm matte fades in behind the avatar
+  const WRITE_START = 0.7;      // "Hi There!" starts writing on
+  const LETTER_STAGGER = 0.075; // gap between letters starting
+  const LETTER_DRAW = 0.4;      // each letter's outline draw
+  const LETTER_FILL = [0.2, 0.5]; // each letter's fill, relative to its start
+  const WIGGLE = [0.8, 2.45];   // the wave wiggle
+  const PHOTO_POP = 2.6;        // headshot pops up
+  const GONE = 3.0;             // avatar fully below the frame edge
+  const CLEANUP = 3.45;         // remove the intro layers from the page
+  // Longer than any single letter outline at the greeting's font size, so
+  // the dash covers a whole glyph (dashes restart on every glyph subpath).
+  const GLYPH_DASH = 400;
 
   /** Ease helpers: turn a 0..1 progress value into a nicer 0..1 curve. */
   const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
   const easeIn = (t: number) => t * t * t;
+  const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   /** Progress of `now` between `start` and `end`, clamped to 0..1. */
   const between = (now: number, start: number, end: number) =>
     Math.min(1, Math.max(0, (now - start) / (end - start)));
@@ -139,13 +229,27 @@
     root.classList.remove('is-playing');
     root.classList.remove('is-done');
     root.querySelector('[data-avatar-stage]')?.remove();
+    root.querySelector('[data-avatar-matte]')?.remove();
+    root.parentElement?.querySelector('[data-avatar-frame]')?.remove();
   }
 
   function runIntro(root: HTMLElement) {
     const stage = root.querySelector<HTMLElement>('[data-avatar-stage]');
     const waving = root.querySelector<HTMLElement>('.avatar-pose--waving');
-    const greeting = root.querySelector<HTMLElement>('[data-avatar-greeting]');
+    const greeting = root.querySelector<SVGElement>('[data-avatar-greeting]');
+    const letters = Array.from(root.querySelectorAll<SVGTSpanElement>('[data-avatar-greeting] tspan'));
+    const matte = root.querySelector<HTMLElement>('[data-avatar-matte]');
+    const frame = root.parentElement?.querySelector<SVGRectElement>('[data-avatar-frame] rect');
     if (!stage || !waving) return;
+
+    // The frame's perimeter, so the dash exactly covers the border.
+    const perimeter = frame ? frame.getTotalLength() : 0;
+    if (frame) {
+      frame.style.strokeDasharray = `${perimeter}`;
+      frame.style.strokeDashoffset = `${perimeter}`;
+      if (frame.ownerSVGElement) frame.ownerSVGElement.style.visibility = 'visible';
+    }
+    for (const letter of letters) letter.style.strokeDasharray = `${GLYPH_DASH}`;
 
     const start = performance.now();
     let popped = false;
@@ -153,36 +257,49 @@
     const tick = () => {
       const t = (performance.now() - start) / 1000;
 
-      // 1. The avatar is already in place inside the dropping frame — no
-      //    rise. It only sinks out at the end, as the photo pops up.
+      // 1. The avatar fades in; the frame's border draws around it; the
+      //    matte fills in behind.
+      const avatarIn = easeOut(between(t, AVATAR_IN[0], AVATAR_IN[1]));
+      stage.style.opacity = String(avatarIn);
+      if (frame) {
+        frame.style.strokeDashoffset = String(perimeter * (1 - easeInOut(between(t, FRAME_DRAW[0], FRAME_DRAW[1]))));
+      }
+      if (matte) matte.style.opacity = String(between(t, MATTE_IN[0], MATTE_IN[1]));
+
+      // 2. "Hi There!" writes on: each letter's outline draws, then fills.
+      //    The whole greeting fades out as the avatar starts sinking.
+      if (greeting) {
+        greeting.style.opacity = String(t >= WRITE_START ? 1 - between(t, PHOTO_POP, GONE) : 0);
+        letters.forEach((letter, i) => {
+          const s = WRITE_START + i * LETTER_STAGGER;
+          letter.style.strokeDashoffset = String(GLYPH_DASH * (1 - easeOut(between(t, s, s + LETTER_DRAW))));
+          letter.style.fillOpacity = String(between(t, s + LETTER_FILL[0], s + LETTER_FILL[1]));
+        });
+      }
+
+      // 3. The avatar sinks out at the end, as the photo pops up.
       const down = easeIn(between(t, PHOTO_POP, GONE));
       stage.style.transform = `translateY(${down * 104}%)`;
 
-      // 2. The "Hi There!" greeting fades in once the frame has landed, and
-      //    fades out as the avatar starts sinking.
-      if (greeting) {
-        greeting.style.opacity = String(
-          between(t, FRAME_LANDS, FRAME_LANDS + 0.3) * (1 - between(t, PHOTO_POP, GONE))
-        );
-      }
-
-      // 3. The wave: a small rotation wiggle on the whole figure sells the
-      //    gesture (the raised arm is baked into the waving pose). Starts
-      //    only once the frame has settled.
-      const wiggling = between(t, FRAME_LANDS, WIGGLE_END) * (1 - between(t, WIGGLE_END, WIGGLE_END + 0.15));
+      // 4. The wave: a small rotation wiggle on the whole figure sells the
+      //    gesture (the raised arm is baked into the waving pose).
+      const wiggling = between(t, WIGGLE[0], WIGGLE[0] + 0.2) * (1 - between(t, WIGGLE[1], WIGGLE[1] + 0.15));
       const wiggle = Math.sin(t * Math.PI * 5) * 2.2 * wiggling; // degrees
       stage.style.rotate = `${wiggle}deg`;
 
-      // 4. Hand over to the real photo.
+      // 5. Hand over to the real photo.
       if (!popped && t >= PHOTO_POP) {
         popped = true;
         root.classList.add('is-done'); // CSS springs the photo up
       }
 
-      // 5. Finished: remove the avatar stage.
+      // 6. Finished: the real border and matte take over (same place, so the
+      //    swap is invisible) and the intro layers are removed.
       if (t >= CLEANUP) {
         root.classList.remove('is-playing', 'is-done');
         stage.remove();
+        matte?.remove();
+        frame?.parentElement?.remove();
         return;
       }
       requestAnimationFrame(tick);
@@ -204,9 +321,9 @@
     }
 
     root.classList.add('is-playing');
-    // Tell the page this is the one-time greeting, so the portrait frame's
-    // drop-from-above (in index.astro) plays too. On later loads within the
-    // session this class is never set, so the frame is simply there.
+    // Tell the page this is the one-time greeting, so the hero's wash,
+    // underline and breathing (in index.astro) wait for the photo hand-off.
+    // On later loads within the session this class is never set.
     document.documentElement.classList.add('first-visit');
 
     // Start only once both pose images are ready (or give up on error), AND

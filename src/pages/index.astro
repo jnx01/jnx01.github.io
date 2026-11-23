@@ -115,12 +115,13 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
       </div>
       <div class="hero-portrait" data-reveal="fade" data-reveal-delay="2" data-parallax>
         <!-- The portrait frame. AvatarIntro wraps it: on the FIRST visit of
-             a session a 3D avatar waves hello, then sinks away and the photo
-             pops up. PortraitFlip makes the frame clickable once the intro
-             choreography has finished (when the breathing loop starts):
-             click to flip to a cartoon avatar version of the photo, click
-             again to flip back. Reduced-motion / no-JS visitors just see
-             the photo. -->
+             a session the frame draws itself around a waving cartoon avatar,
+             "Hi There!" writes on, then the avatar sinks away and the photo
+             pops up. PortraitFlip arms the frame once the intro choreography
+             has finished (when the breathing loop starts): hovering with a
+             mouse flips it to a cartoon avatar version of the photo and
+             leaving flips it back (tap / Enter toggles on touch / keyboard).
+             Reduced-motion / no-JS visitors just see the photo. -->
         <AvatarIntro>
           <PortraitFlip>
             <Headshot />
@@ -1069,16 +1070,16 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
          background tab doesn't spend the welcome wash unseen.
 
          Two timings:
-         - First visit (.first-visit): the frame drops (~1.55s) with the
-           avatar already in it, the avatar greets for 1.7s, so the wash holds
-           until 3.25s and fades as the headshot pops up.
-         - Revisit: no frame drop, no avatar — fade at 2.5s. */
+         - First visit (.first-visit): the frame draws itself around the
+           avatar and "Hi There!" writes on, so the wash holds until 2.6s
+           and fades as the headshot pops up (PHOTO_POP in AvatarIntro).
+         - Revisit: no avatar — fade at 2.5s. */
       animation: hero-wash-out 1.4s var(--ease-out) 2.5s forwards;
       animation-play-state: paused;
     }
 
     :global(html.first-visit) .hero::after {
-      animation-delay: 3.25s;
+      animation-delay: 2.6s;
     }
 
     /* Play only when the tab is visible. */
@@ -1183,8 +1184,8 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
          wipe-and-redraw loop every 5s — a periodic reminder of the thesis.
          Two timings, matching the wash:
          - Revisit: wash fades at 2.5s, so the underline draws at 3.5s.
-         - First visit (.first-visit): headshot pops at 3.25s, so the
-           underline draws at 4.25s.
+         - First visit (.first-visit): headshot pops at 2.6s, so the
+           underline draws at 3.6s.
          Both start PAUSED and only play once the tab is visible
          (.is-visible on <html>), so a background tab doesn't spend the
          first draw unseen. */
@@ -1195,7 +1196,7 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     }
 
     :global(html.first-visit) .hero-underline-stroke path {
-      animation-delay: 4.25s, 4.95s;
+      animation-delay: 3.6s, 4.3s;
     }
 
     /* Play only when the tab is visible. */
@@ -1344,16 +1345,12 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     }
 
     :global(html.first-visit) .hero-portrait {
-      /* First visit: frame drop (1.4s @ 150ms) AND breathing (underline draws
-         at 4.25s + 0.7s = done at 4.95s). */
-      animation:
-        hero-frame-drop 1.4s cubic-bezier(0.22, 1, 0.36, 1) 150ms both,
-        hero-breathe 9s ease-in-out 5.0s infinite;
-      animation-play-state: paused, paused;
+      /* First visit: underline draws at 3.6s + 0.7s = done at 4.3s. */
+      animation-delay: 4.4s;
     }
 
     :global(html.is-visible) .hero-portrait {
-      animation-play-state: running, running;
+      animation-play-state: running;
     }
 
     /* Extra stops approximate a sine curve, so the swell and relax have no
@@ -1363,25 +1360,6 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
       25%      { transform: scale(1.017); }
       50%      { transform: scale(1.025); }
       75%      { transform: scale(1.017); }
-    }
-  }
-
-  /* The frame drops in from above the viewport and lands with a pronounced
-     bounce. FIRST VISIT ONLY (the .first-visit class on <html> is set by the
-     AvatarIntro script while the greeting plays), and paused until the tab is
-     visible (.is-visible). Because it only ever plays once per session, it
-     can afford to be big and slow. Reduced-motion users skip it entirely. */
-  @media (prefers-reduced-motion: no-preference) {
-    /* Fall from well above, overshoot clearly below home, rebound up, settle.
-       The bounce is doubled: a big overshoot, a big rebound, then a second
-       smaller overshoot + settle. transform + opacity only. */
-    @keyframes hero-frame-drop {
-      0%   { transform: translateY(-130%); opacity: 0; }
-      48%  { transform: translateY(12%);   opacity: 1; } /* big overshoot (doubled) */
-      64%  { transform: translateY(-6%);   }             /* big rebound up (doubled) */
-      78%  { transform: translateY(3%);    }             /* second, smaller overshoot */
-      90%  { transform: translateY(-1%);   }             /* second, smaller rebound */
-      100% { transform: translateY(0);     opacity: 1; } /* rest */
     }
   }
 

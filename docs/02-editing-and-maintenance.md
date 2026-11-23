@@ -198,6 +198,18 @@ Cloudflare Worker endpoint (`ANALYTICS.TELEMETRY_ENDPOINT`). To turn visitor
 tracking off, set `TELEMETRY_ENDPOINT` to `''` and rebuild — no tracking script
 loads.
 
+**Changing the analytics Worker** (`telemetry/worker.js`): it is NOT deployed
+by pushing to `main`. Run the tests, then deploy it by hand:
+
+```bash
+npm run test:telemetry          # must pass (6 tests)
+cd telemetry && npx wrangler deploy
+```
+
+If the dashboard ever stops counting visits, run `npx wrangler tail` in
+`telemetry/` and load the site: any `collect failed:` line is the cause.
+Full notes: `telemetry/README.md`.
+
 ---
 
 ## 6b. The homepage journey (the scroll laptop)
