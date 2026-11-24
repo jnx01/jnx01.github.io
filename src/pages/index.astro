@@ -18,7 +18,7 @@ import PortraitFlip from '../components/PortraitFlip.astro';
 import Card from '../components/Card.astro';
 import Laptop from '../components/Laptop.astro';
 import LaptopScreens from '../components/LaptopScreens.astro';
-import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.config';
+import { RESUME_URL, EMAIL, EMAIL_URL, LINKEDIN_URL, GITHUB_URL } from '../site.config';
 ---
 
 <Base
@@ -81,12 +81,10 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
         <p class="hero-summary" data-reveal data-reveal-delay="2">
           Production GenAI at Teradata. Research on cheaper, more reliable agents.
         </p>
-        <!-- The action row: one primary button (the work index) + Email,
-             LinkedIn, GitHub, Resume as quiet text links. "Email" matches the
-             links visually, but instead of navigating it reveals the
-             obfuscated address in a small popup. Works on hover (desktop),
-             focus (keyboard), and click/tap (mobile). The address stays out
-             of any href, so scrapers get nothing actionable. -->
+        <!-- The action row: two pill CTAs + Email, LinkedIn, GitHub, Resume as
+             quiet text links. "Email" is a mailto: link; hovering or focusing
+             it also shows the full address in a small popup, for visitors
+             whose browser has no mail app set up (Escape dismisses it). -->
         <div class="hero-cta" data-reveal data-reveal-delay="3">
           <div class="hero-cta-buttons">
             <a class="btn-primary" href="/work/teradata/">See What I've Shipped</a>
@@ -94,15 +92,9 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
           </div>
           <ul class="hero-links">
             <li class="email-reveal">
-              <button
-                type="button"
-                class="link-draw email-reveal-btn"
-                aria-describedby="email-tooltip"
-              >
-                Email
-              </button>
+              <a class="link-draw email-reveal-link" href={EMAIL_URL} aria-describedby="email-tooltip">Email</a>
               <span class="email-tooltip" id="email-tooltip" role="tooltip">
-                {EMAIL_DISPLAY}
+                {EMAIL}
               </span>
             </li>
             <li><a class="link-draw" href={LINKEDIN_URL} rel="me noopener noreferrer" target="_blank">LinkedIn</a></li>
@@ -402,28 +394,21 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     </div>
   </section>
 
-  <!-- Email-reveal toggle: on touch devices there's no hover, so tapping the
-       "Email" button toggles the popup open/closed. Tapping anywhere else
-       closes it. Hover (desktop) and focus (keyboard) are handled in CSS. -->
+  <!-- Email popup dismissal: Escape hides the hover/focus popup without
+       moving the pointer or focus (WCAG 1.4.13). It comes back the next time
+       the pointer enters or the link is focused. -->
   <script is:inline>
     (() => {
       const wrap = document.querySelector('.email-reveal');
-      const btn = document.querySelector('.email-reveal-btn');
-      if (!wrap || !btn) return;
+      const link = document.querySelector('.email-reveal-link');
+      if (!wrap || !link) return;
 
-      // Toggle the popup when the button is clicked/tapped.
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        wrap.classList.toggle('open');
-      });
-
-      // Tapping anywhere outside closes it.
-      document.addEventListener('click', () => wrap.classList.remove('open'));
-
-      // Escape key closes it too (keyboard accessibility).
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') wrap.classList.remove('open');
+        if (e.key === 'Escape') wrap.classList.add('is-dismissed');
       });
+      const reset = () => wrap.classList.remove('is-dismissed');
+      wrap.addEventListener('pointerenter', reset);
+      link.addEventListener('focus', reset);
     })();
   </script>
 
@@ -1493,23 +1478,10 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
 
   /* ---- Person + contact --------------------------------------------------------- */
   /* ---- Email reveal -------------------------------------------------------
-     The "Email" button looks like the LinkedIn/GitHub links. The tooltip is
-     hidden by default and appears on hover (desktop), focus (keyboard), or
-     when toggled on by click/tap (mobile). */
+     "Email" is a mailto: link like its neighbours. The popup with the full
+     address appears on hover (desktop) and keyboard focus. */
   .email-reveal {
     position: relative; /* the tooltip positions itself against this */
-  }
-
-  /* Make the button look exactly like the text links beside it. */
-  .email-reveal-btn {
-    background: none;
-    border: none;
-    padding: 0;
-    font: inherit;
-    font-size: var(--text-md);
-    font-weight: 500;
-    color: var(--color-accent);
-    cursor: pointer;
   }
 
   .email-tooltip {
@@ -1545,13 +1517,25 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
     border-top-color: var(--color-ink);
   }
 
-  /* Show on hover (desktop), on keyboard focus, and when toggled by tap. */
-  .email-reveal:hover .email-tooltip,
-  .email-reveal-btn:focus-visible + .email-tooltip,
-  .email-reveal.open .email-tooltip {
+  /* Show on hover (desktop) and keyboard focus, unless dismissed with Escape.
+     Touch devices skip it: a tap simply opens the mail app. */
+  @media (hover: hover) {
+    .email-reveal:hover .email-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+  }
+
+  .email-reveal-link:focus-visible + .email-tooltip {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
+  }
+
+  .email-reveal.is-dismissed .email-tooltip {
+    opacity: 0;
+    visibility: hidden;
   }
 
   /* Reduced motion: the tooltip simply appears, no slide. */
