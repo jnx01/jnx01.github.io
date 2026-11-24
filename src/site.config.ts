@@ -10,8 +10,9 @@
 export const RESUME_URL =
   'https://drive.google.com/file/d/1w_O62eYCbF0_oNYVTAWY2b8Hq0ABscgW/view?usp=sharing';
 
-// The obfuscated email address shown on the site (not a mailto: link).
-export const EMAIL_DISPLAY = 'naeemjahanzeb[at]gmail[dot]com';
+// The email address shown on the site, and the mailto: link built from it.
+export const EMAIL = 'naeemjahanzeb@gmail.com';
+export const EMAIL_URL = `mailto:${EMAIL}`;
 
 // Social profile links.
 export const LINKEDIN_URL = 'https://www.linkedin.com/in/jna1';
