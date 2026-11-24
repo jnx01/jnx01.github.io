@@ -8,7 +8,7 @@
  * should feel like an invitation, not a form to fill.
  */
 import Base from '../layouts/Base.astro';
-import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.config';
+import { RESUME_URL, EMAIL, EMAIL_URL, LINKEDIN_URL, GITHUB_URL } from '../site.config';
 ---
 
 <Base
@@ -28,12 +28,12 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
 
       <ul class="contact-list">
         <li data-reveal data-reveal-delay="2">
-          <!-- Email is plain text (obfuscated), not a mailto: link — the user
-               prefers not to expose a clickable address to scrapers. -->
-          <div class="contact-link contact-link--static">
+          <!-- A real mailto: link (opens the visitor's mail app). The address
+               is also shown in full, for visitors with no mail app set up. -->
+          <a class="contact-link" href={EMAIL_URL}>
             <span class="contact-method">Email</span>
-            <span class="contact-value">{EMAIL_DISPLAY}</span>
-          </div>
+            <span class="contact-value">{EMAIL}</span>
+          </a>
         </li>
         <li data-reveal data-reveal-delay="3">
           <a class="contact-link" href={LINKEDIN_URL} rel="me noopener noreferrer" target="_blank">
@@ -106,20 +106,6 @@ import { RESUME_URL, EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.con
   .contact-link:hover {
     text-decoration: none;
     padding-left: var(--space-4);
-  }
-
-  /* Static variant (the email row): not a link, so no hover nudge and no
-     pointer cursor — but visually identical to the link rows. */
-  .contact-link--static {
-    cursor: default;
-  }
-
-  .contact-link--static:hover {
-    padding-left: 0;
-  }
-
-  .contact-link--static:hover .contact-method {
-    color: var(--color-ink);
   }
 
   .contact-method {
