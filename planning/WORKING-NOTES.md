@@ -8,6 +8,34 @@ For step-by-step recipes, see `docs/02-editing-and-maintenance.md`.
 
 ---
 
+## 2026-11-24 — Real email address + mailto links
+
+**What was requested:** replace the obfuscated `naeemjahanzeb[at]gmail[dot]com`
+with the real address and make it a mailto: link (reverses the earlier
+"no mailto, obfuscated plain text" rule).
+
+**Changes:**
+- `site.config.ts`: `EMAIL_DISPLAY` replaced by `EMAIL` + `EMAIL_URL`
+  (`mailto:`). All imports updated.
+- Contact page: the email row is now a normal link row (the static,
+  no-hover variant and its CSS were removed). Footer: email is a link.
+- Homepage hero: "Email" is a mailto: link like its neighbours. The popup
+  with the full address stays on hover (desktop, `@media (hover: hover)`)
+  and keyboard focus, for visitors without a mail app; Escape dismisses it
+  (WCAG 1.4.13), and it returns on the next hover/focus. The old tap-toggle
+  script is gone (a tap now opens the mail app).
+- JSON-LD Person gains `email`.
+- Telemetry beacon: mailto clicks are recorded as `email` events and
+  flushed immediately (like resume/outbound).
+- ARCHITECTURE.md: footer, contact and content rules updated.
+
+**Validation:** build green (12 pages); 0 obfuscated addresses in dist;
+mailto link on all 12 pages (footer); preview check: popup hidden -> shown
+on hover -> hidden on Escape -> shown on re-hover; click sends an `email`
+beacon event.
+
+---
+
 ## 2026-11-24 — Teradata work updated: two new production skills + skill discovery
 
 **What was requested:** reflect recent Teradata work on the site.
