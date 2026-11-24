@@ -4,7 +4,7 @@
  * visible in footer"). Present on every page, quiet in style.
  */
 
-import { EMAIL_DISPLAY, LINKEDIN_URL, GITHUB_URL } from '../site.config';
+import { EMAIL, EMAIL_URL, LINKEDIN_URL, GITHUB_URL } from '../site.config';
 
 const year = new Date().getFullYear();
 ---
@@ -14,9 +14,7 @@ const year = new Date().getFullYear();
     <p class="footer-note">© {year} Jahanzeb Naeem · Islamabad, Pakistan</p>
 
     <ul class="footer-links">
-      <!-- Email is plain text (obfuscated), not a mailto: link — the user
-           prefers not to expose a clickable address to scrapers. -->
-      <li><span class="footer-email">{EMAIL_DISPLAY}</span></li>
+      <li><a class="footer-email" href={EMAIL_URL}>{EMAIL}</a></li>
       <li><a href={LINKEDIN_URL} rel="me noopener noreferrer" target="_blank">LinkedIn</a></li>
       <li><a href={GITHUB_URL} rel="me noopener noreferrer" target="_blank">GitHub</a></li>
     </ul>
@@ -52,11 +50,8 @@ const year = new Date().getFullYear();
     font-size: var(--text-sm);
   }
 
-  /* The plain-text email: same size/color as the footer links, but not a
-     link (no hover, no accent). Allow it to wrap/shrink so the long
-     obfuscated address never overflows a narrow screen. */
+  /* The email link may wrap on very narrow screens instead of overflowing. */
   .footer-email {
-    color: var(--color-ink-muted);
-    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 </style>
