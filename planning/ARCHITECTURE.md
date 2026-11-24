@@ -199,7 +199,7 @@ pick from these steps instead of inventing arbitrary pixel values.
 hamburger on desktop; the items are short enough to fit even on small phones
 (≥360px). Home is reachable via the name/wordmark.
 
-**Footer:** email (obfuscated, not a link), LinkedIn, GitHub. Present on
+**Footer:** email (mailto: link), LinkedIn, GitHub. Present on
 every page.
 
 ---
@@ -347,7 +347,7 @@ caving — at 3× the tokens" (2026-09-29). Sparse index, newest first.
 
 ### Contact (`/contact`)
 
-4 large rows: Email (plain text, obfuscated, not a link), LinkedIn, GitHub,
+4 large rows: Email (mailto: link, full address shown), LinkedIn, GitHub,
 Resume (PDF). No form — GitHub Pages is static hosting.
 
 ---
@@ -662,6 +662,9 @@ watches a detached element after navigation and does nothing.
   described only as "research with strong early results, now moving to
   production": no internal people/approvals, no paper names, no detail that
   reveals the actual approach.
+- Email is a real `mailto:` link everywhere (address in `src/site.config.ts`:
+  `EMAIL` / `EMAIL_URL`). The hero's "Email" link also shows the full
+  address in a hover/focus popup for visitors without a mail app.
 - Honest about failures: the budgeted-eval negative result is presented
   proudly; the RA manuscripts note says they weren't accepted.
 
@@ -679,7 +682,6 @@ watches a detached element after navigation and does nothing.
   localStorage and applied before first paint.
 - No gimmick copy.
 - No contact form (static hosting).
-- No mailto: link (email is obfuscated plain text).
 - No archive page for old projects (absence is cleaner than a graveyard).
 
 ### Removed from the old site
